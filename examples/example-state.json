@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "roster": {
+    "players": [
+      {
+        "id": "top",
+        "name": "Dani",
+        "role": "TOP",
+        "pool": [
+          { "champion_id": "Ornn", "comfort": 5, "winrate": 57.0 },
+          { "champion_id": "Garen", "comfort": 4, "winrate": null },
+          { "champion_id": "Jax", "comfort": 3, "winrate": 52.0 },
+          { "champion_id": "KSante", "comfort": 2, "winrate": null }
+        ]
+      },
+      {
+        "id": "jungle",
+        "name": "Mario",
+        "role": "JUNGLE",
+        "pool": [
+          { "champion_id": "Sejuani", "comfort": 5, "winrate": 60.0 },
+          { "champion_id": "Vi", "comfort": 4, "winrate": 54.0 },
+          { "champion_id": "Lillia", "comfort": 3, "winrate": null },
+          { "champion_id": "LeeSin", "comfort": 2, "winrate": 50.0 }
+        ]
+      },
+      {
+        "id": "mid",
+        "name": "Lucía",
+        "role": "MID",
+        "pool": [
+          { "champion_id": "Orianna", "comfort": 5, "winrate": 58.0 },
+          { "champion_id": "Syndra", "comfort": 4, "winrate": 55.0 },
+          { "champion_id": "Ahri", "comfort": 3, "winrate": null },
+          { "champion_id": "Aurora", "comfort": 2, "winrate": null }
+        ]
+      },
+      {
+        "id": "adc",
+        "name": "Pablo",
+        "role": "ADC",
+        "pool": [
+          { "champion_id": "Jinx", "comfort": 5, "winrate": 61.0 },
+          { "champion_id": "Ashe", "comfort": 4, "winrate": 53.0 },
+          { "champion_id": "Kaisa", "comfort": 3, "winrate": 51.0 },
+          { "champion_id": "Sivir", "comfort": 2, "winrate": null }
+        ]
+      },
+      {
+        "id": "support",
+        "name": "Sara",
+        "role": "SUPPORT",
+        "pool": [
+          { "champion_id": "Rakan", "comfort": 5, "winrate": 59.0 },
+          { "champion_id": "Nautilus", "comfort": 4, "winrate": 56.0 },
+          { "champion_id": "Lulu", "comfort": 3, "winrate": null },
+          { "champion_id": "Milio", "comfort": 2, "winrate": null }
+        ]
+      }
+    ],
+    "pick_order": ["top", "jungle", "mid", "adc", "support"]
+  },
+  "draft": {
+    "version": 1,
+    "side": "BLUE",
+    "template_id": "tournament",
+    "step_index": 17,
+    "our_bans": ["Yuumi", "Smolder", "KSante", "Aurora", "Skarner"],
+    "enemy_bans": ["Malphite", "Lulu", "Rakan", "Poppy", "Vi"],
+    "our_picks": [
+      { "player_id": "top", "champion_id": "Ornn", "role": "TOP" },
+      { "player_id": "jungle", "champion_id": "Sejuani", "role": "JUNGLE" },
+      { "player_id": "mid", "champion_id": "Orianna", "role": "MID" }
+    ],
+    "enemy_picks": [
+      { "champion_id": "Rumble", "role": "TOP" },
+      { "champion_id": "LeeSin", "role": "JUNGLE" },
+      { "champion_id": "Azir", "role": "MID" },
+      { "champion_id": "Caitlyn", "role": "ADC" }
+    ],
+    "priorities": [],
+    "current_player_id": "adc",
+    "manual": null
+  },
+  "settings": {
+    "top_n": 5,
+    "allow_offrole_flex": false,
+    "pool_precedence": true
+  }
+}

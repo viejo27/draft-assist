@@ -1,0 +1,647 @@
+{
+  "summary": {
+    "side": "BLUE",
+    "side_label": "Azul",
+    "phase": "PICK",
+    "turn_label": "Pick azul 4",
+    "template_name": "Competitivo / Clash",
+    "our_bans": [
+      {
+        "id": "Yuumi",
+        "name": "Yuumi",
+        "image": "Yuumi.png",
+        "roles": [
+          "SUPPORT"
+        ]
+      },
+      {
+        "id": "Smolder",
+        "name": "Smolder",
+        "image": "Smolder.png",
+        "roles": [
+          "ADC"
+        ]
+      },
+      {
+        "id": "KSante",
+        "name": "K'Sante",
+        "image": "KSante.png",
+        "roles": [
+          "TOP"
+        ]
+      },
+      {
+        "id": "Aurora",
+        "name": "Aurora",
+        "image": "Aurora.png",
+        "roles": [
+          "MID",
+          "TOP"
+        ]
+      },
+      {
+        "id": "Skarner",
+        "name": "Skarner",
+        "image": "Skarner.png",
+        "roles": [
+          "JUNGLE",
+          "TOP"
+        ]
+      }
+    ],
+    "enemy_bans": [
+      {
+        "id": "Malphite",
+        "name": "Malphite",
+        "image": "Malphite.png",
+        "roles": [
+          "TOP",
+          "SUPPORT"
+        ]
+      },
+      {
+        "id": "Lulu",
+        "name": "Lulu",
+        "image": "Lulu.png",
+        "roles": [
+          "SUPPORT"
+        ]
+      },
+      {
+        "id": "Rakan",
+        "name": "Rakan",
+        "image": "Rakan.png",
+        "roles": [
+          "SUPPORT"
+        ]
+      },
+      {
+        "id": "Poppy",
+        "name": "Poppy",
+        "image": "Poppy.png",
+        "roles": [
+          "JUNGLE",
+          "TOP",
+          "SUPPORT"
+        ]
+      },
+      {
+        "id": "Vi",
+        "name": "Vi",
+        "image": "Vi.png",
+        "roles": [
+          "JUNGLE"
+        ]
+      }
+    ],
+    "our_picks": [
+      {
+        "player": {
+          "id": "top",
+          "name": "Dani",
+          "role": "TOP"
+        },
+        "role": "TOP",
+        "champion": {
+          "id": "Ornn",
+          "name": "Ornn",
+          "image": "Ornn.png",
+          "roles": [
+            "TOP"
+          ]
+        }
+      },
+      {
+        "player": {
+          "id": "jungle",
+          "name": "Mario",
+          "role": "JUNGLE"
+        },
+        "role": "JUNGLE",
+        "champion": {
+          "id": "Sejuani",
+          "name": "Sejuani",
+          "image": "Sejuani.png",
+          "roles": [
+            "JUNGLE",
+            "TOP"
+          ]
+        }
+      },
+      {
+        "player": {
+          "id": "mid",
+          "name": "Lucía",
+          "role": "MID"
+        },
+        "role": "MID",
+        "champion": {
+          "id": "Orianna",
+          "name": "Orianna",
+          "image": "Orianna.png",
+          "roles": [
+            "MID"
+          ]
+        }
+      }
+    ],
+    "enemy_picks": [
+      {
+        "champion": {
+          "id": "Rumble",
+          "name": "Rumble",
+          "image": "Rumble.png",
+          "roles": [
+            "TOP",
+            "MID"
+          ]
+        },
+        "role": "TOP",
+        "inferred_role": "TOP"
+      },
+      {
+        "champion": {
+          "id": "LeeSin",
+          "name": "Lee Sin",
+          "image": "LeeSin.png",
+          "roles": [
+            "JUNGLE"
+          ]
+        },
+        "role": "JUNGLE",
+        "inferred_role": "JUNGLE"
+      },
+      {
+        "champion": {
+          "id": "Azir",
+          "name": "Azir",
+          "image": "Azir.png",
+          "roles": [
+            "MID"
+          ]
+        },
+        "role": "MID",
+        "inferred_role": "MID"
+      },
+      {
+        "champion": {
+          "id": "Caitlyn",
+          "name": "Caitlyn",
+          "image": "Caitlyn.png",
+          "roles": [
+            "ADC"
+          ]
+        },
+        "role": "ADC",
+        "inferred_role": "ADC"
+      }
+    ],
+    "composition": {
+      "damage_split": {
+        "physical": 0.0,
+        "magic": 1.0,
+        "mixed": 0.0
+      },
+      "traits": {
+        "anti_heal": 0.5,
+        "anti_tank": 6.0,
+        "aoe": 10.0,
+        "carry": 4.0,
+        "cc": 13.0,
+        "early": 7.5,
+        "engage": 11.0,
+        "frontline": 12.0,
+        "mobility": 4.0,
+        "peel": 7.0,
+        "poke": 3.0,
+        "scaling": 11.0,
+        "shield": 4.0,
+        "splitpush": 5.0,
+        "sustain": 6.0,
+        "utility": 7.0,
+        "waveclear": 9.0
+      },
+      "archetype": "engage",
+      "archetype_label": "Engage / wombo",
+      "needs": [
+        {
+          "id": "ad_damage",
+          "label": "Falta daño AD",
+          "severity": 1.0
+        }
+      ]
+    }
+  },
+  "turn": {
+    "step_index": 17,
+    "phase": "PICK",
+    "acting_side": "BLUE",
+    "acting_side_label": "Azul",
+    "is_our_turn": true,
+    "current_player": {
+      "id": "adc",
+      "name": "Pablo",
+      "role": "ADC"
+    },
+    "pick_number": 4,
+    "label": "Pick azul 4",
+    "our_picks_made": 3,
+    "enemy_picks_made": 4,
+    "our_bans_made": 5,
+    "enemy_bans_made": 5
+  },
+  "recommendations": [
+    {
+      "rank": 1,
+      "champion": {
+        "id": "Jinx",
+        "name": "Jinx",
+        "title": "the Loose Cannon",
+        "image": "Jinx.png",
+        "roles": [
+          "ADC"
+        ],
+        "tags": [
+          "Marksman"
+        ],
+        "damage": "PHYSICAL",
+        "priority": 5
+      },
+      "role": "ADC",
+      "action": "PICK",
+      "score": 71.7,
+      "tier": "B",
+      "in_pool": true,
+      "comfort": 5,
+      "off_pool_warning": null,
+      "justification": "Comfort 5/5 en el pool de Pablo. Winrate personal: 61%. Sinergia con Ornn: Frontline sólida y engage a distancia para Jinx.",
+      "reasons": [
+        "Comfort 5/5 en el pool de Pablo. Winrate personal: 61%.",
+        "Sinergia con Ornn: Frontline sólida y engage a distancia para Jinx.",
+        "Cubre la carencia: Falta daño AD.",
+        "Pick tardío: buen momento para castigar el matchup."
+      ],
+      "risks": [
+        "Matchup complicado contra Caitlyn: Rango y trampas dominan el early; Jinx necesita escalar."
+      ],
+      "breakdown": {
+        "matchup": 0.33999997,
+        "synergy": 0.82000005,
+        "needs": 1.0,
+        "comfort": 1.0,
+        "meta": 1.0,
+        "flex": 0.4548,
+        "counter_risk": 0.363,
+        "pool_penalty": 0.0,
+        "threat": 0.0,
+        "denial": 0.0,
+        "self_ban": 0.0
+      }
+    },
+    {
+      "rank": 2,
+      "champion": {
+        "id": "Ashe",
+        "name": "Ashe",
+        "title": "the Frost Archer",
+        "image": "Ashe.png",
+        "roles": [
+          "ADC",
+          "SUPPORT"
+        ],
+        "tags": [
+          "Marksman",
+          "Support"
+        ],
+        "damage": "PHYSICAL",
+        "priority": 4
+      },
+      "role": "ADC",
+      "action": "PICK",
+      "score": 71.3,
+      "tier": "B",
+      "in_pool": true,
+      "comfort": 4,
+      "off_pool_warning": null,
+      "justification": "Comfort 4/5 en el pool de Pablo. Winrate personal: 53%. Aporta engage o follow-up para el wombo aliado.",
+      "reasons": [
+        "Comfort 4/5 en el pool de Pablo. Winrate personal: 53%.",
+        "Aporta engage o follow-up para el wombo aliado.",
+        "Cubre la carencia: Falta daño AD.",
+        "Pick tardío: buen momento para castigar el matchup."
+      ],
+      "risks": [
+        "Matchup complicado contra Caitlyn: Caitlyn gana los trades largos y empuja antes."
+      ],
+      "breakdown": {
+        "matchup": 0.38,
+        "synergy": 0.85,
+        "needs": 1.0,
+        "comfort": 0.77000004,
+        "meta": 0.8,
+        "flex": 0.6832,
+        "counter_risk": 0.19200002,
+        "pool_penalty": 0.0,
+        "threat": 0.0,
+        "denial": 0.0,
+        "self_ban": 0.0
+      }
+    },
+    {
+      "rank": 3,
+      "champion": {
+        "id": "Sivir",
+        "name": "Sivir",
+        "title": "the Battle Mistress",
+        "image": "Sivir.png",
+        "roles": [
+          "ADC"
+        ],
+        "tags": [
+          "Marksman"
+        ],
+        "damage": "PHYSICAL",
+        "priority": 4
+      },
+      "role": "ADC",
+      "action": "PICK",
+      "score": 68.7,
+      "tier": "B",
+      "in_pool": true,
+      "comfort": 2,
+      "off_pool_warning": null,
+      "justification": "Comfort 2/5 en el pool de Pablo. Ventaja contra Caitlyn: Spellshield y waveclear permiten sobrevivir al early.",
+      "reasons": [
+        "Comfort 2/5 en el pool de Pablo.",
+        "Ventaja contra Caitlyn: Spellshield y waveclear permiten sobrevivir al early.",
+        "Añade peel y protección para el carry.",
+        "Cubre la carencia: Falta daño AD."
+      ],
+      "risks": [],
+      "breakdown": {
+        "matchup": 0.65,
+        "synergy": 0.78,
+        "needs": 1.0,
+        "comfort": 0.4,
+        "meta": 0.8,
+        "flex": 0.56,
+        "counter_risk": 0.0,
+        "pool_penalty": 0.0,
+        "threat": 0.0,
+        "denial": 0.0,
+        "self_ban": 0.0
+      }
+    },
+    {
+      "rank": 4,
+      "champion": {
+        "id": "Kaisa",
+        "name": "Kai'Sa",
+        "title": "Daughter of the Void",
+        "image": "Kaisa.png",
+        "roles": [
+          "ADC"
+        ],
+        "tags": [
+          "Marksman",
+          "Mage"
+        ],
+        "damage": "MIXED",
+        "priority": 4
+      },
+      "role": "ADC",
+      "action": "PICK",
+      "score": 56.7,
+      "tier": "C",
+      "in_pool": true,
+      "comfort": 3,
+      "off_pool_warning": null,
+      "justification": "Comfort 3/5 en el pool de Pablo. Winrate personal: 51%. Aporta engage o follow-up para el wombo aliado.",
+      "reasons": [
+        "Comfort 3/5 en el pool de Pablo. Winrate personal: 51%.",
+        "Aporta engage o follow-up para el wombo aliado.",
+        "Cubre la carencia: Falta daño AD.",
+        "Pick tardío: buen momento para castigar el matchup."
+      ],
+      "risks": [
+        "Matchup complicado contra Caitlyn: La presión de rango retrasa el escalado de Kai'Sa."
+      ],
+      "breakdown": {
+        "matchup": 0.36,
+        "synergy": 0.85,
+        "needs": 0.6,
+        "comfort": 0.59000003,
+        "meta": 0.8,
+        "flex": 0.4584,
+        "counter_risk": 0.254,
+        "pool_penalty": 0.0,
+        "threat": 0.0,
+        "denial": 0.0,
+        "self_ban": 0.0
+      }
+    },
+    {
+      "rank": 5,
+      "champion": {
+        "id": "MissFortune",
+        "name": "Miss Fortune",
+        "title": "the Bounty Hunter",
+        "image": "MissFortune.png",
+        "roles": [
+          "ADC",
+          "SUPPORT"
+        ],
+        "tags": [
+          "Marksman",
+          "Mage"
+        ],
+        "damage": "PHYSICAL",
+        "priority": 4
+      },
+      "role": "ADC",
+      "action": "PICK",
+      "score": 41.2,
+      "tier": "D",
+      "in_pool": false,
+      "comfort": null,
+      "off_pool_warning": "Fuera del pool de Pablo; úsalo solo si el equipo asume el costo de práctica.",
+      "justification": "Ventaja contra Caitlyn: Pasiva y Q permiten trades fuertes si evita trampas. Aporta engage o follow-up para el wombo aliado.",
+      "reasons": [
+        "Ventaja contra Caitlyn: Pasiva y Q permiten trades fuertes si evita trampas.",
+        "Aporta engage o follow-up para el wombo aliado.",
+        "Cubre la carencia: Falta daño AD.",
+        "Pick tardío: buen momento para castigar el matchup."
+      ],
+      "risks": [
+        "Fuera del pool de Pablo; requeriría práctica."
+      ],
+      "breakdown": {
+        "matchup": 0.65,
+        "synergy": 0.85,
+        "needs": 1.0,
+        "comfort": 0.1,
+        "meta": 0.8,
+        "flex": 0.76000005,
+        "counter_risk": 0.0,
+        "pool_penalty": 24.367996,
+        "threat": 0.0,
+        "denial": 0.0,
+        "self_ban": 0.0
+      }
+    }
+  ],
+  "next_picks": [
+    {
+      "step_index": 18,
+      "turn_label": "Pick azul 5",
+      "player": {
+        "id": "support",
+        "name": "Sara",
+        "role": "SUPPORT"
+      },
+      "suggestions": [
+        {
+          "rank": 1,
+          "champion": {
+            "id": "Nautilus",
+            "name": "Nautilus",
+            "title": "the Titan of the Depths",
+            "image": "Nautilus.png",
+            "roles": [
+              "SUPPORT"
+            ],
+            "tags": [
+              "Tank",
+              "Support"
+            ],
+            "damage": "PHYSICAL",
+            "priority": 4
+          },
+          "role": "SUPPORT",
+          "action": "PICK",
+          "score": 72.8,
+          "tier": "B",
+          "in_pool": true,
+          "comfort": 4,
+          "off_pool_warning": null,
+          "justification": "Comfort 4/5 en el pool de Sara. Winrate personal: 56%. Aporta frontline para el carry aliado.",
+          "reasons": [
+            "Comfort 4/5 en el pool de Sara. Winrate personal: 56%.",
+            "Aporta frontline para el carry aliado.",
+            "Pick tardío: buen momento para castigar el matchup."
+          ],
+          "risks": [],
+          "breakdown": {
+            "matchup": 0.5,
+            "synergy": 0.85,
+            "needs": 1.0,
+            "comfort": 0.8000001,
+            "meta": 0.8,
+            "flex": 0.48800004,
+            "counter_risk": 0.17999999,
+            "pool_penalty": 0.0,
+            "threat": 0.0,
+            "denial": 0.0,
+            "self_ban": 0.0
+          }
+        },
+        {
+          "rank": 2,
+          "champion": {
+            "id": "Milio",
+            "name": "Milio",
+            "title": "The Gentle Flame",
+            "image": "Milio.png",
+            "roles": [
+              "SUPPORT"
+            ],
+            "tags": [
+              "Support",
+              "Mage"
+            ],
+            "damage": "MAGIC",
+            "priority": 4
+          },
+          "role": "SUPPORT",
+          "action": "PICK",
+          "score": 46.1,
+          "tier": "D",
+          "in_pool": true,
+          "comfort": 2,
+          "off_pool_warning": null,
+          "justification": "Comfort 2/5 en el pool de Sara. Sinergia con Jinx: Rango extra y cleanse para la carry.",
+          "reasons": [
+            "Comfort 2/5 en el pool de Sara.",
+            "Sinergia con Jinx: Rango extra y cleanse para la carry.",
+            "Pick tardío: buen momento para castigar el matchup."
+          ],
+          "risks": [],
+          "breakdown": {
+            "matchup": 0.5,
+            "synergy": 0.64000005,
+            "needs": 0.10000001,
+            "comfort": 0.4,
+            "meta": 0.8,
+            "flex": 0.56,
+            "counter_risk": 0.0,
+            "pool_penalty": 0.0,
+            "threat": 0.0,
+            "denial": 0.0,
+            "self_ban": 0.0
+          }
+        },
+        {
+          "rank": 3,
+          "champion": {
+            "id": "Pantheon",
+            "name": "Pantheon",
+            "title": "the Unbreakable Spear",
+            "image": "Pantheon.png",
+            "roles": [
+              "TOP",
+              "MID",
+              "SUPPORT",
+              "JUNGLE"
+            ],
+            "tags": [
+              "Fighter",
+              "Assassin"
+            ],
+            "damage": "PHYSICAL",
+            "priority": 4
+          },
+          "role": "SUPPORT",
+          "action": "PICK",
+          "score": 40.3,
+          "tier": "D",
+          "in_pool": false,
+          "comfort": null,
+          "off_pool_warning": "Fuera del pool de Sara; úsalo solo si el equipo asume el costo de práctica.",
+          "justification": "Aporta engage o follow-up para el wombo aliado. Pick tardío: buen momento para castigar el matchup.",
+          "reasons": [
+            "Aporta engage o follow-up para el wombo aliado.",
+            "Pick tardío: buen momento para castigar el matchup.",
+            "Alternativa meta fuera del pool de Sara."
+          ],
+          "risks": [
+            "Fuera del pool de Sara; requeriría práctica."
+          ],
+          "breakdown": {
+            "matchup": 0.5,
+            "synergy": 0.85,
+            "needs": 1.0,
+            "comfort": 0.1,
+            "meta": 0.8,
+            "flex": 0.96000004,
+            "counter_risk": 0.0,
+            "pool_penalty": 24.003998,
+            "threat": 0.0,
+            "denial": 0.0,
+            "self_ban": 0.0
+          }
+        }
+      ]
+    }
+  ],
+  "warnings": []
+}

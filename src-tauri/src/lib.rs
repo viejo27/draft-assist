@@ -1,0 +1,72 @@
+mod commands;
+mod persistence;
+
+use draft_engine::Engine;
+use draft_engine::data::GameData;
+use std::path::Path;
+use std::sync::Mutex;
+use tauri::Manager;
+
+pub struct RuntimeState {
+    pub engine: Mutex<Engine>,
+    pub data_dir: std::path::PathBuf,
+    pub warnings: Vec<String>,
+}
+
+pub fn load_engine(data_dir: &Path) -> Result<(Engine, Vec<String>), String> {
+    let data_path = data_dir.join("data");
+    let mut warnings = Vec::new();
+
+    if let Err(error) = GameData::ensure_defaults(&data_path) {
+        warnings.push(format!(
+            "No se pudo preparar la carpeta de datos editables: {error}"
+        ));
+    }
+
+    match Engine::from_paths(&data_path) {
+        Ok(engine) => {
+            warnings.extend(engine.data().validate().warnings);
+            Ok((engine, warnings))
+        }
+        Err(error) => {
+            warnings.push(format!(
+                "Los datos editables no son válidos ({error}). Se usan los datos embebidos."
+            ));
+            let engine = Engine::embedded().map_err(|error| error.to_string())?;
+            Ok((engine, warnings))
+        }
+    }
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            let data_dir = app
+                .path()
+                .app_data_dir()
+                .map_err(|error| std::io::Error::other(error.to_string()))?;
+            std::fs::create_dir_all(&data_dir)?;
+            let (engine, warnings) = load_engine(&data_dir).map_err(std::io::Error::other)?;
+            app.manage(RuntimeState {
+                engine: Mutex::new(engine),
+                data_dir,
+                warnings,
+            });
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            commands::bootstrap,
+            commands::recommend,
+            commands::validate_state,
+            commands::save_app_state,
+            commands::load_app_state,
+            commands::reload_data,
+            commands::data_info,
+            commands::load_example,
+            commands::open_data_dir,
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}

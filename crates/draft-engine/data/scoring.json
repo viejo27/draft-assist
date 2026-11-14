@@ -1,0 +1,60 @@
+{
+  "profiles": {
+    "EARLY": {
+      "matchup": 0.05,
+      "synergy": 0.15,
+      "needs": 0.15,
+      "comfort": 0.25,
+      "meta": 0.2,
+      "flex": 0.2,
+      "risk": 0.05
+    },
+    "MID": {
+      "matchup": 0.15,
+      "synergy": 0.2,
+      "needs": 0.2,
+      "comfort": 0.2,
+      "meta": 0.1,
+      "flex": 0.15,
+      "risk": 0.1
+    },
+    "LATE": {
+      "matchup": 0.22,
+      "synergy": 0.22,
+      "needs": 0.18,
+      "comfort": 0.22,
+      "meta": 0.06,
+      "flex": 0.1,
+      "risk": 0.12
+    }
+  },
+  "ban_weights": {
+    "meta": 0.3,
+    "threat": 0.3,
+    "flex": 0.15,
+    "denial": 0.15,
+    "contested": 0.1,
+    "self_ban": 0.25
+  },
+  "off_pool_multiplier": 0.72,
+  "off_pool_penalty": 6.0,
+  "pool_precedence_default": true,
+  "tiers": {
+    "S": 85.0,
+    "A": 75.0,
+    "B": 65.0,
+    "C": 55.0
+  },
+  "needs": {
+    "frontline_min": 4.0,
+    "engage_min": 2.0,
+    "cc_min": 5.0,
+    "peel_min": 2.0,
+    "waveclear_min": 3.0,
+    "ap_min_share": 0.3,
+    "ad_min_share": 0.3,
+    "anti_tank_min": 2.0
+  },
+  "early_pick_max": 2,
+  "late_pick_min": 4
+}

@@ -1,0 +1,540 @@
+import * as api from "./api.js";
+
+export const app = {
+  bootstrap: null,
+  state: null,
+  response: null,
+  view: "draft",
+  busy: false,
+  loading: true,
+  fatalError: null,
+  warnings: [],
+  undo: [],
+  toasts: [],
+  picker: null,
+  stepDialog: false,
+  isExample: false,
+  lastSaved: null,
+  validation: null,
+  preview: api.isPreview,
+};
+
+const listeners = new Set();
+
+export function subscribe(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+let renderQueued = false;
+export function emit() {
+  if (renderQueued) return;
+  renderQueued = true;
+  queueMicrotask(() => {
+    renderQueued = false;
+    for (const listener of listeners) listener(app);
+  });
+}
+
+let toastId = 0;
+export function toast(message, tone = "info") {
+  const id = ++toastId;
+  app.toasts.push({ id, message, tone });
+  emit();
+  window.setTimeout(() => {
+    app.toasts = app.toasts.filter((item) => item.id !== id);
+    emit();
+  }, 4200);
+}
+
+export function currentTemplate() {
+  if (!app.bootstrap || !app.state) return null;
+  return (
+    app.bootstrap.templates.find(
+      (template) => template.id === app.state.draft.template_id,
+    ) ?? app.bootstrap.templates[0]
+  );
+}
+
+export function currentStep() {
+  const template = currentTemplate();
+  const index = app.state?.draft?.step_index ?? 0;
+  return template?.steps?.[index] ?? null;
+}
+
+export function orderedPlayers() {
+  if (!app.state) return [];
+  const players = app.state.roster.players;
+  const order = app.state.roster.pick_order ?? [];
+  const ordered = order.map((id) => players.find((player) => player.id === id)).filter(Boolean);
+  for (const player of players) {
+    if (!ordered.some((existing) => existing.id === player.id)) ordered.push(player);
+  }
+  return ordered;
+}
+
+export function playerForPick(pickNumber) {
+  return orderedPlayers()[Math.max(0, Number(pickNumber) - 1)] ?? null;
+}
+
+export function currentTurn() {
+  if (!app.state) return null;
+  const draft = app.state.draft;
+  if (draft.manual) {
+    const isOurTurn = draft.manual.acting_side === draft.side;
+    return {
+      phase: draft.manual.phase,
+      actingSide: draft.manual.acting_side,
+      isOurTurn,
+      pickNumber:
+        draft.manual.phase === "PICK" && isOurTurn ? draft.our_picks.length + 1 : null,
+      label:
+        draft.manual.phase === "BAN"
+          ? "Turno manual · ban"
+          : "Turno manual · pick",
+      currentPlayer: draft.manual.player_id
+        ? app.state.roster.players.find((player) => player.id === draft.manual.player_id)
+        : null,
+      manual: true,
+    };
+  }
+
+  const step = currentStep();
+  if (!step) return null;
+  const isOurTurn = !step.team || step.team === draft.side;
+  const player =
+    step.kind === "PICK" && isOurTurn
+      ? draft.current_player_id
+        ? app.state.roster.players.find((player) => player.id === draft.current_player_id)
+        : playerForPick(step.pick_number)
+      : null;
+  return {
+    phase: step.kind,
+    actingSide: step.team,
+    isOurTurn,
+    pickNumber: step.pick_number,
+    label: step.label || (step.kind === "BAN" ? "Fase de bans" : "Turno de pick"),
+    currentPlayer: player ?? null,
+    manual: false,
+    simultaneousBan: Boolean(step.simultaneous),
+  };
+}
+
+export function championById(id) {
+  return app.bootstrap?.champions.find((champion) => champion.id === id) ?? null;
+}
+
+export function metaFor(championId) {
+  return championById(championId);
+}
+
+export function unavailableChampions() {
+  if (!app.state) return new Set();
+  const draft = app.state.draft;
+  return new Set([
+    ...draft.our_bans,
+    ...draft.enemy_bans,
+    ...draft.our_picks.map((pick) => pick.champion_id),
+    ...draft.enemy_picks.map((pick) => pick.champion_id),
+  ]);
+}
+
+export function nextStepIndex() {
+  const template = currentTemplate();
+  const step = currentStep();
+  if (!template || !step) return app.state?.draft?.step_index ?? 0;
+  if (step.kind === "BAN" && step.simultaneous) {
+    const slots = step.ban_slots_per_team ?? 5;
+    if (
+      app.state.draft.our_bans.length >= slots &&
+      app.state.draft.enemy_bans.length >= slots
+    ) {
+      return Math.min(template.steps.length, app.state.draft.step_index + 1);
+    }
+    return app.state.draft.step_index;
+  }
+  return Math.min(template.steps.length, app.state.draft.step_index + 1);
+}
+
+function advance() {
+  app.state.draft.step_index = nextStepIndex();
+  app.state.draft.current_player_id = null;
+}
+
+function clone(value) {
+  return structuredClone(value);
+}
+
+function pushUndo() {
+  if (!app.state) return;
+  app.undo.push(clone(app.state.draft));
+  if (app.undo.length > 40) app.undo.shift();
+}
+
+function afterDraftChange() {
+  app.validation = null;
+  scheduleSave();
+  emit();
+  void refresh();
+}
+
+let saveTimer = null;
+function scheduleSave() {
+  window.clearTimeout(saveTimer);
+  saveTimer = window.setTimeout(async () => {
+    if (!app.state) return;
+    try {
+      const result = await api.saveAppState(app.state);
+      app.lastSaved = result.path;
+      app.validation = result.validation;
+      if (result.validation?.errors?.length) {
+        app.warnings = [...new Set([...app.warnings, ...result.validation.errors])];
+      }
+      emit();
+    } catch (error) {
+      toast(error.message ?? "No se pudo guardar el estado.", "error");
+    }
+  }, 260);
+}
+
+let refreshToken = 0;
+export async function refresh() {
+  if (!app.state) return;
+  const token = ++refreshToken;
+  app.busy = true;
+  emit();
+  try {
+    const response = await api.recommend({
+      draft: app.state.draft,
+      roster: app.state.roster,
+      options: app.state.settings,
+    });
+    if (token !== refreshToken) return;
+    app.response = response;
+    app.warnings = response.warnings ?? [];
+  } catch (error) {
+    if (token !== refreshToken) return;
+    app.response = null;
+    app.warnings = [error.message ?? String(error)];
+  } finally {
+    if (token === refreshToken) {
+      app.busy = false;
+      emit();
+    }
+  }
+}
+
+export async function init() {
+  app.loading = true;
+  app.fatalError = null;
+  emit();
+  try {
+    app.bootstrap = await api.bootstrap();
+    let saved = null;
+    try {
+      saved = await api.loadAppState();
+    } catch (error) {
+      toast(
+        `No se pudo cargar el estado guardado; se usa el ejemplo. ${error.message ?? error}`,
+        "warning",
+      );
+    }
+    app.state = saved ?? clone(app.bootstrap.example_state);
+    app.isExample = !saved;
+    app.view = "draft";
+    app.undo = [];
+    if (app.isExample) {
+      app.lastSaved = null;
+    }
+    app.loading = false;
+    emit();
+    await refresh();
+    if (app.isExample) {
+      toast("Draft de ejemplo cargado. Puedes editar todo o empezar uno nuevo.", "info");
+    }
+    if (app.preview) {
+      toast("Vista previa sin Tauri: recomendaciones estáticas.", "warning");
+    }
+  } catch (error) {
+    app.loading = false;
+    app.fatalError = error.message ?? String(error);
+    emit();
+  }
+}
+
+export function setView(view) {
+  app.view = view;
+  emit();
+}
+
+export function undo() {
+  if (!app.undo.length) return;
+  app.state.draft = app.undo.pop();
+  afterDraftChange();
+}
+
+export function startNewDraft({ templateId, side, useExampleRoster }) {
+  if (!app.bootstrap) return;
+  const example = app.bootstrap.example_state;
+  if (useExampleRoster) {
+    app.state.roster = clone(example.roster);
+  }
+  app.state.draft = {
+    version: 1,
+    side,
+    template_id: templateId,
+    step_index: 0,
+    our_bans: [],
+    enemy_bans: [],
+    our_picks: [],
+    enemy_picks: [],
+    priorities: [],
+    current_player_id: null,
+    manual: null,
+  };
+  app.undo = [];
+  app.view = "draft";
+  app.isExample = false;
+  afterDraftChange();
+  toast("Nuevo draft creado.", "success");
+}
+
+export function loadExample() {
+  if (!app.bootstrap) return;
+  app.state = clone(app.bootstrap.example_state);
+  app.undo = [];
+  app.view = "draft";
+  app.isExample = true;
+  afterDraftChange();
+  toast("Ejemplo competitivo cargado.", "success");
+}
+
+export function setStepIndex(index) {
+  const template = currentTemplate();
+  if (!template) return;
+  pushUndo();
+  app.state.draft.step_index = Math.max(0, Math.min(template.steps.length, Number(index)));
+  app.state.draft.current_player_id = null;
+  afterDraftChange();
+}
+
+export function setCurrentPlayer(playerId) {
+  app.state.draft.current_player_id = playerId || null;
+  afterDraftChange();
+}
+
+function validateChampion(championId, side) {
+  if (!championById(championId)) {
+    toast("Ese campeón no existe en el catálogo.", "error");
+    return false;
+  }
+  const draft = app.state.draft;
+  const unavailable = unavailableChampions();
+  if (unavailable.has(championId)) {
+    toast("Ese campeón ya está baneado o pickeado.", "error");
+    return false;
+  }
+  const maxBans = 5;
+  if (side === "our" && draft.our_bans.length >= maxBans) {
+    toast("Ya tienes los 5 bans.", "error");
+    return false;
+  }
+  if (side === "enemy" && draft.enemy_bans.length >= maxBans) {
+    toast("El rival ya tiene los 5 bans.", "error");
+    return false;
+  }
+  return true;
+}
+
+export function recordPick(championId, role = null) {
+  const turn = currentTurn();
+  if (!turn || turn.phase !== "PICK") {
+    toast("Ahora mismo no toca un pick.", "error");
+    return;
+  }
+  if (unavailableChampions().has(championId)) {
+    toast("Ese campeón ya está baneado o pickeado.", "error");
+    return;
+  }
+
+  pushUndo();
+  if (turn.isOurTurn) {
+    const player = turn.currentPlayer;
+    if (!player) {
+      toast("No se pudo determinar el jugador actual. Revisa el orden de picks.", "error");
+      app.undo.pop();
+      return;
+    }
+    app.state.draft.our_picks.push({
+      player_id: player.id,
+      champion_id: championId,
+      role: player.role,
+    });
+  } else {
+    const champion = championById(championId);
+    app.state.draft.enemy_picks.push({
+      champion_id: championId,
+      role: role || champion?.roles?.[0] || null,
+    });
+  }
+  advance();
+  afterDraftChange();
+}
+
+export function recordBan(championId, side = "our") {
+  const turn = currentTurn();
+  if (!turn || turn.phase !== "BAN") {
+    toast("Ahora mismo no toca un ban.", "error");
+    return;
+  }
+  if (!validateChampion(championId, side)) return;
+
+  pushUndo();
+  if (side === "our") {
+    app.state.draft.our_bans.push(championId);
+  } else {
+    app.state.draft.enemy_bans.push(championId);
+  }
+  advance();
+  afterDraftChange();
+}
+
+export function togglePriority(need) {
+  pushUndo();
+  const priorities = app.state.draft.priorities;
+  const index = priorities.indexOf(need);
+  if (index >= 0) priorities.splice(index, 1);
+  else priorities.push(need);
+  afterDraftChange();
+}
+
+export function setSettings(partial) {
+  app.state.settings = { ...app.state.settings, ...partial };
+  scheduleSave();
+  emit();
+  void refresh();
+}
+
+export function setPickOrder(playerId, direction) {
+  const order = [...(app.state.roster.pick_order ?? [])];
+  for (const player of app.state.roster.players) {
+    if (!order.includes(player.id)) order.push(player.id);
+  }
+  const index = order.indexOf(playerId);
+  const target = index + direction;
+  if (index < 0 || target < 0 || target >= order.length) return;
+  [order[index], order[target]] = [order[target], order[index]];
+  app.state.roster.pick_order = order;
+  scheduleSave();
+  emit();
+  void refresh();
+}
+
+export function renamePlayer(playerId, name) {
+  const player = app.state.roster.players.find((item) => item.id === playerId);
+  if (!player) return;
+  player.name = name;
+  scheduleSave();
+  emit();
+  void refresh();
+}
+
+export function setPoolComfort(playerId, championId, comfort) {
+  const player = app.state.roster.players.find((item) => item.id === playerId);
+  const entry = player?.pool.find((item) => item.champion_id === championId);
+  if (!entry) return;
+  entry.comfort = Math.max(1, Math.min(5, Number(comfort) || 1));
+  scheduleSave();
+  emit();
+  void refresh();
+}
+
+export function setPoolWinrate(playerId, championId, winrate) {
+  const player = app.state.roster.players.find((item) => item.id === playerId);
+  const entry = player?.pool.find((item) => item.champion_id === championId);
+  if (!entry) return;
+  const value = winrate === "" ? null : Number(winrate);
+  entry.winrate = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : null;
+  scheduleSave();
+  emit();
+  void refresh();
+}
+
+export function addPoolEntry(playerId, championId) {
+  const player = app.state.roster.players.find((item) => item.id === playerId);
+  if (!player || !championById(championId)) return;
+  if (player.pool.some((entry) => entry.champion_id === championId)) {
+    toast("Ese campeón ya está en el pool.", "warning");
+    return;
+  }
+  player.pool.push({ champion_id: championId, comfort: 3, winrate: null });
+  scheduleSave();
+  emit();
+  void refresh();
+}
+
+export function removePoolEntry(playerId, championId) {
+  const player = app.state.roster.players.find((item) => item.id === playerId);
+  if (!player) return;
+  player.pool = player.pool.filter((entry) => entry.champion_id !== championId);
+  scheduleSave();
+  emit();
+  void refresh();
+}
+
+export function exportState() {
+  const json = JSON.stringify(app.state, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `draft-assist-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  toast("Estado exportado.", "success");
+}
+
+export async function importState(file) {
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const validation = await api.validateState(parsed);
+    if (validation.errors?.length) {
+      toast(`No se importó: ${validation.errors[0]}`, "error");
+      return;
+    }
+    app.state = parsed;
+    app.undo = [];
+    app.view = "draft";
+    afterDraftChange();
+    toast("Estado importado.", "success");
+  } catch (error) {
+    toast(`No se pudo importar: ${error.message ?? error}`, "error");
+  }
+}
+
+export async function reloadData() {
+  try {
+    const result = await api.reloadData();
+    const fresh = await api.bootstrap();
+    app.bootstrap = { ...fresh, data: result.data, warnings: result.warnings ?? [] };
+    if (result.warnings?.length) {
+      toast(result.warnings[0], "warning");
+    } else {
+      toast("Datos recargados.", "success");
+    }
+    await refresh();
+  } catch (error) {
+    toast(error.message ?? "No se pudieron recargar los datos.", "error");
+  }
+}
+
+export async function openDataDir() {
+  try {
+    await api.openDataDir();
+  } catch (error) {
+    toast(error.message ?? "No se pudo abrir la carpeta.", "error");
+  }
+}

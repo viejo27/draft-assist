@@ -1,0 +1,17 @@
+{
+  "name": "draft-lol",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri",
+    "prepare-data": "node scripts/prepare-data.mjs",
+    "test:engine": "cargo test -p draft-engine",
+    "test": "cargo test --workspace"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4"
+  }
+}

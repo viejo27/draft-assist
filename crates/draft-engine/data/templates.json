@@ -1,0 +1,49 @@
+{
+  "templates": [
+    {
+      "id": "ranked",
+      "name": "Ranked solo",
+      "description": "10 bans simultáneos y orden de picks 1-2-2-2-2-1.",
+      "steps": [
+        { "kind": "BAN", "team": null, "pick_number": null, "simultaneous": true, "ban_slots_per_team": 5, "label": "Fase de bans" },
+        { "kind": "PICK", "team": "BLUE", "pick_number": 1, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick azul 1" },
+        { "kind": "PICK", "team": "RED", "pick_number": 1, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick rojo 1" },
+        { "kind": "PICK", "team": "RED", "pick_number": 2, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick rojo 2" },
+        { "kind": "PICK", "team": "BLUE", "pick_number": 2, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick azul 2" },
+        { "kind": "PICK", "team": "BLUE", "pick_number": 3, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick azul 3" },
+        { "kind": "PICK", "team": "RED", "pick_number": 3, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick rojo 3" },
+        { "kind": "PICK", "team": "RED", "pick_number": 4, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick rojo 4" },
+        { "kind": "PICK", "team": "BLUE", "pick_number": 4, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick azul 4" },
+        { "kind": "PICK", "team": "BLUE", "pick_number": 5, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick azul 5" },
+        { "kind": "PICK", "team": "RED", "pick_number": 5, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick rojo 5" }
+      ]
+    },
+    {
+      "id": "tournament",
+      "name": "Competitivo / Clash",
+      "description": "Draft de torneo: 3 bans por equipo, 6 picks, 2 bans por equipo y 4 picks finales.",
+      "steps": [
+        { "kind": "BAN", "team": "BLUE", "pick_number": null, "simultaneous": false, "ban_slots_per_team": 1, "label": "Ban azul 1" },
+        { "kind": "BAN", "team": "RED", "pick_number": null, "simultaneous": false, "ban_slots_per_team": 1, "label": "Ban rojo 1" },
+        { "kind": "BAN", "team": "BLUE", "pick_number": null, "simultaneous": false, "ban_slots_per_team": 1, "label": "Ban azul 2" },
+        { "kind": "BAN", "team": "RED", "pick_number": null, "simultaneous": false, "ban_slots_per_team": 1, "label": "Ban rojo 2" },
+        { "kind": "BAN", "team": "BLUE", "pick_number": null, "simultaneous": false, "ban_slots_per_team": 1, "label": "Ban azul 3" },
+        { "kind": "BAN", "team": "RED", "pick_number": null, "simultaneous": false, "ban_slots_per_team": 1, "label": "Ban rojo 3" },
+        { "kind": "PICK", "team": "BLUE", "pick_number": 1, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick azul 1" },
+        { "kind": "PICK", "team": "RED", "pick_number": 1, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick rojo 1" },
+        { "kind": "PICK", "team": "RED", "pick_number": 2, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick rojo 2" },
+        { "kind": "PICK", "team": "BLUE", "pick_number": 2, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick azul 2" },
+        { "kind": "PICK", "team": "BLUE", "pick_number": 3, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick azul 3" },
+        { "kind": "PICK", "team": "RED", "pick_number": 3, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick rojo 3" },
+        { "kind": "BAN", "team": "RED", "pick_number": null, "simultaneous": false, "ban_slots_per_team": 1, "label": "Ban rojo 4" },
+        { "kind": "BAN", "team": "BLUE", "pick_number": null, "simultaneous": false, "ban_slots_per_team": 1, "label": "Ban azul 4" },
+        { "kind": "BAN", "team": "RED", "pick_number": null, "simultaneous": false, "ban_slots_per_team": 1, "label": "Ban rojo 5" },
+        { "kind": "BAN", "team": "BLUE", "pick_number": null, "simultaneous": false, "ban_slots_per_team": 1, "label": "Ban azul 5" },
+        { "kind": "PICK", "team": "RED", "pick_number": 4, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick rojo 4" },
+        { "kind": "PICK", "team": "BLUE", "pick_number": 4, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick azul 4" },
+        { "kind": "PICK", "team": "BLUE", "pick_number": 5, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick azul 5" },
+        { "kind": "PICK", "team": "RED", "pick_number": 5, "simultaneous": false, "ban_slots_per_team": 0, "label": "Pick rojo 5" }
+      ]
+    }
+  ]
+}

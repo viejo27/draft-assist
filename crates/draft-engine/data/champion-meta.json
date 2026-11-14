@@ -1,0 +1,4768 @@
+{
+  "version": "16.21.1",
+  "note": "Datos curados/heurísticos para el motor. Editable. Los valores de traits van de 0 a 5.",
+  "champions": {
+    "Aatrox": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Ahri": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3,
+        "mobility": 3,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Akali": {
+      "roles": [
+        "MID",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 5,
+        "scaling": 4,
+        "early": 2.5,
+        "splitpush": 4,
+        "poke": 1,
+        "sustain": 0.5,
+        "waveclear": 1.5,
+        "mobility": 5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0,
+        "aoe": 1
+      }
+    },
+    "Akshan": {
+      "roles": [
+        "MID",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 4.5,
+        "scaling": 4.5,
+        "early": 3.5,
+        "splitpush": 4,
+        "poke": 1.5,
+        "sustain": 0.5,
+        "waveclear": 2.5,
+        "mobility": 4,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 2,
+        "aoe": 1
+      }
+    },
+    "Alistar": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 5,
+        "engage": 5,
+        "peel": 3,
+        "cc": 5,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2.5,
+        "splitpush": 2,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Ambessa": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 5,
+      "traits": {
+        "frontline": 2,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4.5,
+        "scaling": 3,
+        "early": 4,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Amumu": {
+      "roles": [
+        "JUNGLE",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 4,
+        "engage": 5,
+        "peel": 3.5,
+        "cc": 5,
+        "carry": 0.5,
+        "scaling": 3,
+        "early": 2.5,
+        "splitpush": 2,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 2,
+        "aoe": 4
+      }
+    },
+    "Anivia": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 3.5,
+        "carry": 4,
+        "scaling": 4.5,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 5,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 4
+      }
+    },
+    "Annie": {
+      "roles": [
+        "MID",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 4,
+        "peel": 3.5,
+        "cc": 4,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4.5,
+        "aoe": 3
+      }
+    },
+    "Aphelios": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 0,
+        "peel": 0,
+        "cc": 0.5,
+        "carry": 5,
+        "scaling": 5,
+        "early": 3,
+        "splitpush": 2.5,
+        "poke": 1.5,
+        "sustain": 0.5,
+        "waveclear": 3,
+        "mobility": 1,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Ashe": {
+      "roles": [
+        "ADC",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 3,
+        "peel": 3.5,
+        "cc": 3.5,
+        "carry": 4,
+        "scaling": 4,
+        "early": 3,
+        "splitpush": 2.5,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4,
+        "aoe": 1.5
+      }
+    },
+    "AurelionSol": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Aurora": {
+      "roles": [
+        "MID",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2,
+        "carry": 4,
+        "scaling": 3.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Azir": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2,
+        "carry": 5,
+        "scaling": 5,
+        "early": 2,
+        "splitpush": 2.5,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 4,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Bard": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 3,
+        "peel": 3,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 3,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 5,
+        "aoe": 2
+      }
+    },
+    "Belveth": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Blitzcrank": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3.5,
+        "engage": 5,
+        "peel": 3.5,
+        "cc": 5,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2.5,
+        "splitpush": 2,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 3,
+        "aoe": 2
+      }
+    },
+    "Brand": {
+      "roles": [
+        "MID",
+        "SUPPORT",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 4,
+        "sustain": 2,
+        "waveclear": 4,
+        "mobility": 1.5,
+        "anti_tank": 1.5,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4.5,
+        "aoe": 4
+      }
+    },
+    "Braum": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 4,
+        "engage": 2,
+        "peel": 5,
+        "cc": 4,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2.5,
+        "splitpush": 2,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 3,
+        "utility": 4,
+        "aoe": 2
+      }
+    },
+    "Briar": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Caitlyn": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 0,
+        "peel": 0,
+        "cc": 0.5,
+        "carry": 5,
+        "scaling": 4,
+        "early": 5,
+        "splitpush": 2.5,
+        "poke": 4,
+        "sustain": 0.5,
+        "waveclear": 3,
+        "mobility": 1.5,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Camille": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 4.5,
+        "early": 2.5,
+        "splitpush": 5,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Cassiopeia": {
+      "roles": [
+        "MID",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2,
+        "carry": 4.5,
+        "scaling": 4.5,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 1,
+        "anti_tank": 2,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Chogath": {
+      "roles": [
+        "TOP",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 5,
+        "engage": 2.5,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2,
+        "splitpush": 2,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Corki": {
+      "roles": [
+        "MID",
+        "ADC"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 5,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4.5,
+        "scaling": 4.5,
+        "early": 2.5,
+        "splitpush": 2.5,
+        "poke": 3.5,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Darius": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 3,
+        "engage": 1.5,
+        "peel": 2,
+        "cc": 2,
+        "carry": 4.5,
+        "scaling": 3,
+        "early": 3.5,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 4,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Diana": {
+      "roles": [
+        "JUNGLE",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "DrMundo": {
+      "roles": [
+        "TOP",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 3,
+      "traits": {
+        "frontline": 5,
+        "engage": 2.5,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Draven": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 0,
+        "peel": 0,
+        "cc": 0.5,
+        "carry": 5,
+        "scaling": 3.5,
+        "early": 5,
+        "splitpush": 2.5,
+        "poke": 2,
+        "sustain": 0.5,
+        "waveclear": 2.5,
+        "mobility": 1,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Ekko": {
+      "roles": [
+        "MID",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4,
+        "scaling": 3.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Elise": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2,
+        "carry": 4,
+        "scaling": 3.5,
+        "early": 4.5,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 3,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Evelynn": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4,
+        "scaling": 3.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Ezreal": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4,
+        "scaling": 4,
+        "early": 2.5,
+        "splitpush": 2.5,
+        "poke": 4,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 3,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Fiddlesticks": {
+      "roles": [
+        "JUNGLE",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 4,
+        "peel": 3.5,
+        "cc": 4,
+        "carry": 4,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4.5,
+        "aoe": 4.5
+      }
+    },
+    "Fiora": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4.5,
+        "scaling": 4.5,
+        "early": 3,
+        "splitpush": 5,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 4,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Fizz": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Galio": {
+      "roles": [
+        "MID",
+        "SUPPORT",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 3,
+        "engage": 4,
+        "peel": 2,
+        "cc": 4,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2,
+        "splitpush": 2,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Gangplank": {
+      "roles": [
+        "TOP",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Garen": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3.5,
+        "engage": 1,
+        "peel": 2,
+        "cc": 1,
+        "carry": 3.5,
+        "scaling": 4,
+        "early": 3,
+        "splitpush": 4,
+        "poke": 0.5,
+        "sustain": 3,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Gnar": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "MIXED",
+      "priority": 4,
+      "traits": {
+        "frontline": 4,
+        "engage": 4.5,
+        "peel": 2,
+        "cc": 4,
+        "carry": 3,
+        "scaling": 3.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Gragas": {
+      "roles": [
+        "JUNGLE",
+        "TOP",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 1.5,
+        "waveclear": 3.5,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Graves": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 0,
+        "peel": 0,
+        "cc": 0.5,
+        "carry": 5,
+        "scaling": 4.5,
+        "early": 2.5,
+        "splitpush": 2.5,
+        "poke": 1.5,
+        "sustain": 0.5,
+        "waveclear": 2.5,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Gwen": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4.5,
+        "scaling": 5,
+        "early": 3,
+        "splitpush": 4,
+        "poke": 0.5,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 2.5,
+        "anti_tank": 4,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Hecarim": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 4,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 4,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Heimerdinger": {
+      "roles": [
+        "TOP",
+        "MID",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 2,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 2,
+        "carry": 4,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 4,
+        "sustain": 2,
+        "waveclear": 5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Hwei": {
+      "roles": [
+        "MID",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 4,
+        "sustain": 2,
+        "waveclear": 4,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 3,
+        "aoe": 4
+      }
+    },
+    "Illaoi": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 4,
+        "engage": 2.5,
+        "peel": 2,
+        "cc": 3,
+        "carry": 4,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 4,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Irelia": {
+      "roles": [
+        "TOP",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Ivern": {
+      "roles": [
+        "JUNGLE",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2,
+        "peel": 4,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 4,
+        "utility": 5,
+        "aoe": 3
+      }
+    },
+    "Janna": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 5,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 4,
+        "utility": 5,
+        "aoe": 3
+      }
+    },
+    "JarvanIV": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 3,
+        "engage": 4,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3,
+        "scaling": 3,
+        "early": 4,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2.5
+      }
+    },
+    "Jax": {
+      "roles": [
+        "TOP",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 5,
+        "early": 3,
+        "splitpush": 5,
+        "poke": 0.5,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 2.5,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Jayce": {
+      "roles": [
+        "TOP",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 5,
+        "scaling": 4.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1.5,
+        "sustain": 1.5,
+        "waveclear": 2.5,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Jhin": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2,
+        "carry": 4.5,
+        "scaling": 4,
+        "early": 3.5,
+        "splitpush": 2.5,
+        "poke": 4,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Jinx": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 5,
+      "traits": {
+        "frontline": 0,
+        "engage": 0,
+        "peel": 0,
+        "cc": 1,
+        "carry": 5,
+        "scaling": 5,
+        "early": 2,
+        "splitpush": 3,
+        "poke": 2,
+        "sustain": 0.5,
+        "waveclear": 4,
+        "mobility": 1,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 3
+      }
+    },
+    "KSante": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "MIXED",
+      "priority": 5,
+      "traits": {
+        "frontline": 5,
+        "engage": 4,
+        "peel": 2,
+        "cc": 5,
+        "carry": 3.5,
+        "scaling": 4,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Kaisa": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "MIXED",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 5,
+        "scaling": 5,
+        "early": 2.5,
+        "splitpush": 2.5,
+        "poke": 1,
+        "sustain": 0.5,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Kalista": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 0,
+        "peel": 0,
+        "cc": 0.5,
+        "carry": 4.5,
+        "scaling": 4.5,
+        "early": 4,
+        "splitpush": 2.5,
+        "poke": 1.5,
+        "sustain": 0.5,
+        "waveclear": 2.5,
+        "mobility": 4,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 3,
+        "aoe": 1
+      }
+    },
+    "Karma": {
+      "roles": [
+        "SUPPORT",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3,
+        "cc": 2,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3.5,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 3.5,
+        "utility": 4,
+        "aoe": 3
+      }
+    },
+    "Karthus": {
+      "roles": [
+        "JUNGLE",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4.5,
+        "scaling": 4.5,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 2,
+        "sustain": 0.5,
+        "waveclear": 4,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 4
+      }
+    },
+    "Kassadin": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4.5,
+        "scaling": 5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Katarina": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4.5,
+        "scaling": 3.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 2,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3.5
+      }
+    },
+    "Kayle": {
+      "roles": [
+        "TOP",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 5,
+        "scaling": 5,
+        "early": 2.5,
+        "splitpush": 2.5,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Kayn": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Kennen": {
+      "roles": [
+        "TOP",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Khazix": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 2.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 0.5,
+        "waveclear": 1.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0,
+        "aoe": 1
+      }
+    },
+    "Kindred": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 0,
+        "peel": 0,
+        "cc": 0.5,
+        "carry": 5,
+        "scaling": 4.5,
+        "early": 2.5,
+        "splitpush": 2.5,
+        "poke": 1.5,
+        "sustain": 0.5,
+        "waveclear": 2.5,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Kled": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 3,
+        "peel": 0.5,
+        "cc": 2,
+        "carry": 4,
+        "scaling": 3,
+        "early": 4,
+        "splitpush": 4,
+        "poke": 0.5,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "KogMaw": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "MIXED",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 5,
+        "scaling": 5,
+        "early": 1.5,
+        "splitpush": 2.5,
+        "poke": 2,
+        "sustain": 0.5,
+        "waveclear": 2.5,
+        "mobility": 0.5,
+        "anti_tank": 4,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Leblanc": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4.5,
+        "scaling": 3.5,
+        "early": 4,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "LeeSin": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 1.5,
+        "engage": 2,
+        "peel": 0.5,
+        "cc": 2,
+        "carry": 4,
+        "scaling": 1.5,
+        "early": 5,
+        "splitpush": 2,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Leona": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 4,
+        "engage": 5,
+        "peel": 2.5,
+        "cc": 5,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2.5,
+        "splitpush": 2,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Lillia": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2,
+        "carry": 4.5,
+        "scaling": 4.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 1.5,
+        "waveclear": 3.5,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Lissandra": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 4,
+        "peel": 1,
+        "cc": 4,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 2,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3.5
+      }
+    },
+    "Locke": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MIXED",
+      "priority": 4,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 2
+      }
+    },
+    "Lucian": {
+      "roles": [
+        "ADC",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 4.5,
+        "scaling": 4.5,
+        "early": 4.5,
+        "splitpush": 3,
+        "poke": 2.5,
+        "sustain": 0.5,
+        "waveclear": 1.5,
+        "mobility": 3,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Lulu": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 5,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 4.5,
+        "utility": 5,
+        "aoe": 3
+      }
+    },
+    "Lux": {
+      "roles": [
+        "SUPPORT",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4.5,
+        "aoe": 3
+      }
+    },
+    "Malphite": {
+      "roles": [
+        "TOP",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 5,
+        "engage": 5,
+        "peel": 2,
+        "cc": 5,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 2,
+        "splitpush": 2,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1,
+        "anti_tank": 2,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Malzahar": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 4,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 4,
+        "mobility": 1,
+        "anti_tank": 2,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Maokai": {
+      "roles": [
+        "SUPPORT",
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 4.5,
+        "engage": 4,
+        "peel": 3,
+        "cc": 4,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2.5,
+        "splitpush": 2,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 3,
+        "aoe": 3
+      }
+    },
+    "MasterYi": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Mel": {
+      "roles": [
+        "MID",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 4,
+        "sustain": 2,
+        "waveclear": 4,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Milio": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 5,
+        "cc": 2,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2.5,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 4.5,
+        "utility": 5,
+        "aoe": 3
+      }
+    },
+    "MissFortune": {
+      "roles": [
+        "ADC",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4.5,
+        "scaling": 3.5,
+        "early": 4,
+        "splitpush": 2.5,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3,
+        "mobility": 1,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 4
+      }
+    },
+    "Mordekaiser": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 3,
+        "engage": 1.5,
+        "peel": 1,
+        "cc": 2,
+        "carry": 4.5,
+        "scaling": 4,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 1.5,
+        "waveclear": 3.5,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Morgana": {
+      "roles": [
+        "SUPPORT",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4.5,
+        "aoe": 3
+      }
+    },
+    "Naafiri": {
+      "roles": [
+        "MID",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Nami": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 3,
+        "peel": 4,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 4,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4,
+        "aoe": 3
+      }
+    },
+    "Nasus": {
+      "roles": [
+        "TOP",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 2.5,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 5,
+        "early": 3,
+        "splitpush": 5,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Nautilus": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 4.5,
+        "engage": 5,
+        "peel": 3,
+        "cc": 5,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2.5,
+        "splitpush": 2,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 3,
+        "aoe": 2
+      }
+    },
+    "Neeko": {
+      "roles": [
+        "MID",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4.5,
+        "aoe": 3
+      }
+    },
+    "Nidalee": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4,
+        "scaling": 3.5,
+        "early": 4.5,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3,
+        "mobility": 3,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Nilah": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4.5,
+        "scaling": 4.5,
+        "early": 2.5,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 3
+      }
+    },
+    "Nocturne": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 3,
+        "peel": 0.5,
+        "cc": 2,
+        "carry": 4,
+        "scaling": 3,
+        "early": 4,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Nunu": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 4,
+        "engage": 4,
+        "peel": 2,
+        "cc": 4,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2,
+        "splitpush": 2,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 3,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 3,
+        "aoe": 3
+      }
+    },
+    "Olaf": {
+      "roles": [
+        "TOP",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 2,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 3,
+        "early": 4,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Orianna": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 5,
+      "traits": {
+        "frontline": 2,
+        "engage": 2,
+        "peel": 3,
+        "cc": 3,
+        "carry": 3,
+        "scaling": 4,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 4,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 3,
+        "utility": 3,
+        "aoe": 4
+      }
+    },
+    "Ornn": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 5,
+        "engage": 4,
+        "peel": 2,
+        "cc": 5,
+        "carry": 0.5,
+        "scaling": 4,
+        "early": 2,
+        "splitpush": 2,
+        "poke": 0,
+        "sustain": 2,
+        "waveclear": 3,
+        "mobility": 1,
+        "anti_tank": 2,
+        "anti_heal": 0,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Pantheon": {
+      "roles": [
+        "TOP",
+        "MID",
+        "SUPPORT",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 3,
+        "peel": 0.5,
+        "cc": 2,
+        "carry": 4,
+        "scaling": 3,
+        "early": 5,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 2.5,
+        "anti_tank": 1.5,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Poppy": {
+      "roles": [
+        "JUNGLE",
+        "TOP",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 5,
+      "traits": {
+        "frontline": 4,
+        "engage": 3,
+        "peel": 3,
+        "cc": 4,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Pyke": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 4,
+        "peel": 3.5,
+        "cc": 4,
+        "carry": 3.5,
+        "scaling": 2.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 1.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 3,
+        "aoe": 1.5
+      }
+    },
+    "Qiyana": {
+      "roles": [
+        "MID",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 2.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 0.5,
+        "waveclear": 1.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0,
+        "aoe": 1
+      }
+    },
+    "Quinn": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 2,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 4.5,
+        "scaling": 4.5,
+        "early": 4,
+        "splitpush": 5,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 2.5,
+        "mobility": 4,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Rakan": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 5,
+      "traits": {
+        "frontline": 2,
+        "engage": 5,
+        "peel": 4,
+        "cc": 4,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2.5,
+        "splitpush": 0.5,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 1.5,
+        "mobility": 5,
+        "anti_tank": 0.5,
+        "anti_heal": 0.5,
+        "shield": 2.5,
+        "utility": 4,
+        "aoe": 3
+      }
+    },
+    "Rammus": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 5,
+        "engage": 4,
+        "peel": 2,
+        "cc": 4,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2,
+        "splitpush": 2,
+        "poke": 0,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "RekSai": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2,
+        "peel": 2,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 4.5,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Rell": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 5,
+      "traits": {
+        "frontline": 5,
+        "engage": 5,
+        "peel": 3,
+        "cc": 5,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2.5,
+        "splitpush": 2,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Renata": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 4.5,
+        "cc": 3.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 3,
+        "utility": 5,
+        "aoe": 3
+      }
+    },
+    "Renekton": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 2.5,
+        "peel": 2,
+        "cc": 3,
+        "carry": 4,
+        "scaling": 3,
+        "early": 5,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Rengar": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Riven": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 0.5,
+        "cc": 2,
+        "carry": 4.5,
+        "scaling": 3,
+        "early": 3.5,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 2.5
+      }
+    },
+    "Rumble": {
+      "roles": [
+        "TOP",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 1,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4.5,
+        "scaling": 3.5,
+        "early": 4.5,
+        "splitpush": 3,
+        "poke": 2,
+        "sustain": 1.5,
+        "waveclear": 4,
+        "mobility": 1,
+        "anti_tank": 1.5,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 4.5
+      }
+    },
+    "Ryze": {
+      "roles": [
+        "MID",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 1.5,
+        "carry": 4,
+        "scaling": 4.5,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 2,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Samira": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 4.5,
+        "scaling": 4,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1.5,
+        "sustain": 0.5,
+        "waveclear": 2.5,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 3
+      }
+    },
+    "Sejuani": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 5,
+        "engage": 5,
+        "peel": 2,
+        "cc": 5,
+        "carry": 0.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 2,
+        "poke": 0,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1.5,
+        "anti_tank": 3,
+        "anti_heal": 0,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Senna": {
+      "roles": [
+        "SUPPORT",
+        "ADC"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3.5,
+        "carry": 3.5,
+        "scaling": 4.5,
+        "early": 3,
+        "splitpush": 2.5,
+        "poke": 4,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 3,
+        "aoe": 1.5
+      }
+    },
+    "Seraphine": {
+      "roles": [
+        "SUPPORT",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 4,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 4,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 3,
+        "utility": 4,
+        "aoe": 4
+      }
+    },
+    "Sett": {
+      "roles": [
+        "TOP",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 5,
+        "engage": 2.5,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Shaco": {
+      "roles": [
+        "JUNGLE",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 2,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 2.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 0.5,
+        "waveclear": 1.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0,
+        "aoe": 1
+      }
+    },
+    "Shen": {
+      "roles": [
+        "TOP",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 4,
+      "traits": {
+        "frontline": 5,
+        "engage": 3,
+        "peel": 4,
+        "cc": 3,
+        "carry": 0.5,
+        "scaling": 3,
+        "early": 2,
+        "splitpush": 2,
+        "poke": 0,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 0.5,
+        "utility": 3,
+        "aoe": 2
+      }
+    },
+    "Shyvana": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 2,
+        "peel": 2,
+        "cc": 2,
+        "carry": 4,
+        "scaling": 4,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Singed": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 2,
+      "traits": {
+        "frontline": 3,
+        "engage": 3,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2,
+        "splitpush": 4,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Sion": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "MIXED",
+      "priority": 3,
+      "traits": {
+        "frontline": 5,
+        "engage": 2.5,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Sivir": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 0,
+        "peel": 0,
+        "cc": 0.5,
+        "carry": 4,
+        "scaling": 4.5,
+        "early": 2,
+        "splitpush": 2.5,
+        "poke": 2,
+        "sustain": 0.5,
+        "waveclear": 5,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 2,
+        "aoe": 1
+      }
+    },
+    "Skarner": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 4.5,
+        "engage": 4,
+        "peel": 2,
+        "cc": 4.5,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Smolder": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "MIXED",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 5,
+        "scaling": 5,
+        "early": 1,
+        "splitpush": 2.5,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Sona": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 4,
+        "cc": 3.5,
+        "carry": 3.5,
+        "scaling": 4,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 4,
+        "utility": 5,
+        "aoe": 3
+      }
+    },
+    "Soraka": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 4,
+        "cc": 3.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 5,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4,
+        "aoe": 3
+      }
+    },
+    "Swain": {
+      "roles": [
+        "MID",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 2.5,
+        "carry": 4,
+        "scaling": 4,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 3,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4.5,
+        "aoe": 3
+      }
+    },
+    "Sylas": {
+      "roles": [
+        "MID",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2,
+        "carry": 4.5,
+        "scaling": 4,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 3,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 2
+      }
+    },
+    "Syndra": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 3,
+        "carry": 4,
+        "scaling": 4,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 4,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "TahmKench": {
+      "roles": [
+        "TOP",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 3,
+      "traits": {
+        "frontline": 5,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3.5,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2.5,
+        "splitpush": 2,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4.5,
+        "aoe": 2
+      }
+    },
+    "Taliyah": {
+      "roles": [
+        "JUNGLE",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4.5,
+        "aoe": 3
+      }
+    },
+    "Talon": {
+      "roles": [
+        "MID",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 2.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 0.5,
+        "waveclear": 1.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0,
+        "aoe": 1
+      }
+    },
+    "Taric": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 4,
+        "engage": 2.5,
+        "peel": 5,
+        "cc": 2.5,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2.5,
+        "splitpush": 2,
+        "poke": 1.5,
+        "sustain": 3,
+        "waveclear": 2,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 3,
+        "utility": 4,
+        "aoe": 2
+      }
+    },
+    "Teemo": {
+      "roles": [
+        "TOP",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 2,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 4.5,
+        "early": 2.5,
+        "splitpush": 4,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 2,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Thresh": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 3.5,
+        "engage": 4.5,
+        "peel": 4.5,
+        "cc": 4.5,
+        "carry": 0.5,
+        "scaling": 2.5,
+        "early": 2.5,
+        "splitpush": 2,
+        "poke": 1.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4,
+        "aoe": 2
+      }
+    },
+    "Tristana": {
+      "roles": [
+        "ADC",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 5,
+        "scaling": 4,
+        "early": 3,
+        "splitpush": 4,
+        "poke": 1.5,
+        "sustain": 0.5,
+        "waveclear": 2.5,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Trundle": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 4,
+        "engage": 1,
+        "peel": 2,
+        "cc": 2,
+        "carry": 3,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 4,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 4,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Tryndamere": {
+      "roles": [
+        "TOP",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "TwistedFate": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 3.5,
+        "carry": 5,
+        "scaling": 4.5,
+        "early": 3,
+        "splitpush": 2.5,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 4,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 4,
+        "aoe": 3
+      }
+    },
+    "Twitch": {
+      "roles": [
+        "ADC",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 5,
+        "scaling": 5,
+        "early": 1.5,
+        "splitpush": 3,
+        "poke": 1.5,
+        "sustain": 0.5,
+        "waveclear": 2.5,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 4
+      }
+    },
+    "Udyr": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 3,
+      "traits": {
+        "frontline": 3.5,
+        "engage": 2,
+        "peel": 2,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3.5,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 3,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Urgot": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 2.5,
+        "peel": 2,
+        "cc": 3,
+        "carry": 4,
+        "scaling": 3.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Varus": {
+      "roles": [
+        "ADC",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4.5,
+        "scaling": 4,
+        "early": 2.5,
+        "splitpush": 2.5,
+        "poke": 4,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 2,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Vayne": {
+      "roles": [
+        "ADC",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 5,
+        "scaling": 5,
+        "early": 1.5,
+        "splitpush": 4,
+        "poke": 1.5,
+        "sustain": 0.5,
+        "waveclear": 2.5,
+        "mobility": 3,
+        "anti_tank": 5,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Veigar": {
+      "roles": [
+        "MID",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Velkoz": {
+      "roles": [
+        "MID",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3.5,
+        "carry": 4,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 4.5,
+        "sustain": 2,
+        "waveclear": 4,
+        "mobility": 1.5,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 4.5,
+        "aoe": 3.5
+      }
+    },
+    "Vex": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 3.5,
+        "carry": 4,
+        "scaling": 4,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 2.5,
+        "sustain": 0.5,
+        "waveclear": 3,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Vi": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 5,
+      "traits": {
+        "frontline": 2.5,
+        "engage": 4.5,
+        "peel": 0.5,
+        "cc": 4,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 4,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Viego": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4.5,
+        "scaling": 4,
+        "early": 2.5,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Viktor": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4.5,
+        "scaling": 4.5,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 0.5,
+        "waveclear": 4,
+        "mobility": 1,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3.5
+      }
+    },
+    "Vladimir": {
+      "roles": [
+        "MID",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4.5,
+        "scaling": 5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 3,
+        "sustain": 4,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Volibear": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 4,
+      "traits": {
+        "frontline": 3.5,
+        "engage": 3,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3,
+        "scaling": 3,
+        "early": 4,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Warwick": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MIXED",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 3,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3,
+        "scaling": 3,
+        "early": 4,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 3,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "MonkeyKing": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 3,
+        "engage": 4,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2.5
+      }
+    },
+    "Xayah": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 0,
+        "peel": 0,
+        "cc": 2,
+        "carry": 5,
+        "scaling": 4.5,
+        "early": 2.5,
+        "splitpush": 2.5,
+        "poke": 1.5,
+        "sustain": 0.5,
+        "waveclear": 4,
+        "mobility": 1.5,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 1,
+        "aoe": 1
+      }
+    },
+    "Xerath": {
+      "roles": [
+        "MID",
+        "SUPPORT"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3.5,
+        "carry": 4,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 5,
+        "sustain": 2,
+        "waveclear": 4.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 1,
+        "aoe": 3
+      }
+    },
+    "XinZhao": {
+      "roles": [
+        "JUNGLE"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 2.5,
+        "engage": 3,
+        "peel": 2,
+        "cc": 2,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 4.5,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Yasuo": {
+      "roles": [
+        "MID",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 1,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 2,
+        "carry": 5,
+        "scaling": 4.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 2
+      }
+    },
+    "Yone": {
+      "roles": [
+        "MID",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 1,
+        "engage": 1.5,
+        "peel": 0.5,
+        "cc": 2,
+        "carry": 5,
+        "scaling": 4.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 2.5
+      }
+    },
+    "Yorick": {
+      "roles": [
+        "TOP"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 3,
+        "engage": 2.5,
+        "peel": 2,
+        "cc": 3,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 5,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 2
+      }
+    },
+    "Yunara": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 0,
+        "engage": 0,
+        "peel": 0,
+        "cc": 0.5,
+        "carry": 5,
+        "scaling": 4,
+        "early": 3,
+        "splitpush": 2.5,
+        "poke": 1.5,
+        "sustain": 0.5,
+        "waveclear": 3,
+        "mobility": 3,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Yuumi": {
+      "roles": [
+        "SUPPORT"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 4,
+        "cc": 3.5,
+        "carry": 3.5,
+        "scaling": 4,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 4,
+        "waveclear": 3.5,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 3,
+        "utility": 4,
+        "aoe": 3
+      }
+    },
+    "Zaahen": {
+      "roles": [
+        "TOP",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 4,
+      "traits": {
+        "frontline": 3,
+        "engage": 1,
+        "peel": 0.5,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 3,
+        "early": 4,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 1.5,
+        "waveclear": 2,
+        "mobility": 2,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Zac": {
+      "roles": [
+        "JUNGLE",
+        "TOP"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 5,
+        "engage": 5,
+        "peel": 2,
+        "cc": 5,
+        "carry": 3.5,
+        "scaling": 3,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 0.5,
+        "sustain": 2,
+        "waveclear": 2,
+        "mobility": 3,
+        "anti_tank": 2,
+        "anti_heal": 0.5,
+        "shield": 0.5,
+        "utility": 2,
+        "aoe": 3
+      }
+    },
+    "Zed": {
+      "roles": [
+        "MID",
+        "JUNGLE"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0.5,
+        "engage": 0.5,
+        "peel": 0,
+        "cc": 1,
+        "carry": 4,
+        "scaling": 2.5,
+        "early": 3,
+        "splitpush": 3,
+        "poke": 1,
+        "sustain": 0.5,
+        "waveclear": 1.5,
+        "mobility": 4,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0,
+        "aoe": 1
+      }
+    },
+    "Zeri": {
+      "roles": [
+        "ADC"
+      ],
+      "flex": false,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 0,
+        "peel": 0,
+        "cc": 0.5,
+        "carry": 5,
+        "scaling": 5,
+        "early": 2,
+        "splitpush": 2.5,
+        "poke": 2,
+        "sustain": 0.5,
+        "waveclear": 3,
+        "mobility": 4,
+        "anti_tank": 3,
+        "anti_heal": 0.5,
+        "shield": 0,
+        "utility": 0.5,
+        "aoe": 1
+      }
+    },
+    "Ziggs": {
+      "roles": [
+        "MID",
+        "ADC"
+      ],
+      "flex": true,
+      "damage": "PHYSICAL",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2.5,
+        "carry": 4,
+        "scaling": 3.5,
+        "early": 2,
+        "splitpush": 1,
+        "poke": 4,
+        "sustain": 0.5,
+        "waveclear": 5,
+        "mobility": 1,
+        "anti_tank": 2,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 5
+      }
+    },
+    "Zilean": {
+      "roles": [
+        "SUPPORT",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 4,
+        "cc": 2.5,
+        "carry": 3.5,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 3,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 5,
+        "aoe": 3
+      }
+    },
+    "Zoe": {
+      "roles": [
+        "MID"
+      ],
+      "flex": false,
+      "damage": "MAGIC",
+      "priority": 3,
+      "traits": {
+        "frontline": 0,
+        "engage": 1,
+        "peel": 1,
+        "cc": 2,
+        "carry": 4.5,
+        "scaling": 3.5,
+        "early": 3,
+        "splitpush": 1,
+        "poke": 4.5,
+        "sustain": 0.5,
+        "waveclear": 3.5,
+        "mobility": 2,
+        "anti_tank": 1,
+        "anti_heal": 0,
+        "shield": 1,
+        "utility": 1.5,
+        "aoe": 3
+      }
+    },
+    "Zyra": {
+      "roles": [
+        "SUPPORT",
+        "MID"
+      ],
+      "flex": true,
+      "damage": "MAGIC",
+      "priority": 4,
+      "traits": {
+        "frontline": 2,
+        "engage": 2.5,
+        "peel": 3.5,
+        "cc": 3,
+        "carry": 3,
+        "scaling": 3.5,
+        "early": 2.5,
+        "splitpush": 1,
+        "poke": 3,
+        "sustain": 2,
+        "waveclear": 4,
+        "mobility": 1.5,
+        "anti_tank": 1,
+        "anti_heal": 0.5,
+        "shield": 2,
+        "utility": 2,
+        "aoe": 3
+      }
+    }
+  }
+}

@@ -1,0 +1,402 @@
+import {
+  app,
+  addPoolEntry,
+  currentTurn,
+  emit,
+  exportState,
+  importState,
+  init,
+  loadExample,
+  openDataDir,
+  recordBan,
+  recordPick,
+  refresh,
+  reloadData,
+  removePoolEntry,
+  renamePlayer,
+  setCurrentPlayer,
+  setPickOrder,
+  setPoolComfort,
+  setPoolWinrate,
+  setSettings,
+  setStepIndex,
+  setView,
+  startNewDraft,
+  subscribe,
+  toast,
+  togglePriority,
+  undo,
+} from "./js/state.js";
+import {
+  championDialogBody,
+  render,
+  renderChampionRoleFilter,
+  renderEnemyRoleExtra,
+  renderNewDraftOptions,
+  renderStepOptions,
+} from "./js/render.js";
+
+const picker = {
+  mode: "pick",
+  side: "our",
+  playerId: null,
+  role: null,
+  search: "",
+  roleFilter: "ALL",
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  subscribe(render);
+
+  document.getElementById("undo-button")?.addEventListener("click", undo);
+  bindGlobalEvents();
+  renderChampionRoleFilter("ALL");
+  render(app);
+  void init();
+
+  document.getElementById("new-draft-confirm")?.addEventListener("click", confirmNewDraft);
+  document.getElementById("step-confirm")?.addEventListener("click", confirmStep);
+  document.getElementById("import-file")?.addEventListener("change", async (event) => {
+    const file = event.target.files?.[0];
+    if (file) await importState(file);
+    event.target.value = "";
+  });
+
+  document.addEventListener(
+    "error",
+    (event) => {
+      const image = event.target;
+      if (!(image instanceof HTMLImageElement) || !image.closest("[data-champion-avatar]")) {
+        return;
+      }
+      image.hidden = true;
+      const fallback = image.nextElementSibling;
+      if (fallback) fallback.hidden = false;
+    },
+    true,
+  );
+});
+
+function bindGlobalEvents() {
+  document.addEventListener("click", handleClick);
+  document.addEventListener("change", handleChange);
+  document.addEventListener("input", handleInput);
+  document.addEventListener("keydown", handleKeydown);
+
+  for (const dialog of document.querySelectorAll("dialog")) {
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+  }
+}
+
+function handleClick(event) {
+  const trigger = event.target.closest("[data-action]");
+  if (!trigger) return;
+  const action = trigger.dataset.action;
+
+  switch (action) {
+    case "view":
+      setView(trigger.dataset.view);
+      break;
+    case "undo":
+      undo();
+      break;
+    case "new-draft":
+      openNewDraftDialog();
+      break;
+    case "load-example":
+      if (
+        hasDraftProgress() &&
+        !window.confirm("Se reemplazará el draft actual por el ejemplo. ¿Continuar?")
+      ) {
+        break;
+      }
+      closeDialogs();
+      loadExample();
+      break;
+    case "open-step-dialog":
+      openStepDialog();
+      break;
+    case "retry":
+      void init();
+      break;
+    case "pick":
+      if (trigger.dataset.champion) recordPick(trigger.dataset.champion);
+      break;
+    case "ban":
+      if (trigger.dataset.champion) recordBan(trigger.dataset.champion, "our");
+      break;
+    case "open-picker":
+      openPickerFromTrigger(trigger);
+      break;
+    case "open-pool-picker":
+      openPoolPicker(trigger.dataset.player);
+      break;
+    case "choose-champion":
+      chooseChampion(trigger.dataset.champion);
+      break;
+    case "filter-role":
+      picker.roleFilter = trigger.dataset.role ?? "ALL";
+      renderChampionRoleFilter(picker.roleFilter);
+      updateChampionGrid();
+      break;
+    case "toggle-priority":
+      togglePriority(trigger.dataset.need);
+      break;
+    case "move-order":
+      setPickOrder(trigger.dataset.player, Number(trigger.dataset.direction));
+      break;
+    case "remove-pool":
+      removePoolEntry(trigger.dataset.player, trigger.dataset.champion);
+      break;
+    case "set-comfort":
+      setPoolComfort(
+        trigger.dataset.player,
+        trigger.dataset.champion,
+        Number(trigger.dataset.comfort),
+      );
+      break;
+    case "export":
+      exportState();
+      break;
+    case "import":
+      document.getElementById("import-file")?.click();
+      break;
+    case "open-data-dir":
+      void openDataDir();
+      break;
+    case "reload-data":
+      void reloadData();
+      break;
+    case "dismiss-toast":
+      app.toasts = app.toasts.filter(
+        (toastItem) => String(toastItem.id) !== trigger.dataset.toast,
+      );
+      emit();
+      break;
+    default:
+      break;
+  }
+}
+
+function handleChange(event) {
+  const target = event.target;
+  if (target.id === "current-player-select") {
+    setCurrentPlayer(target.value || null);
+    return;
+  }
+  const action = target.dataset.action;
+  if (!action) return;
+
+  switch (action) {
+    case "set-top-n":
+      setSettings({ top_n: Math.max(1, Math.min(10, Number(target.value) || 5)) });
+      break;
+    case "toggle-pool-precedence":
+      setSettings({ pool_precedence: target.checked });
+      break;
+    case "toggle-offrole-flex":
+      setSettings({ allow_offrole_flex: target.checked });
+      break;
+    case "rename-player":
+      renamePlayer(target.dataset.player, target.value.trim() || "Jugador");
+      break;
+    case "set-winrate":
+      setPoolWinrate(target.dataset.player, target.dataset.champion, target.value);
+      break;
+    default:
+      break;
+  }
+}
+
+function handleInput(event) {
+  const target = event.target;
+  if (target.id === "champion-search") {
+    picker.search = target.value;
+    updateChampionGrid();
+  }
+}
+
+function handleKeydown(event) {
+  const target = event.target;
+  const editingText =
+    target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+  if (
+    (event.ctrlKey || event.metaKey) &&
+    event.key.toLowerCase() === "z" &&
+    !editingText
+  ) {
+    event.preventDefault();
+    undo();
+    return;
+  }
+  if (event.key === "/" && document.getElementById("champion-dialog")?.open) {
+    event.preventDefault();
+    document.getElementById("champion-search")?.focus();
+  }
+}
+
+function openNewDraftDialog() {
+  if (!app.bootstrap) return;
+  renderNewDraftOptions(app);
+  const currentSide = app.state?.draft?.side ?? "BLUE";
+  const sideInput = document.querySelector(`input[name="new-side"][value="${currentSide}"]`);
+  if (sideInput) sideInput.checked = true;
+  const exampleCheckbox = document.getElementById("new-draft-example-roster");
+  if (exampleCheckbox) exampleCheckbox.checked = true;
+  const dialog = document.getElementById("new-draft-dialog");
+  if (dialog && !dialog.open) dialog.showModal();
+}
+
+function confirmNewDraft() {
+  const templateId = document.getElementById("new-draft-template")?.value;
+  const side =
+    document.querySelector('input[name="new-side"]:checked')?.value ?? "BLUE";
+  const useExampleRoster =
+    document.getElementById("new-draft-example-roster")?.checked ?? true;
+  if (!templateId) return;
+  startNewDraft({ templateId, side, useExampleRoster });
+  document.getElementById("new-draft-dialog")?.close();
+}
+
+function openStepDialog() {
+  if (!app.state) return;
+  renderStepOptions(app);
+  const dialog = document.getElementById("step-dialog");
+  if (dialog && !dialog.open) dialog.showModal();
+}
+
+function confirmStep() {
+  const value = Number(document.getElementById("step-select")?.value ?? 0);
+  setStepIndex(value);
+  document.getElementById("step-dialog")?.close();
+}
+
+function openPickerFromTrigger(trigger) {
+  const { mode, side } = trigger.dataset;
+  const turn = currentTurn();
+  if (!mode || !side) return;
+
+  if (mode === "pick") {
+    if (!turn || turn.phase !== "PICK") {
+      toast("Ahora no toca un pick.", "warning");
+      return;
+    }
+    if (side === "our" && !turn.isOurTurn) {
+      toast("El turno actual es del rival.", "warning");
+      return;
+    }
+    if (side === "enemy" && turn.isOurTurn) {
+      toast("El turno actual es nuestro.", "warning");
+      return;
+    }
+  }
+
+  if (mode === "ban") {
+    if (!turn || turn.phase !== "BAN") {
+      toast("Ahora no toca un ban.", "warning");
+      return;
+    }
+  }
+
+  const player =
+    side === "our" && mode === "pick"
+      ? turn?.currentPlayer ?? app.state.roster.players.find((item) => item.id === trigger.dataset.player)
+      : null;
+
+  openChampionPicker({
+    mode,
+    side,
+    playerId: player?.id ?? null,
+    role: trigger.dataset.role ?? player?.role ?? null,
+  });
+}
+
+function openPoolPicker(playerId) {
+  const player = app.state?.roster.players.find((item) => item.id === playerId);
+  if (!player) return;
+  openChampionPicker({
+    mode: "pool",
+    side: "our",
+    playerId,
+    role: player.role,
+  });
+}
+
+function openChampionPicker({ mode, side, playerId, role }) {
+  picker.mode = mode;
+  picker.side = side;
+  picker.playerId = playerId;
+  picker.role = role;
+  picker.search = "";
+  picker.roleFilter = "ALL";
+
+  const dialog = document.getElementById("champion-dialog");
+  const search = document.getElementById("champion-search");
+  const title = document.getElementById("champion-dialog-title");
+  if (search) search.value = "";
+
+  if (title) {
+    if (mode === "ban") title.textContent = "Banear campeón";
+    else if (mode === "pool") title.textContent = "Añadir al pool";
+    else if (side === "enemy") title.textContent = "Registrar pick enemigo";
+    else title.textContent = "Elegir campeón";
+  }
+
+  renderChampionRoleFilter("ALL");
+  renderEnemyRoleExtra(picker);
+  updateChampionGrid();
+  if (dialog && !dialog.open) dialog.showModal();
+  window.setTimeout(() => search?.focus(), 40);
+}
+
+function updateChampionGrid() {
+  if (!app.state) return;
+  const body = championDialogBody(app, picker, picker.search, picker.roleFilter);
+  const grid = document.getElementById("champion-grid");
+  const subtitle = document.getElementById("champion-dialog-subtitle");
+  if (grid) grid.innerHTML = body.html;
+  if (subtitle) {
+    const player = picker.playerId
+      ? app.state.roster.players.find((item) => item.id === picker.playerId)
+      : currentTurn()?.currentPlayer;
+    const where = player ? ` · ${player.name}` : "";
+    subtitle.textContent = `${body.count} campeones${where}`;
+  }
+}
+
+function chooseChampion(championId) {
+  if (!championId) return;
+  const dialog = document.getElementById("champion-dialog");
+  if (picker.mode === "pool") {
+    addPoolEntry(picker.playerId, championId);
+    dialog?.close();
+    return;
+  }
+  if (picker.mode === "ban") {
+    recordBan(championId, picker.side);
+    dialog?.close();
+    return;
+  }
+  const enemyRole = document.getElementById("enemy-role-select")?.value || null;
+  recordPick(championId, enemyRole);
+  dialog?.close();
+}
+
+function hasDraftProgress() {
+  const draft = app.state?.draft;
+  if (!draft) return false;
+  return (
+    draft.our_bans.length > 0 ||
+    draft.enemy_bans.length > 0 ||
+    draft.our_picks.length > 0 ||
+    draft.enemy_picks.length > 0
+  );
+}
+
+function closeDialogs() {
+  for (const dialog of document.querySelectorAll("dialog[open]")) {
+    dialog.close();
+  }
+}
