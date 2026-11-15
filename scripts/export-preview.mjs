@@ -6,11 +6,12 @@ const dataDir = path.join(root, "crates", "draft-engine", "data");
 const outputDir = path.join(root, "src", "data");
 await mkdir(outputDir, { recursive: true });
 
-const [catalog, meta, templates, exampleState] = await Promise.all([
+const [catalog, meta, templates, exampleState, packageJson] = await Promise.all([
   readFile(path.join(dataDir, "champions.json"), "utf8").then(JSON.parse),
   readFile(path.join(dataDir, "champion-meta.json"), "utf8").then(JSON.parse),
   readFile(path.join(dataDir, "templates.json"), "utf8").then(JSON.parse),
   readFile(path.join(dataDir, "example-state.json"), "utf8").then(JSON.parse),
+  readFile(path.join(root, "package.json"), "utf8").then(JSON.parse),
 ]);
 
 const champions = catalog.champions
@@ -48,7 +49,7 @@ const bootstrap = {
   },
   example_state: exampleState,
   warnings: [],
-  app_version: "0.1.0",
+  app_version: packageJson.version,
 };
 
 await writeFile(

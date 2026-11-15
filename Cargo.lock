@@ -831,7 +831,7 @@ dependencies = [
 
 [[package]]
 name = "draft-assist"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "draft-engine",
  "serde",
@@ -843,7 +843,7 @@ dependencies = [
 
 [[package]]
 name = "draft-engine"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
