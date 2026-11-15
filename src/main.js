@@ -118,6 +118,9 @@ function handleClick(event) {
     case "open-step-dialog":
       openStepDialog();
       break;
+    case "close-dialog":
+      trigger.closest("dialog")?.close();
+      break;
     case "retry":
       void init();
       break;
