@@ -1,4 +1,4 @@
-# DESIGN.md — Draft Assist LoL
+# DESIGN.md — Draft Assist
 
 ## Mode
 

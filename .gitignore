@@ -33,3 +33,6 @@ lol-things
 *.njsproj
 *.sln
 *.sw?
+
+# asdf
+asdf.txt

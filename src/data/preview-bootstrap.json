@@ -2742,7 +2742,7 @@
     },
     {
       "id": "tournament",
-      "name": "Competitivo / Clash",
+      "name": "Competitivo",
       "description": "Draft de torneo: 3 bans por equipo, 6 picks, 2 bans por equipo y 4 picks finales.",
       "steps": [
         {

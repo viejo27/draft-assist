@@ -2,7 +2,7 @@
 
 ## Product
 
-**Draft Assist LoL** es una aplicación de escritorio para equipos amateur y competitivos de League of Legends que necesitan decidir picks y bans durante el draft con criterio de composición, matchup y comfort del jugador.
+**Draft Assist** es una aplicación de escritorio para equipos amateur y competitivos de League of Legends que necesitan decidir picks y bans durante el draft con criterio de composición, matchup y comfort del jugador.
 
 ## User
 
@@ -18,6 +18,7 @@
 - El pool del jugador manda por defecto sobre el meta desconocido.
 - Los datos de campeones salen de Data Dragon 16.21.1 y están empaquetados. Counters y sinergias son un seed curado editable.
 - La app persiste el draft y el roster en JSON local; se puede exportar e importar.
+- La app no automatiza picks ni bans; todas las acciones las confirma el usuario.
 - No hay Riot API, LCU, scraping ni recomendaciones en vivo en la v1.
 
 ## Product principles
@@ -33,3 +34,4 @@
 - No es un tracker automático de partidas.
 - No promete winrates reales ni tier lists vivas.
 - No sustituye la decisión del coach: ordena opciones y expone el porqué.
+- No usa scraping de terceros. La estadística personal local se valorará en una próxima versión.

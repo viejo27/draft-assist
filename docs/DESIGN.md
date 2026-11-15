@@ -1,4 +1,4 @@
-# Diseño técnico — Draft Assist LoL
+# Diseño técnico — Draft Assist
 
 ## 1. Alcance
 
@@ -189,7 +189,7 @@ Score de ban:
 
 - `threat`: cuánto counterea a nuestros picks y a los pools restantes (ponderado por comfort).
 - `denial`: neutral 0.5 en v1 (no hay pools enemigos).
-- `self_ban`: comfort máximo del campeón en nuestro roster; evita autobans.
+- `self_ban`: comfort máximo del campeón en nuestro roster; evita los bans propios.
 - Se excluyen baneados y pickeados.
 
 ## 7. Próximos picks
@@ -242,16 +242,17 @@ Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warn
 - El rol enemigo se infiere si no se registra.
 - La UI no expone el modo manual completo; el motor lo soporta y la UI permite saltar de turno.
 - No hay integración con LCU/Riot API.
+- No hay scraping de terceros.
 
 ## 12. Mejoras futuras
 
-- LCU para leer champion select automáticamente.
-- Riot API para maestría, winrates y pools reales.
-- ETL de counters/sinergias por parche (lolalytics/u.gg/Meraki).
+- LCU de solo lectura para reducir la entrada manual (futuro, no implementado; sujeto a aprobación de Riot).
+- Riot API para maestría y estadísticas propias (futuro, no implementado; requiere production key y aprobación de Riot).
+- Guardar datos de uso (picks, bans, resultados) localmente para estadística personal (próxima versión).
 - Draft fearless con bans acumulados.
 - Optimización conjunta de los 5 bans.
 - Simulación Monte Carlo de respuestas enemigas.
-- Scouting de pools rivales y bans por comfort.
+- Notas de scouting del rival introducidas manualmente, solo con información pública (futuro).
 - Historial de drafts/scrims y comparación de composiciones.
 - Multiusuario/cloud para coaches.
 - Tests E2E de la UI y accesibilidad.

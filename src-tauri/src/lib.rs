@@ -13,6 +13,49 @@ pub struct RuntimeState {
     pub warnings: Vec<String>,
 }
 
+/// Copies the state and editable data from the old identifier folder once.
+/// Best effort: a failed migration must never prevent the app from starting.
+fn migrate_legacy_data(app: &tauri::App) {
+    let Ok(base) = app.path().data_dir() else {
+        return;
+    };
+    let old_dir = base.join("com.elviejo27.draftlol");
+    let Ok(new_dir) = app.path().app_data_dir() else {
+        return;
+    };
+    if !old_dir.exists() || old_dir == new_dir {
+        return;
+    }
+
+    let _ = std::fs::create_dir_all(&new_dir);
+
+    let old_state = old_dir.join("state.json");
+    let new_state = new_dir.join("state.json");
+    if old_state.exists() && !new_state.exists() {
+        let _ = std::fs::copy(&old_state, &new_state);
+    }
+
+    let old_data = old_dir.join("data");
+    let new_data = new_dir.join("data");
+    if old_data.exists() {
+        let _ = std::fs::create_dir_all(&new_data);
+        if let Ok(entries) = std::fs::read_dir(&old_data) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if !path.is_file() {
+                    continue;
+                }
+                if let Some(name) = path.file_name() {
+                    let target = new_data.join(name);
+                    if !target.exists() {
+                        let _ = std::fs::copy(&path, &target);
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub fn load_engine(data_dir: &Path) -> Result<(Engine, Vec<String>), String> {
     let data_path = data_dir.join("data");
     let mut warnings = Vec::new();
@@ -43,6 +86,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            migrate_legacy_data(app);
             let data_dir = app
                 .path()
                 .app_data_dir()

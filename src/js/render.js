@@ -781,9 +781,20 @@ function settingsView(view) {
           </div>
         </header>
         <p>El motor combina comfort, matchup de línea, sinergia estructural, carencias de composición, prioridad estática del parche y flexibilidad. En picks tempranos pesa más el pool y la seguridad; en picks tardíos gana peso el counter directo.</p>
-        <p>Los bans se calculan por amenaza a tus picks y a los pools restantes, con penalización si el campeón está en tu propio pool.</p>
-        <p class="muted">Los datos son locales y editables. No hay llamadas a Riot ni scraping en esta versión.</p>
+        <p>Los bans se calculan por amenaza a tus picks y a los pools restantes, con penalización si el campeón está en tu propio pool (bans propios).</p>
         ${validation?.errors?.length ? `<div class="notice-list">${validation.errors.map((error) => `<p class="notice notice-error">${escapeHtml(error)}</p>`).join("")}</div>` : ""}
+      </section>
+
+      <section class="settings-section settings-about">
+        <header class="panel-head">
+          <div>
+            <h2>Acerca de / Aviso legal</h2>
+          </div>
+        </header>
+        <p>La app no automatiza picks ni bans; todas las acciones las confirma el usuario.</p>
+        <p class="muted">Los datos son locales y editables. No hay llamadas a Riot ni scraping en esta versión. En una próxima versión se podrán guardar datos de uso localmente para estadística personal.</p>
+        <p class="muted">Draft Assist isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</p>
+        <p class="muted">Los datos e imágenes de campeones son propiedad de Riot Games y se usan bajo la política de Riot/Data Dragon. No están cubiertos por la licencia MIT ni pueden usarse comercialmente.</p>
       </section>
     </div>
   `;

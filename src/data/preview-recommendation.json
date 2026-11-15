@@ -4,7 +4,7 @@
     "side_label": "Azul",
     "phase": "PICK",
     "turn_label": "Pick azul 4",
-    "template_name": "Competitivo / Clash",
+    "template_name": "Competitivo",
     "our_bans": [
       {
         "id": "Yuumi",

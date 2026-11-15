@@ -703,7 +703,7 @@ pub fn evaluate_ban(
                 self_pool_comfort = Some(comfort);
                 if comfort >= 4 {
                     self_ban_reason = Some(format!(
-                        "Está en el pool de {} ({comfort}/5): evita el autoban.",
+                        "Está en el pool de {} ({comfort}/5): evita el ban propio.",
                         player.name
                     ));
                 }

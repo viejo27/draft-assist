@@ -830,16 +830,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "draft-engine"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "draft-lol"
+name = "draft-assist"
 version = "0.1.0"
 dependencies = [
  "draft-engine",
@@ -848,6 +839,15 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
+]
+
+[[package]]
+name = "draft-engine"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

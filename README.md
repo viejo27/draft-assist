@@ -1,17 +1,21 @@
-# Draft Assist LoL
+# Draft Assist
 
 Asistente de draft para League of Legends, hecho con **Rust + Tauri v2** y frontend vanilla. Registra el estado real del champion select y devuelve un Top 5 explicado para el pick o ban actual.
 
-![Draft Assist LoL](docs/screenshot.png)
+[Repositorio](https://github.com/viejo27/draft-assist) · [Descargas](https://github.com/viejo27/draft-assist/releases)
+
+![Draft Assist](docs/screenshot.png)
 
 - Datos locales de **Data Dragon 16.21.1** (173 campeones e iconos).
 - Pool por jugador con comfort 1–5 y winrate opcional.
 - Counters y sinergias en JSON editable.
-- Plantillas **ranked solo** y **competitivo/Clash**.
+- Plantillas **ranked solo** y **competitivo**.
 - Recomendaciones con score, tier, razones y riesgos.
-- Bans recomendados por amenaza y autoban.
+- Bans recomendados por amenaza y protección de bans propios.
 - Próximos picks tentativos.
 - Persistencia local con autosave, export/import.
+
+La app no automatiza picks ni bans; todas las acciones las confirma el usuario.
 
 ## Requisitos
 
@@ -40,7 +44,7 @@ Build de producción:
 npm.cmd run build
 ```
 
-Genera el ejecutable en `target/release/draft-lol.exe` y los instaladores en `target/release/bundle/` (MSI y NSIS en Windows). Si solo quieres compilar sin empaquetar:
+Genera el ejecutable en `target/release/draft-assist.exe` y los instaladores en `target/release/bundle/` (MSI y NSIS en Windows). Si solo quieres compilar sin empaquetar:
 
 ```powershell
 npx.cmd @tauri-apps/cli build --no-bundle
@@ -64,7 +68,7 @@ La primera vez se abre con un **draft de ejemplo** cargado. Desde ahí puedes ed
 
 ## Uso rápido
 
-1. **Nuevo draft** → elige `Ranked solo` o `Competitivo / Clash`, y tu lado (azul/rojo).
+1. **Nuevo draft** → elige `Ranked solo` o `Competitivo`, y tu lado (azul/rojo).
 2. **Equipo** → revisa los 5 jugadores, su orden de picks y su pool. Ajusta comfort y winrate.
 3. **Draft** → registra bans y picks. Si el turno es del rival, la app te pide registrar su acción.
 4. En tu turno, el panel derecho muestra el Top 5. Cada carta indica:
@@ -78,10 +82,10 @@ La primera vez se abre con un **draft de ejemplo** cargado. Desde ahí puedes ed
 El estado se guarda automáticamente en:
 
 ```text
-%APPDATA%/com.elviejo27.draftlol/state.json
+%APPDATA%/viejo27.draft-assist/state.json
 ```
 
-Los JSON editables se copian a `%APPDATA%/com.elviejo27.draftlol/data/`.
+Los JSON editables se copian a `%APPDATA%/viejo27.draft-assist/data/`.
 
 ## Modelo de entrada
 
@@ -235,7 +239,7 @@ Componentes: comfort, matchup de línea, riesgo de counters, sinergia curada/est
 - **Picks tempranos:** pesan más comfort, meta y flex/seguridad.
 - **Picks tardíos:** pesan más matchup y counter directo.
 - **Pool primero:** por defecto, todos los campeones del pool se ordenan antes que los off-pool. Los off-pool siguen visibles con advertencia.
-- **Bans:** priorizan amenaza a tus picks/pools y penalizan autobans.
+- **Bans:** priorizan amenaza a tus picks/pools y penalizan los bans propios.
 
 El detalle técnico está en [`docs/DESIGN.md`](docs/DESIGN.md). El sistema visual está en [`DESIGN.md`](DESIGN.md).
 
@@ -295,16 +299,22 @@ Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, pri
 
 ## Mejoras futuras
 
-- Integración LCU para leer champion select automáticamente.
-- Riot API para maestría, winrates y pools reales.
-- Counters/sinergias desde datos estadísticos por parche.
+- Integración LCU de solo lectura para reducir la entrada manual (futuro, no implementado; sujeto a aprobación de Riot).
+- Riot API para maestría y estadísticas propias (futuro, no implementado; requiere production key y aprobación de Riot).
+- Guardar datos de uso (picks, bans, resultados) localmente para estadística personal (próxima versión).
 - Draft fearless con bans acumulados por serie.
 - Optimización conjunta de los 5 bans de ranked.
 - Simulación de respuestas enemigas y Monte Carlo.
-- Scouting de pools rivales.
+- Notas de scouting del rival introducidas manualmente, solo con información pública (futuro).
 - Historial de drafts/scrims y vista de coach.
 - Tests E2E de UI y accesibilidad.
 
 ## Licencia
 
-MIT. Ver [`LICENSE`](LICENSE).
+El código de Draft Assist está bajo la licencia MIT. Ver [`LICENSE`](LICENSE).
+
+Los datos e imágenes de campeones son propiedad de Riot Games y se usan bajo la política de Riot/Data Dragon. No están cubiertos por la licencia MIT y no pueden usarse comercialmente. Ver [`ATTRIBUTION.md`](ATTRIBUTION.md).
+
+## Aviso legal
+
+Draft Assist isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
