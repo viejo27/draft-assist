@@ -56,6 +56,20 @@ fn migrate_legacy_data(app: &tauri::App) {
     }
 }
 
+/// Updates the template label in the editable data folder created by older
+/// versions. The embedded data is already correct; this fixes existing installs.
+fn migrate_template_labels(data_dir: &Path) {
+    let path = data_dir.join("data").join("templates.json");
+    let Ok(content) = std::fs::read_to_string(&path) else {
+        return;
+    };
+    if !content.contains("\"Competitivo / Clash\"") {
+        return;
+    }
+    let updated = content.replace("\"Competitivo / Clash\"", "\"Competitivo\"");
+    let _ = std::fs::write(&path, updated);
+}
+
 pub fn load_engine(data_dir: &Path) -> Result<(Engine, Vec<String>), String> {
     let data_path = data_dir.join("data");
     let mut warnings = Vec::new();
@@ -92,6 +106,12 @@ pub fn run() {
                 .app_data_dir()
                 .map_err(|error| std::io::Error::other(error.to_string()))?;
             std::fs::create_dir_all(&data_dir)?;
+            migrate_template_labels(&data_dir);
+            if let Some(window) = app.get_webview_window("main")
+                && let Some(icon) = app.default_window_icon().cloned()
+            {
+                let _ = window.set_icon(icon);
+            }
             let (engine, warnings) = load_engine(&data_dir).map_err(std::io::Error::other)?;
             app.manage(RuntimeState {
                 engine: Mutex::new(engine),
@@ -113,4 +133,33 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::migrate_template_labels;
+
+    #[test]
+    fn migrates_the_old_competitive_template_label() {
+        let dir = std::env::temp_dir().join(format!(
+            "draft-assist-template-migration-{}",
+            std::process::id()
+        ));
+        let data_dir = dir.join("data");
+        std::fs::create_dir_all(&data_dir).unwrap();
+        let path = data_dir.join("templates.json");
+        std::fs::write(
+            &path,
+            r#"{"templates":[{"id":"tournament","name":"Competitivo / Clash"}]}"#,
+        )
+        .unwrap();
+
+        migrate_template_labels(&dir);
+
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert!(content.contains(r#""name":"Competitivo""#));
+        assert!(!content.contains("Competitivo / Clash"));
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

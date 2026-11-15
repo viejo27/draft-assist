@@ -12,6 +12,8 @@ Low-light team room, 1440×900 desktop window, champion select on a second monit
 
 **Draft sheet, not esports overlay.** The interface reads like a working analyst board: a top context strip, two horizontal team rows, a central ban ledger, then a recommendation column. No neon glow, no gradient text, no decorative glass. The memorable moment is the live board: a pick locks into the current slot and the recommendation column answers with ranked, explained cards.
 
+**App icon.** A gold D with a blue/red diagonal slash on a graphite rounded square. The source lives in `src-tauri/app-icon.svg`; regenerate the platform icons with `npx tauri icon src-tauri/app-icon.svg`.
+
 ## Tokens
 
 ### Color

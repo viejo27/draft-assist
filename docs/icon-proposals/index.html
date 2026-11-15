@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Draft Assist — propuestas de icono</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 32px;
+        background: #090c11;
+        color: #e9eef5;
+        font: 14px/1.5 "Segoe UI", system-ui, sans-serif;
+      }
+      h1 { margin: 0 0 6px; font-size: 24px; letter-spacing: -0.03em; }
+      p.lead { margin: 0 0 28px; color: #8b9aab; }
+      .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+      .card { margin: 0; padding: 14px; border: 1px solid #25303c; border-radius: 15px; background: #10151c; }
+      .card img { display: block; width: 100%; aspect-ratio: 1; border-radius: 18%; background: #090c11; }
+      .card figcaption { margin-top: 12px; }
+      .card strong { display: block; font-size: 15px; }
+      .card span { color: #8b9aab; font-size: 12px; }
+      .tag { display: inline-block; margin-bottom: 8px; padding: 2px 7px; border: 1px solid #354456; border-radius: 5px; color: #e8bd73; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+    </style>
+  </head>
+  <body>
+    <h1>Draft Assist — propuestas de icono</h1>
+    <p class="lead">La A es la recomendada: se lee mejor a 16×16 y conecta con el wordmark Draft/Assist.</p>
+    <div class="grid">
+      <figure class="card">
+        <img src="option-a.png" alt="Propuesta A: monograma D con diagonal azul y roja" />
+        <figcaption>
+          <span class="tag">Recomendada</span>
+          <strong>A · Monograma D/</strong>
+          <span>D dorada + diagonal azul/rojo. Máxima legibilidad.</span>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="option-b.png" alt="Propuesta B: tablero de draft con filas azul y roja" />
+        <figcaption>
+          <span class="tag">Literal</span>
+          <strong>B · Tablero</strong>
+          <span>Filas de equipo y pick central. Más detalle, menos legible en pequeño.</span>
+        </figcaption>
+      </figure>
+      <figure class="card">
+        <img src="option-c.png" alt="Propuesta C: ficha hexagonal dorada con split azul y rojo" />
+        <figcaption>
+          <span class="tag">Abstracta</span>
+          <strong>C · Ficha de draft</strong>
+          <span>Token hexagonal con split de lado. Distintiva, pero más genérica.</span>
+        </figcaption>
+      </figure>
+    </div>
+  </body>
+</html>

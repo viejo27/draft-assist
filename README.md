@@ -50,6 +50,16 @@ Genera el ejecutable en `target/release/draft-assist.exe` y los instaladores en 
 npx.cmd @tauri-apps/cli build --no-bundle
 ```
 
+## Icono
+
+El icono fuente está en `src-tauri/app-icon.svg`. Para regenerar todos los tamaños:
+
+```powershell
+npx.cmd @tauri-apps/cli icon src-tauri/app-icon.svg
+```
+
+Los iconos resultantes se generan en `src-tauri/icons/`.
+
 Tests del motor:
 
 ```powershell
