@@ -13,17 +13,17 @@
 
 ## Product truth
 
-- El estado del draft se introduce manualmente: lado, formato, bans, picks, roles y pools.
+- El estado del draft se introduce manualmente o se sincroniza en **solo lectura** desde el LCU local.
+- El modo automático es **seguimiento**, no auto-pick: lee lobby, formato, lado, posiciones, bans y picks; nunca envía acciones al cliente.
 - El motor es local, determinista y explicable. Combina comfort, matchup, sinergia, carencias de composición, prioridad estática y momento del draft.
 - El pool del jugador manda por defecto sobre el meta desconocido.
 - Los datos de campeones salen de Data Dragon 16.21.1 y están empaquetados. Counters y sinergias son un seed curado editable.
 - La app persiste el draft y el roster en JSON local; se puede exportar e importar.
-- La app no automatiza picks ni bans; todas las acciones las confirma el usuario.
-- No hay Riot API, LCU, scraping ni recomendaciones en vivo en la v1.
+- No hay Riot API, scraping ni recomendaciones en vivo. El LCU solo se usa para leer el cliente local.
 
 ## Product principles
 
-1. **The board is the truth.** El tablero debe reflejar exactamente el draft; cada acción se puede deshacer.
+1. **The board is the truth.** El tablero debe reflejar exactamente el draft; las acciones manuales se pueden deshacer y el seguimiento LCU es de solo lectura.
 2. **Explain the pick, not the model.** Cada recomendación lleva una razón legible: comfort, counter, sinergia o carencia.
 3. **Pool first.** Un pick cómodo y bien puntuado gana a un meta que el jugador no domina.
 4. **Fast under pressure.** Densa pero escaneable; acciones a un clic; sin modales innecesarios.
@@ -32,6 +32,7 @@
 ## Non-goals
 
 - No es un tracker automático de partidas.
+- No automatiza picks ni bans; todas las acciones en el cliente las confirma el usuario.
 - No promete winrates reales ni tier lists vivas.
 - No sustituye la decisión del coach: ordena opciones y expone el porqué.
 - No usa scraping de terceros. La estadística personal local se valorará en una próxima versión.

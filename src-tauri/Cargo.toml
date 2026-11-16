@@ -1,6 +1,6 @@
 [package]
 name = "draft-assist"
-version = "0.1.2"
+version = "0.2.0"
 description = "Asistente de draft para League of Legends"
 authors = ["el_viejo27"]
 edition = "2024"
@@ -21,3 +21,8 @@ tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 draft-engine = { path = "../crates/draft-engine" }
+base64 = "0.22"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+sysinfo = "0.33"
+thiserror = "2"
+tokio = { version = "1", features = ["time"] }

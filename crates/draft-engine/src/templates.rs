@@ -1,5 +1,6 @@
 use crate::model::{
-    DraftState, DraftStep, DraftTemplate, ManualTurn, Phase, Player, PlayerView, Roster, Side,
+    DraftState, DraftStep, DraftTemplate, LcuTurn, ManualTurn, Phase, Player, PlayerView, Roster,
+    Side,
 };
 
 #[derive(Debug, Clone)]
@@ -11,12 +12,20 @@ pub struct TurnContext {
     pub pick_number: Option<u8>,
     pub label: String,
     pub manual: Option<ManualTurn>,
+    pub lcu: Option<LcuTurn>,
 }
 
 impl TurnContext {
     pub fn player<'a>(&self, draft: &DraftState, roster: &'a Roster) -> Option<&'a Player> {
         if self.phase != Phase::Pick {
             return None;
+        }
+
+        if let Some(lcu) = self.lcu.as_ref()
+            && lcu.acting_side == draft.side
+            && let Some(player_id) = lcu.player_id.as_deref()
+        {
+            return roster.player(player_id);
         }
 
         if let Some(manual) = self.manual.as_ref()
@@ -50,6 +59,20 @@ impl TurnContext {
 }
 
 pub fn current_turn(draft: &DraftState, template: Option<&DraftTemplate>) -> TurnContext {
+    if let Some(lcu) = draft.lcu_turn.as_ref() {
+        let is_our_turn = lcu.acting_side == draft.side;
+        return TurnContext {
+            step_index: draft.step_index,
+            phase: lcu.phase,
+            acting_side: Some(lcu.acting_side),
+            is_our_turn,
+            pick_number: lcu.pick_number,
+            label: lcu.label.clone(),
+            manual: None,
+            lcu: Some(lcu.clone()),
+        };
+    }
+
     if let Some(manual) = draft.manual.as_ref() {
         let is_our_turn = manual.acting_side == draft.side;
         let pick_number = if manual.phase == Phase::Pick && is_our_turn {
@@ -72,6 +95,7 @@ pub fn current_turn(draft: &DraftState, template: Option<&DraftTemplate>) -> Tur
                 manual.acting_side.label_es()
             ),
             manual: Some(manual.clone()),
+            lcu: None,
         };
     }
 
@@ -98,6 +122,7 @@ pub fn current_turn(draft: &DraftState, template: Option<&DraftTemplate>) -> Tur
             pick_number: step.pick_number,
             label,
             manual: None,
+            lcu: None,
         };
     }
 
@@ -109,6 +134,7 @@ pub fn current_turn(draft: &DraftState, template: Option<&DraftTemplate>) -> Tur
         pick_number: Some((draft.our_picks.len() as u8).saturating_add(1)),
         label: "Turno de draft".into(),
         manual: None,
+        lcu: None,
     }
 }
 

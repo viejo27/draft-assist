@@ -38,6 +38,7 @@
         <button class="view-tab is-active" type="button" data-action="view" data-view="draft">Draft</button>
         <button class="view-tab" type="button" data-action="view" data-view="roster">Equipo</button>
         <button class="view-tab" type="button" data-action="view" data-view="settings">Ajustes</button>
+        <div class="lcu-control" id="lcu-control" hidden></div>
         <span class="viewbar-note" id="viewbar-note"></span>
       </nav>
 
@@ -121,6 +122,33 @@
       <div class="dialog-actions">
         <button class="button button-ghost" type="button" data-action="close-dialog">Cancelar</button>
         <button class="button button-primary" id="step-confirm" type="button">Ir al turno</button>
+      </div>
+    </dialog>
+
+    <dialog class="dialog" id="lcu-dialog">
+      <form method="dialog" class="dialog-head">
+        <div>
+          <h2>Seguimiento LCU</h2>
+          <p class="muted">La app leerá el draft desde League of Legends.</p>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="Cerrar" type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </form>
+      <div class="dialog-body">
+        <p class="lcu-dialog-copy">Mientras el seguimiento esté activo, el tablero se actualizará automáticamente desde el cliente y será de solo lectura.</p>
+        <ul class="lcu-points">
+          <li>No se envían picks ni bans al cliente.</li>
+          <li>No se modifica la prioridad estricta del pool.</li>
+          <li>No se modifica el flex fuera de rol.</li>
+          <li>Al entrar a un lobby, el tablero se prepara con el formato detectado.</li>
+          <li>Puedes detenerlo en cualquier momento.</li>
+        </ul>
+        <p class="callout">Abre League of Legends y entra a un lobby. Si el cliente aún no está abierto, la app lo buscará en segundo plano.</p>
+      </div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-action="close-dialog">Cancelar</button>
+        <button class="button button-primary" type="button" id="lcu-confirm">Activar seguimiento</button>
       </div>
     </dialog>
 

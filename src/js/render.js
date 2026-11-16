@@ -78,16 +78,25 @@ function renderTopbar(view) {
       <span class="context-turn">${escapeHtml(turn?.label ?? "Draft completo")}</span>
       ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
       ${view.isExample ? `<span class="context-chip context-example">Ejemplo</span>` : ""}
+      ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
     `;
   }
 
-  if (undoButton) undoButton.disabled = !view.undo?.length;
+  const auto = Boolean(view.lcu?.auto);
+  if (undoButton) undoButton.disabled = !view.undo?.length || auto;
+  for (const action of ["open-step-dialog", "new-draft", "load-example"]) {
+    const button = document.querySelector(`.topbar-actions [data-action="${action}"]`);
+    if (button) button.disabled = auto;
+  }
 }
 
 function renderViewbar(view) {
   document.querySelectorAll(".view-tab").forEach((tab) => {
     tab.classList.toggle("is-active", tab.dataset.view === view.view);
   });
+
+  renderLcuControl(view);
+
   const note = document.getElementById("viewbar-note");
   if (!note) return;
   if (view.loading) {
@@ -99,6 +108,57 @@ function renderViewbar(view) {
   } else {
     note.textContent = "Los cambios se guardan en tu equipo";
   }
+}
+
+function renderLcuControl(view) {
+  const root = document.getElementById("lcu-control");
+  if (!root) return;
+
+  if (view.preview) {
+    root.hidden = true;
+    root.innerHTML = "";
+    return;
+  }
+
+  root.hidden = false;
+  const status = view.lcu?.status;
+  const auto = Boolean(view.lcu?.auto);
+  const dot = lcuDotClass(status, auto);
+  const label = lcuShortLabel(status, auto);
+  const disabled = view.lcu?.starting ? "disabled" : "";
+
+  root.innerHTML = `
+    <span class="lcu-dot ${dot}"></span>
+    <span class="lcu-label" title="${escapeHtml(status?.last_error ?? label)}">${escapeHtml(label)}</span>
+    <button class="button button-small ${auto ? "button-danger-ghost" : "button-ghost"}" type="button"
+      data-action="${auto ? "stop-lcu" : "start-lcu"}" ${disabled}>
+      ${auto ? "Detener" : "Seguimiento"}
+    </button>
+  `;
+}
+
+function lcuDotClass(status, auto) {
+  if (auto && !status?.connected) return "is-waiting";
+  if (status?.state === "error") return "is-error";
+  if (status?.connected) return "is-on";
+  return "is-off";
+}
+
+function lcuShortLabel(status, auto) {
+  if (!status) return auto ? "Buscando LCU…" : "LCU";
+  if (status.state === "not_found") return "Sin cliente";
+  if (status.state === "reconnecting") return "Reconectando…";
+  if (status.state === "error") return "Error LCU";
+  if (!status.connected) return auto ? "Buscando LCU…" : "LCU";
+  if (status.phase === "ChampSelect" && status.current_action) {
+    return status.current_action.label;
+  }
+  if (status.phase === "Lobby") {
+    return status.queue_name ? `Lobby · ${status.queue_name}` : "Lobby";
+  }
+  if (status.phase === "InProgress") return "Partida en curso";
+  if (status.phase === "EndOfGame") return "Fin de partida";
+  return status.queue_name ? `LCU · ${status.queue_name}` : "LCU conectado";
 }
 
 function loadingState() {
@@ -130,6 +190,7 @@ function draftView(view) {
   return `
     <div class="draft-layout">
       <div class="board-column">
+        ${view.lcu?.auto ? lcuBanner(view) : ""}
         <section class="board-panel" aria-label="Tablero de draft">
           ${teamBlock(view, "enemy", summary)}
           <div class="board-divider">
@@ -149,6 +210,26 @@ function draftView(view) {
   `;
 }
 
+function lcuBanner(view) {
+  const status = view.lcu?.status;
+  const label = lcuShortLabel(status, true);
+  const detail = status?.current_action
+    ? `${status.current_action.seconds_left ?? "—"} s restantes`
+    : status?.phase === "Lobby"
+      ? "Esperando champ select"
+      : "Sincronizando desde el cliente";
+  return `
+    <div class="lcu-banner" role="status">
+      <span class="lcu-dot ${lcuDotClass(status, true)}"></span>
+      <div class="lcu-banner-copy">
+        <strong>Seguimiento LCU activo</strong>
+        <span>${escapeHtml(label)} · ${escapeHtml(detail)} · tablero de solo lectura</span>
+      </div>
+      <button class="button button-small button-danger-ghost" type="button" data-action="stop-lcu">Detener</button>
+    </div>
+  `;
+}
+
 function teamBlock(view, sideKey, summary) {
   const draft = view.state.draft;
   const ourSide = sideKey === "our";
@@ -158,6 +239,7 @@ function teamBlock(view, sideKey, summary) {
   const picksByRole = ourSide ? ourPicksByRole(draft) : enemyPicksByRole(draft);
   const players = orderedPlayers();
   const turn = currentTurn();
+  const auto = Boolean(view.lcu?.auto);
   const pickSlots = ROLES.map((role) => {
     const player = players.find((item) => item.role === role);
     const pick = picksByRole[role];
@@ -176,6 +258,7 @@ function teamBlock(view, sideKey, summary) {
       player,
       current: current && !champion,
       canAdd:
+        !auto &&
         ourSide &&
         turn?.phase === "PICK" &&
         turn.isOurTurn &&
@@ -194,7 +277,7 @@ function teamBlock(view, sideKey, summary) {
       side,
       index,
       champion,
-      canAdd: canBan(view, sideKey),
+      canAdd: !auto && canBan(view, sideKey),
     });
   }).join("");
 
@@ -355,7 +438,7 @@ function compositionPanel(view, summary) {
         </div>
         <div class="priority-block">
           <span class="field-label">Prioridades del equipo</span>
-          <div class="tag-row tag-row-tight">${priorityChips(view.state.draft.priorities ?? [])}</div>
+          <div class="tag-row tag-row-tight">${priorityChips(view.state.draft.priorities ?? [], view.lcu?.auto)}</div>
         </div>
       </section>
     `;
@@ -394,16 +477,16 @@ function compositionPanel(view, summary) {
         </div>
         <div class="priority-block">
           <span class="field-label">Prioridades del equipo</span>
-          <div class="tag-row tag-row-tight">${priorityChips(priorities)}</div>
+          <div class="tag-row tag-row-tight">${priorityChips(priorities, view.lcu?.auto)}</div>
         </div>
       </div>
     </section>
   `;
 }
 
-function priorityChips(priorities) {
+function priorityChips(priorities, disabled = false) {
   return NEED_OPTIONS.map(([id, label]) => `
-    <button type="button" class="priority-chip ${priorities.includes(id) ? "is-on" : ""}" aria-pressed="${priorities.includes(id)}" data-action="toggle-priority" data-need="${id}">
+    <button type="button" class="priority-chip ${priorities.includes(id) ? "is-on" : ""}" aria-pressed="${priorities.includes(id)}" data-action="toggle-priority" data-need="${id}" ${disabled ? "disabled" : ""}>
       ${label}
     </button>
   `).join("");
@@ -416,6 +499,10 @@ function severityClass(severity) {
 }
 
 function advicePanel(view, turn, completed) {
+  if (view.lcu?.auto) {
+    return lcuAdvicePanel(view, turn, completed);
+  }
+
   const response = view.response;
   const recs = response?.recommendations ?? [];
   const warnings = view.warnings ?? [];
@@ -510,6 +597,131 @@ function advicePanel(view, turn, completed) {
   `;
 }
 
+function lcuAdvicePanel(view, turn, completed) {
+  const status = view.lcu?.status;
+  const action = status?.current_action ?? null;
+  const recs = (view.response?.recommendations ?? []).filter(
+    (rec) => !action || rec.action === action.phase,
+  );
+  const queueName = status?.queue_name ?? "";
+  const connected = Boolean(status?.connected);
+  const inChampSelect = status?.phase === "ChampSelect";
+  const ourTurn = Boolean(turn?.isOurTurn && action);
+  const notices = [...new Set([...(view.warnings ?? []), status?.last_error].filter(Boolean))];
+  const banPhase = action?.phase === "BAN";
+  const title = completed
+    ? "Draft completo"
+    : !connected
+      ? status?.state === "reconnecting"
+        ? "Reconectando con League"
+        : "Buscando League of Legends"
+      : !inChampSelect
+        ? status?.phase === "Lobby"
+          ? "Lobby detectado"
+          : status?.phase === "InProgress"
+            ? "Partida en curso"
+            : "Esperando champ select"
+        : action
+          ? action.label
+          : "Esperando turno";
+  const subtitle = completed
+    ? "El champ select terminó."
+    : !connected
+      ? "Abre el cliente o espera a que la app lo detecte."
+      : !inChampSelect
+        ? status?.phase === "Lobby"
+          ? `${queueName || "Lobby"} · preparando el draft`
+          : "El seguimiento se reactivará en el próximo champ select."
+        : action
+          ? ourTurn
+            ? `${queueName || "Champ select"} · recomendaciones para este turno`
+            : "El rival está actuando; el tablero se actualizará solo."
+          : "Esperando la próxima acción del cliente.";
+
+  let body = "";
+  if (!connected) {
+    body = `
+      <div class="empty-advice">
+        <p>${status?.last_error ? escapeHtml(status.last_error) : "League of Legends no está disponible."}</p>
+        <p>Abre el cliente y entra a un lobby. La app seguirá intentando conectarse.</p>
+        <button class="button button-ghost" type="button" data-action="stop-lcu">Detener seguimiento</button>
+      </div>
+    `;
+  } else if (completed) {
+    body = `
+      <div class="empty-advice">
+        <p>El draft se sincronizó correctamente.</p>
+        <button class="button button-danger-ghost" type="button" data-action="stop-lcu">Detener seguimiento</button>
+      </div>
+    `;
+  } else if (!inChampSelect) {
+    body = `
+      <div class="empty-advice">
+        <p>${status?.phase === "Lobby" ? "La app esperará a que empiece el champ select." : "Puedes dejar el seguimiento activo para la próxima partida."}</p>
+        <button class="button button-danger-ghost" type="button" data-action="stop-lcu">Detener seguimiento</button>
+      </div>
+    `;
+  } else if (!action) {
+    body = `
+      <div class="empty-advice">
+        <p>El cliente está en champ select, pero todavía no expone una acción activa.</p>
+        <p class="muted">En cuanto sea un turno real, aparecerá aquí la recomendación.</p>
+      </div>
+    `;
+  } else if (!ourTurn) {
+    body = `
+      <div class="enemy-turn-panel">
+        <div class="enemy-turn-icon">${banPhase ? "BAN" : "PICK"}</div>
+        <div>
+          <h3>${escapeHtml(action.label)}</h3>
+          <p>El tablero se actualizará automáticamente cuando el rival confirme.</p>
+        </div>
+      </div>
+    `;
+  } else if (recs.length) {
+    body = `
+      <ol class="rec-list">
+        ${recs.map((rec, index) => recommendationCard(rec, index, banPhase, false)).join("")}
+      </ol>
+    `;
+  } else {
+    body = `
+      <div class="empty-advice">
+        <p>No hay recomendaciones para este turno.</p>
+        <p class="muted">El motor no devolvió candidatos con el estado actual del draft.</p>
+      </div>
+    `;
+  }
+
+  return `
+    <section class="advice-panel is-lcu ${view.busy ? "is-busy" : ""}" aria-busy="${view.busy}">
+      <header class="advice-head">
+        <div class="advice-head-top">
+          <div>
+            <h2>${escapeHtml(title)}</h2>
+          </div>
+          ${action ? `<span class="phase-badge ${banPhase ? "phase-ban" : "phase-pick"}">${banPhase ? "BAN" : "PICK"}</span>` : ""}
+        </div>
+        <p class="advice-subtitle">${escapeHtml(subtitle)}</p>
+        ${
+          action && ourTurn && turn?.currentPlayer
+            ? `<div class="current-player-row"><span class="field-label">${banPhase ? "Baneando" : "Pickeando"}</span><span class="lcu-current-player">${escapeHtml(turn.currentPlayer.name)} · ${roleLabel(turn.currentPlayer.role)}</span></div>`
+            : ""
+        }
+      </header>
+      ${
+        notices.length
+          ? `<div class="notice-list">${notices.slice(0, 3).map((warning) => `<p class="notice ${warning === status?.last_error ? "notice-error" : ""}">${escapeHtml(warning)}</p>`).join("")}</div>`
+          : ""
+      }
+      ${body}
+      <footer class="lcu-readonly-note">
+        Solo lectura · la app no envía picks ni bans al cliente.
+      </footer>
+    </section>
+  `;
+}
+
 function enemyTurnPanel(turn) {
   const isBan = turn.phase === "BAN";
   return `
@@ -526,7 +738,7 @@ function enemyTurnPanel(turn) {
   `;
 }
 
-function recommendationCard(rec, index, banPhase) {
+function recommendationCard(rec, index, banPhase, showAction = true) {
   const champion = rec.champion;
   const danger = rec.action === "BAN";
   const actionLabel = danger ? "Banear" : "Elegir";
@@ -538,7 +750,7 @@ function recommendationCard(rec, index, banPhase) {
   );
 
   return `
-    <li class="rec-card ${rec.in_pool ? "" : "is-off-pool"} ${danger ? "is-ban" : ""}">
+    <li class="rec-card ${rec.in_pool ? "" : "is-off-pool"} ${danger ? "is-ban" : ""} ${showAction ? "" : "is-readonly"}">
       <span class="rec-rank">${String(rec.rank).padStart(2, "0")}</span>
       ${championAvatar(champion, "rec-avatar")}
       <div class="rec-main">
@@ -566,14 +778,19 @@ function recommendationCard(rec, index, banPhase) {
         <strong class="rec-score">${formatScore(rec.score)}</strong>
         <span class="score-track"><i style="width:${scoreWidth(rec.score)}"></i></span>
       </div>
-      <button class="button ${danger ? "button-danger-ghost" : "button-primary"} rec-action" type="button" data-action="${danger ? "ban" : "pick"}" data-champion="${escapeHtml(champion.id)}">
-        ${actionLabel}
-      </button>
+      ${
+        showAction
+          ? `<button class="button ${danger ? "button-danger-ghost" : "button-primary"} rec-action" type="button" data-action="${danger ? "ban" : "pick"}" data-champion="${escapeHtml(champion.id)}">
+              ${actionLabel}
+            </button>`
+          : ""
+      }
     </li>
   `;
 }
 
 function nextPicksPanel(view) {
+  if (view.lcu?.auto) return "";
   const groups = view.response?.next_picks ?? [];
   if (!groups.length) return "";
   return `
@@ -695,6 +912,81 @@ function poolEntry(player, entry) {
   `;
 }
 
+function lcuSettingsSection(view) {
+  const status = view.lcu?.status;
+  const auto = Boolean(view.lcu?.auto);
+  const template = view.bootstrap?.templates?.find(
+    (item) => item.id === status?.template_id,
+  );
+  const disabled = view.preview ? "disabled" : "";
+  const statusText = lcuStatusText(status);
+  const side = status?.side ? sideLabel(status.side) : "—";
+  const action = status?.current_action;
+  return `
+    <section class="settings-section settings-lcu">
+      <header class="panel-head">
+        <div>
+          <h2>Cliente de League</h2>
+        </div>
+        <span class="lcu-dot ${lcuDotClass(status, auto)}"></span>
+      </header>
+      <div class="lcu-status-grid">
+        <div><span class="field-label">Estado</span><strong>${escapeHtml(statusText)}</strong></div>
+        <div><span class="field-label">Cola</span><strong>${escapeHtml(status?.queue_name ?? "—")}</strong></div>
+        <div><span class="field-label">Plantilla</span><strong>${escapeHtml(template?.name ?? status?.template_id ?? "—")}</strong></div>
+        <div><span class="field-label">Lado</span><strong>${escapeHtml(side)}</strong></div>
+      </div>
+      ${
+        action
+          ? `<div class="path-block">
+              <span class="field-label">Acción actual</span>
+              <code>${escapeHtml(action.label)} · ${action.seconds_left ?? "—"} s · acción ${action.action_id}</code>
+            </div>`
+          : ""
+      }
+      <div class="path-block">
+        <span class="field-label">Última sincronización</span>
+        <code>${escapeHtml(formatSyncTime(status?.last_sync_ms))}</code>
+      </div>
+      ${
+        status?.last_error
+          ? `<p class="notice notice-error">${escapeHtml(status.last_error)}</p>`
+          : ""
+      }
+      <p class="muted lcu-settings-note">Solo lectura: la app no envía picks ni bans al cliente. Tampoco modifica la prioridad estricta del pool ni el flex fuera de rol.</p>
+      <div class="inline-actions">
+        <button class="button ${auto ? "button-danger-ghost" : "button-ghost"}" type="button"
+          data-action="${auto ? "stop-lcu" : "start-lcu"}" ${disabled}>
+          ${auto ? "Detener seguimiento" : "Activar seguimiento"}
+        </button>
+        <button class="button button-ghost" type="button" data-action="refresh-lcu" ${disabled}>
+          Actualizar estado
+        </button>
+      </div>
+    </section>
+  `;
+}
+
+function lcuStatusText(status) {
+  if (!status) return "Sin comprobar";
+  if (status.state === "preview") return "No disponible en la vista previa";
+  if (status.state === "not_found") return "Cliente no encontrado";
+  if (status.state === "connecting") return "Conectando";
+  if (status.state === "reconnecting") return "Reconectando";
+  if (status.state === "error") return "Error";
+  if (status.connected) return "Conectado";
+  return "Desconectado";
+}
+
+function formatSyncTime(milliseconds) {
+  if (!milliseconds) return "—";
+  return new Date(milliseconds).toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
 function settingsView(view) {
   const settings = view.state.settings;
   const data = view.bootstrap.data;
@@ -747,6 +1039,8 @@ function settingsView(view) {
         </div>
       </section>
 
+      ${lcuSettingsSection(view)}
+
       <section class="settings-section">
         <header class="panel-head">
           <div>
@@ -792,7 +1086,7 @@ function settingsView(view) {
           </div>
         </header>
         <p>La app no automatiza picks ni bans; todas las acciones las confirma el usuario.</p>
-        <p class="muted">Los datos son locales y editables. No hay llamadas a Riot ni scraping en esta versión. En una próxima versión se podrán guardar datos de uso localmente para estadística personal.</p>
+        <p class="muted">Los datos son locales y editables. No hay llamadas a la Riot API ni scraping; el seguimiento LCU solo habla con el cliente local de League of Legends. En una próxima versión se podrán guardar datos de uso localmente para estadística personal.</p>
         <p class="muted">Draft Assist isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</p>
         <p class="muted">Los datos e imágenes de campeones son propiedad de Riot Games y se usan bajo la política de Riot/Data Dragon. No están cubiertos por la licencia MIT ni pueden usarse comercialmente.</p>
       </section>

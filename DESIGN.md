@@ -95,6 +95,14 @@ At ≤1050px the recommendation column moves below the board. Champion slots col
 - Need chips: outlined, severity-tinted at high/mid, with numeric severity. Priorities: transparent chips that turn gold when active.
 - Damage split: single 5px bar, gold AD and violet AP; labels above.
 
+### LCU status and auto-tracking
+
+- Viewbar control: 7px state dot, short label, and a **Seguimiento/Detener** button. Green = connected; gold = searching/reconnecting; red = error; muted = no client.
+- Board banner while tracking: gold-tinted surface, explicit “tablero de solo lectura” copy, and a stop action. No glow.
+- Recommendation cards in tracking mode omit the action button (`is-readonly`), because the client is the source of truth.
+- Settings → Cliente de League: 2×2 status grid (estado, cola, plantilla, lado), current action, last sync, and the read-only disclaimer.
+- Activation dialog: “Solo lectura”, “No se envían picks ni bans”, “No se modifica prioridad estricta del pool / flex fuera de rol”.
+
 ### Dialogs
 
 - Native `<dialog>`, soft float shadow, no backdrop blur.

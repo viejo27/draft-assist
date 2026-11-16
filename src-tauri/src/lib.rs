@@ -1,16 +1,19 @@
 mod commands;
+mod lcu;
 mod persistence;
 
 use draft_engine::Engine;
 use draft_engine::data::GameData;
+use lcu::LcuRuntime;
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::Manager;
 
 pub struct RuntimeState {
     pub engine: Mutex<Engine>,
     pub data_dir: std::path::PathBuf,
     pub warnings: Vec<String>,
+    pub lcu: Arc<LcuRuntime>,
 }
 
 /// Copies the state and editable data from the old identifier folder once.
@@ -117,6 +120,7 @@ pub fn run() {
                 engine: Mutex::new(engine),
                 data_dir,
                 warnings,
+                lcu: Arc::new(LcuRuntime::new()),
             });
             Ok(())
         })
@@ -130,6 +134,9 @@ pub fn run() {
             commands::data_info,
             commands::load_example,
             commands::open_data_dir,
+            commands::lcu_status,
+            commands::lcu_start_tracking,
+            commands::lcu_stop_tracking,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

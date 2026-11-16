@@ -79,3 +79,40 @@ export async function openDataDir() {
   if (isTauri) return invoke("open_data_dir");
   throw new Error("Abrir carpetas solo está disponible en la app de escritorio.");
 }
+
+const previewLcuStatus = {
+  state: "preview",
+  connected: false,
+  phase: null,
+  queue_id: null,
+  queue_name: null,
+  template_id: null,
+  side: null,
+  local_player: null,
+  current_action: null,
+  last_error: null,
+  last_sync_ms: null,
+  auto: false,
+};
+
+export async function lcuStatus() {
+  if (isTauri) return invoke("lcu_status");
+  return previewLcuStatus;
+}
+
+export async function lcuStartTracking(appState) {
+  if (isTauri) return invoke("lcu_start_tracking", { appState });
+  throw new Error("El seguimiento LCU solo está disponible en la app de escritorio.");
+}
+
+export async function lcuStopTracking() {
+  if (isTauri) return invoke("lcu_stop_tracking");
+  return { ...previewLcuStatus, auto: false };
+}
+
+export async function listenLcuSnapshot(handler) {
+  if (!isTauri) return () => {};
+  return window.__TAURI__.event.listen("lcu-snapshot", (event) => {
+    handler(event.payload);
+  });
+}

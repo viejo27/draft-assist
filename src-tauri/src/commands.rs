@@ -1,4 +1,5 @@
 use crate::RuntimeState;
+use crate::lcu::{LcuStatus, TrackingConfig, validate_roster};
 use crate::{load_engine, persistence};
 use draft_engine::data::example_state;
 use draft_engine::model::{
@@ -8,7 +9,7 @@ use draft_engine::model::{
 use draft_engine::{AppState as PersistedState, Engine};
 use serde::Serialize;
 use std::path::Path;
-use tauri::State;
+use tauri::{AppHandle, State};
 use tauri_plugin_opener::OpenerExt;
 
 #[derive(Debug, Clone, Serialize)]
@@ -156,6 +157,42 @@ pub fn open_data_dir(app: tauri::AppHandle, state: State<'_, RuntimeState>) -> R
     app.opener()
         .open_path(path.display().to_string(), None::<&str>)
         .map_err(|error| format!("No se pudo abrir la carpeta de datos: {error}"))
+}
+
+#[tauri::command]
+pub async fn lcu_status(state: State<'_, RuntimeState>) -> Result<LcuStatus, String> {
+    let lcu = state.lcu.clone();
+    Ok(lcu.probe().await)
+}
+
+#[tauri::command]
+pub fn lcu_start_tracking(
+    app: AppHandle,
+    state: State<'_, RuntimeState>,
+    app_state: PersistedState,
+) -> Result<LcuStatus, String> {
+    validate_roster(&app_state.roster)?;
+
+    let data = {
+        let engine = state
+            .engine
+            .lock()
+            .map_err(|_| "El motor está bloqueado; reinicia la aplicación.".to_string())?;
+        engine.data().clone()
+    };
+
+    let config = TrackingConfig {
+        roster: app_state.roster,
+        priorities: app_state.draft.priorities.clone(),
+        side: app_state.draft.side,
+    };
+    state.lcu.start(app, config, data);
+    Ok(state.lcu.status())
+}
+
+#[tauri::command]
+pub fn lcu_stop_tracking(state: State<'_, RuntimeState>) -> Result<LcuStatus, String> {
+    Ok(state.lcu.stop())
 }
 
 fn build_data_info(data_dir: &Path, engine: &Engine) -> DataInfo {

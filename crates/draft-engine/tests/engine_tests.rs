@@ -1,7 +1,8 @@
 use draft_engine::Engine;
 use draft_engine::data::{GameData, example_state};
 use draft_engine::model::{
-    AppState, DraftState, Phase, PoolEntry, RecommendOptions, RecommendRequest, Settings,
+    AppState, DraftState, LcuTurn, Phase, PoolEntry, RecommendOptions, RecommendRequest, Settings,
+    Side,
 };
 
 fn engine() -> Engine {
@@ -204,6 +205,7 @@ fn ban_phase_returns_ban_recommendations_and_excludes_bans() {
         priorities: vec![],
         current_player_id: None,
         manual: None,
+        lcu_turn: None,
     };
     state.settings = Settings::default();
     let response = engine()
@@ -259,6 +261,30 @@ fn state_validation_rejects_duplicate_champions() {
             .errors
             .iter()
             .any(|error| error.contains("duplicado"))
+    );
+}
+
+#[test]
+fn lcu_turn_overrides_template_turn_and_player() {
+    let mut state = example();
+    state.draft.lcu_turn = Some(LcuTurn {
+        phase: Phase::Pick,
+        acting_side: Side::Blue,
+        player_id: Some("support".into()),
+        pick_number: Some(5),
+        label: "Pick azul 5 · LCU".into(),
+    });
+
+    let response = engine().recommend(&request(state)).expect("consulta LCU");
+    let turn = response.turn.expect("turno LCU");
+
+    assert_eq!(turn.label, "Pick azul 5 · LCU");
+    assert_eq!(turn.current_player.expect("jugador LCU").id, "support");
+    assert!(
+        response
+            .recommendations
+            .iter()
+            .all(|rec| rec.champion.roles.contains(&draft_engine::Role::Support))
     );
 }
 

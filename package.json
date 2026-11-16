@@ -1,7 +1,7 @@
 {
   "name": "draft-assist",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/viejo27/draft-assist.git"

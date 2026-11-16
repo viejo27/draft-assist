@@ -13,15 +13,17 @@ Asistente de draft para League of Legends, hecho con **Rust + Tauri v2** y front
 - Recomendaciones con score, tier, razones y riesgos.
 - Bans recomendados por amenaza y protección de bans propios.
 - Próximos picks tentativos.
+- **Seguimiento LCU de solo lectura**: sincroniza lobby, formato, lado, posiciones, bans y picks desde el cliente.
 - Persistencia local con autosave, export/import.
 
-La app no automatiza picks ni bans; todas las acciones las confirma el usuario.
+La app no automatiza picks ni bans; todas las acciones las confirma el usuario. El seguimiento LCU solo lee el cliente y actualiza el tablero.
 
 ## Requisitos
 
 - Rust estable con edition 2024 (probado con 1.96).
 - Tauri v2 prerequisites para Windows: MSVC, WebView2.
 - Node.js 20+ solo para ejecutar el CLI de Tauri y los scripts de datos.
+- League of Legends abierto y logueado para usar el seguimiento LCU (opcional).
 
 En PowerShell, si `npm` da error de execution policy, usa `npm.cmd` y `npx.cmd`.
 
@@ -88,6 +90,44 @@ La primera vez se abre con un **draft de ejemplo** cargado. Desde ahí puedes ed
    - justificación de 2–3 líneas y riesgos.
 5. Pulsa **Elegir** o **Banear** para bloquear la acción y avanzar el turno.
 6. Usa **Deshacer** (`Ctrl/Cmd+Z`) para corregir, o **Cambiar turno** para saltar a otro paso de la plantilla.
+
+## Seguimiento LCU
+
+En la barra de vistas aparece el estado del cliente (`Sin cliente`, `Lobby`, `Champ Select`, etc.). El botón **Seguimiento** abre un diálogo de confirmación y activa la sincronización.
+
+Qué hace:
+
+- Detecta el cliente local de League of Legends por su lockfile o por los argumentos de `LeagueClientUx.exe`.
+- Lee el lobby y el champ select cada segundo.
+- Aplica la plantilla según la cola:
+
+| Cola | Plantilla |
+|---|---|
+| Ranked Solo/Duo (420), Ranked Flex (440), Normal Draft (400) | Ranked |
+| Clash (700) | Competitivo |
+| Custom con bans simultáneos | Ranked |
+| Custom con bans secuenciales | Competitivo |
+| Cola desconocida | Se infiere por `hasSimultaneousBans`; si no existe, Ranked con aviso |
+
+- Mapea `assignedPosition` del LCU a los roles del roster: `top`, `jungle`, `middle`, `bottom`, `utility`.
+- Sincroniza lado, bans, picks, jugador que está pickeando y fase actual.
+- Conserva nombres, pools, comfort y winrate del roster.
+- Hace el tablero de solo lectura mientras está activo.
+
+Qué **no** hace:
+
+- No envía picks ni bans al cliente.
+- No modifica **Prioridad estricta del pool**.
+- No modifica **Permitir flex fuera de rol**.
+- No inventa posiciones enemigas: usa el rol del campeón cuando el LCU no lo expone.
+
+Requisitos y límites:
+
+- League debe estar abierto en el mismo PC y con la misma sesión de usuario.
+- El seguimiento se queda armado entre partidas hasta pulsar **Detener**.
+- Si el cliente se reinicia, la app recalcula el puerto/token y reintenta.
+- LCU es una API local no oficial; puede cambiar entre parches.
+- Para detenerlo: botón **Detener** en la barra o en el banner del tablero.
 
 El estado se guarda automáticamente en:
 
@@ -281,6 +321,7 @@ Usa `scripts/vendor/champion.json` (copia local) o `lol-things/16.21.1/...` si e
 ```text
 crates/draft-engine/      motor Rust puro + datos + tests + demo
 src-tauri/                comandos Tauri, persistencia y ventana
+src-tauri/src/lcu/        cliente, credenciales, mapeo y tracker LCU
 src/                      UI vanilla, estilos e iconos
 scripts/                  generación de datos y preview
 examples/                 estado y salida de ejemplo
@@ -292,12 +333,12 @@ PRODUCT.md                contexto de producto
 ## Tests y calidad
 
 ```powershell
-cargo test -p draft-engine
+cargo test --workspace
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
-Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late.
+Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late. También hay tests de lockfile/credenciales LCU, mapeo de posiciones, detección de ranked/competitivo, mapeo de picks/bans y `lcu_turn`.
 
 ## Problemas comunes
 
@@ -309,7 +350,8 @@ Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, pri
 
 ## Mejoras futuras
 
-- Integración LCU de solo lectura para reducir la entrada manual (futuro, no implementado; sujeto a aprobación de Riot).
+- LCU por WebSocket para latencia menor que el polling actual.
+- Auto-hover/auto-lock opcional en el cliente (no implementado; solo con confirmación explícita, aviso de overrides de pool/flex y botón de emergencia).
 - Riot API para maestría y estadísticas propias (futuro, no implementado; requiere production key y aprobación de Riot).
 - Guardar datos de uso (picks, bans, resultados) localmente para estadística personal (próxima versión).
 - Draft fearless con bans acumulados por serie.

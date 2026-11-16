@@ -335,6 +335,21 @@ pub struct ManualTurn {
     pub player_id: Option<PlayerId>,
 }
 
+/// Turno autoritativo cuando el draft viene del cliente de League.
+/// Permite que el motor recomiende sin depender de que `step_index` coincida
+/// exactamente con la secuencia de la plantilla.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LcuTurn {
+    pub phase: Phase,
+    pub acting_side: Side,
+    #[serde(default)]
+    pub player_id: Option<PlayerId>,
+    #[serde(default)]
+    pub pick_number: Option<u8>,
+    #[serde(default)]
+    pub label: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DraftState {
     #[serde(default = "default_version")]
@@ -357,6 +372,8 @@ pub struct DraftState {
     pub current_player_id: Option<PlayerId>,
     #[serde(default)]
     pub manual: Option<ManualTurn>,
+    #[serde(default)]
+    pub lcu_turn: Option<LcuTurn>,
 }
 
 fn default_version() -> u32 {

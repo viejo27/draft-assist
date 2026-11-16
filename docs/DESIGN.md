@@ -17,8 +17,9 @@ src/ (WebView)
         | comandos Tauri
         v
 src-tauri/
-  commands.rs     -> bootstrap, recommend, save/load, reload, validate
+  commands.rs     -> bootstrap, recommend, save/load, reload, validate, LCU
   persistence.rs  -> state.json
+  lcu/            -> credenciales, cliente HTTP, mapeo y tracker LCU
   lib.rs          -> RuntimeState + carga de datos
         |
         | path dependency
@@ -55,7 +56,8 @@ pub struct AppState {
 - `Roster { players: Vec<Player>, pick_order: Vec<PlayerId> }`
 - `Player { id, name, role, pool: Vec<PoolEntry> }`
 - `PoolEntry { champion_id, comfort: 1..5, winrate: Option<f32> }`
-- `DraftState { side, template_id, step_index, our_bans, enemy_bans, our_picks, enemy_picks, priorities, current_player_id, manual }`
+- `DraftState { side, template_id, step_index, our_bans, enemy_bans, our_picks, enemy_picks, priorities, current_player_id, manual, lcu_turn }`
+- `LcuTurn { phase, acting_side, player_id, pick_number, label }` (turno autoritativo del cliente, opcional)
 - `TeamPick { player_id, champion_id, role }`
 - `EnemyPick { champion_id, role: Option<Role> }`
 - `ManualTurn { phase, acting_side, player_id }` (soporte de motor; la UI usa plantillas y salto de turno)
@@ -204,7 +206,87 @@ Se simula el pick actual con la recomendación top, se avanza a los siguientes p
 - “Recargar datos” reconstruye el motor desde disco.
 - Export/import de estado completo desde la UI.
 
-## 9. UI
+## 9. Seguimiento LCU
+
+Módulo `src-tauri/src/lcu/`:
+
+- `credentials.rs`: lockfile de League y argumentos de `LeagueClientUx.exe`.
+- `client.rs`: HTTP local con TLS autofirmado aceptado solo para `127.0.0.1` y Basic Auth `riot:<token>`.
+- `model.rs`: DTOs de gameflow, lobby y champ select.
+- `mapping.rs`: LCU → `DraftState`; es la parte pura y testeable.
+- `tracker.rs`: polling cada segundo, estado en memoria y evento Tauri `lcu-snapshot`.
+
+El modo es **solo lectura**. No se llama a ningún `PATCH`/`POST` del champ select.
+
+### Detección
+
+1. Busca `LeagueClientUx.exe` y lee `--app-port` + `--remoting-auth-token`.
+2. Si falla, prueba lockfiles conocidos:
+   - `C:\Riot Games\League of Legends\lockfile`
+   - `%ProgramFiles%\Riot Games\League of Legends\lockfile`
+   - `%ProgramFiles(x86)%\...`
+   - `%LOCALAPPDATA%\...`
+3. Parsea `name:pid:port:token:protocol`.
+
+Si el cliente se reinicia, el tracker descarta el cliente HTTP y vuelve a resolver credenciales.
+
+### Endpoints
+
+| Endpoint | Uso |
+|---|---|
+| `GET /lol-gameflow/v1/gameflow-phase` | Fase actual. |
+| `GET /lol-gameflow/v1/session` | Cola y datos de partida. |
+| `GET /lol-lobby/v2/lobby` | Lobby y miembros. |
+| `GET /lol-champ-select/v1/session` | Equipos, posiciones, acciones y bans. |
+
+### Formato y lado
+
+La cola se detecta con `gameData.queue.id`. En champ select, `hasSimultaneousBans` corrige la plantilla:
+
+- 420/440/400 → `ranked`
+- 700 → `tournament`
+- custom + bans simultáneos → `ranked`
+- custom + bans secuenciales → `tournament`
+- desconocida → `hasSimultaneousBans`; fallback `ranked`
+
+El lado se toma del campo `team` del jugador local (`1` azul, `2` rojo). Si falta, se infiere por el actor de la primera acción de pick.
+
+### Mapeo de jugadores
+
+`assignedPosition`:
+
+| LCU | Rol |
+|---|---|
+| `top` | TOP |
+| `jungle` | JUNGLE |
+| `middle` | MID |
+| `bottom` | ADC |
+| `utility` | SUPPORT |
+
+Se exige un roster con un jugador por rol. Los nombres, pools, comfort y winrate se conservan. Los picks enemigos se guardan sin rol si el LCU no lo expone; el motor lo infiere.
+
+### Turno y estado
+
+Cada snapshot construye un `DraftState` nuevo:
+
+- bans de `bans.myTeamBans` y `bans.theirTeamBans`, más acciones de ban completadas como fallback;
+- picks de `myTeam`/`theirTeam` con `championId > 0`;
+- acción activa con `isInProgress`;
+- `lcu_turn` con fase, lado, jugador, pick number y etiqueta.
+
+`DraftState.lcu_turn` tiene prioridad sobre `manual` y sobre la plantilla. Así el motor no depende de que `step_index` coincida exactamente. Al detener el seguimiento, la UI limpia `lcu_turn` y deja el último draft como snapshot editable.
+
+La tarea emite `lcu-snapshot` solo cuando cambia el estado o el draft. El frontend aplica el draft, conserva prioridades y settings, y recalcula recomendaciones.
+
+### UI
+
+- Indicador LCU en la barra de vistas con estado, cola y acción actual.
+- Diálogo de activación que aclara: solo lectura, sin acciones al cliente, sin cambios de pool/flex.
+- Banner de seguimiento y botón **Detener**.
+- Tablero de solo lectura mientras está activo.
+- Sección **Cliente de League** en Ajustes con estado, cola, plantilla, lado, acción y última sincronización.
+
+## 10. UI
 
 Vistas: Draft, Equipo, Ajustes.
 
@@ -214,7 +296,7 @@ Vistas: Draft, Equipo, Ajustes.
 
 La UI está descrita en `DESIGN.md` (sistema visual) y sigue modo Operate: densidad escaneable, acciones a un clic, estados vacío/error/loading.
 
-## 10. Tests
+## 11. Tests
 
 `crates/draft-engine/tests/engine_tests.rs`:
 
@@ -230,23 +312,37 @@ La UI está descrita en `DESIGN.md` (sistema visual) y sigue modo Operate: densi
 - dirección e inversión de matchups;
 - round-trip JSON;
 - flex fuera de rol con opción explícita;
-- early vs late (meta/flex vs counter).
+- early vs late (meta/flex vs counter);
+- `lcu_turn` sobreescribiendo el turno de plantilla.
+
+`src-tauri/src/lcu/`:
+
+- parseo de lockfile y argumentos del proceso;
+- mapeo de posiciones a roles;
+- detección de plantilla ranked/competitivo;
+- mapeo de picks, bans y lado;
+- validación de roster;
+- acción LCU actual y fallback sin acción.
 
 Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` (si clippy está instalado) y el ejemplo CLI.
 
-## 11. Limitaciones
+## 12. Limitaciones
 
 - Prioridad meta estática del parche 16.21.1; no es un tier list vivo.
 - Counters/sinergias son un seed curado, no estadística agregada.
 - No hay pools enemigos, así que `denial` es neutral.
 - El rol enemigo se infiere si no se registra.
 - La UI no expone el modo manual completo; el motor lo soporta y la UI permite saltar de turno.
-- No hay integración con LCU/Riot API.
-- No hay scraping de terceros.
+- El seguimiento LCU usa polling de 1 s, no WebSocket.
+- LCU es una API local no oficial y puede cambiar por parche.
+- El LCU debe estar abierto en el mismo PC y con la misma sesión.
+- No hay Riot API ni scraping de terceros.
+- El modo es solo lectura: no hay auto-hover ni auto-lock.
 
-## 12. Mejoras futuras
+## 13. Mejoras futuras
 
-- LCU de solo lectura para reducir la entrada manual (futuro, no implementado; sujeto a aprobación de Riot).
+- LCU por WebSocket para menor latencia.
+- Auto-hover/auto-lock opcional con confirmación explícita, overrides temporales de pool/flex y botón de emergencia.
 - Riot API para maestría y estadísticas propias (futuro, no implementado; requiere production key y aprobación de Riot).
 - Guardar datos de uso (picks, bans, resultados) localmente para estadística personal (próxima versión).
 - Draft fearless con bans acumulados.

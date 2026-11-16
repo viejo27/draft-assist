@@ -17,6 +17,13 @@ export const app = {
   lastSaved: null,
   validation: null,
   preview: api.isPreview,
+  lcu: {
+    status: null,
+    auto: false,
+    connected: false,
+    starting: false,
+    lastError: null,
+  },
 };
 
 const listeners = new Set();
@@ -80,6 +87,25 @@ export function playerForPick(pickNumber) {
 export function currentTurn() {
   if (!app.state) return null;
   const draft = app.state.draft;
+  if (draft.lcu_turn) {
+    const lcuTurn = draft.lcu_turn;
+    const isOurTurn = lcuTurn.acting_side === draft.side;
+    const player = lcuTurn.player_id
+      ? app.state.roster.players.find((item) => item.id === lcuTurn.player_id)
+      : draft.current_player_id
+        ? app.state.roster.players.find((item) => item.id === draft.current_player_id)
+        : null;
+    return {
+      phase: lcuTurn.phase,
+      actingSide: lcuTurn.acting_side,
+      isOurTurn,
+      pickNumber: lcuTurn.pick_number ?? null,
+      label: lcuTurn.label || "Turno LCU",
+      currentPlayer: player ?? null,
+      manual: false,
+      lcu: true,
+    };
+  }
   if (draft.manual) {
     const isOurTurn = draft.manual.acting_side === draft.side;
     return {
@@ -240,6 +266,9 @@ export async function init() {
       );
     }
     app.state = saved ?? clone(app.bootstrap.example_state);
+    if (app.state?.draft?.lcu_turn) {
+      app.state.draft.lcu_turn = null;
+    }
     app.isExample = !saved;
     app.view = "draft";
     app.undo = [];
@@ -249,6 +278,9 @@ export async function init() {
     app.loading = false;
     emit();
     await refresh();
+    if (api.isTauri) {
+      void initLcu();
+    }
     if (app.isExample) {
       toast("Draft de ejemplo cargado. Puedes editar todo o empezar uno nuevo.", "info");
     }
@@ -262,18 +294,130 @@ export async function init() {
   }
 }
 
+async function initLcu() {
+  try {
+    await api.listenLcuSnapshot(applyLcuSnapshot);
+  } catch (error) {
+    app.lcu.lastError = error.message ?? String(error);
+  }
+
+  try {
+    const status = await api.lcuStatus();
+    applyLcuStatus(status);
+  } catch (error) {
+    app.lcu.lastError = error.message ?? String(error);
+    emit();
+  }
+}
+
+function applyLcuStatus(status) {
+  if (!status) return;
+  app.lcu.status = status;
+  app.lcu.auto = Boolean(status.auto);
+  app.lcu.connected = Boolean(status.connected);
+  app.lcu.lastError = status.last_error ?? null;
+}
+
+export function applyLcuSnapshot(payload) {
+  if (!payload?.status) return;
+  applyLcuStatus(payload.status);
+
+  if (payload.status.auto && payload.draft) {
+    const current = JSON.stringify(app.state?.draft ?? null);
+    const next = JSON.stringify(payload.draft);
+    if (current !== next) {
+      app.state.draft = payload.draft;
+      app.validation = null;
+      scheduleSave();
+      emit();
+      void refresh();
+      return;
+    }
+  }
+
+  emit();
+}
+
+export async function refreshLcuStatus() {
+  if (!api.isTauri) return;
+  try {
+    const status = await api.lcuStatus();
+    applyLcuStatus(status);
+    emit();
+  } catch (error) {
+    app.lcu.lastError = error.message ?? String(error);
+    emit();
+  }
+}
+
+export async function startLcuTracking() {
+  if (!api.isTauri) {
+    toast("El seguimiento LCU solo está disponible en la app de escritorio.", "warning");
+    return;
+  }
+  if (!app.state) return;
+  app.lcu.starting = true;
+  emit();
+  try {
+    const status = await api.lcuStartTracking(app.state);
+    app.lcu.auto = true;
+    app.lcu.status = status;
+    app.lcu.connected = Boolean(status.connected);
+    app.undo = [];
+    toast("Seguimiento LCU activado. El tablero es de solo lectura.", "success");
+    emit();
+    void refresh();
+  } catch (error) {
+    toast(error.message ?? "No se pudo activar el seguimiento LCU.", "error");
+  } finally {
+    app.lcu.starting = false;
+    emit();
+  }
+}
+
+export async function stopLcuTracking() {
+  if (!api.isTauri) return;
+  try {
+    const status = await api.lcuStopTracking();
+    app.lcu.auto = false;
+    app.lcu.status = status;
+    app.lcu.connected = Boolean(status.connected);
+    if (app.state?.draft?.lcu_turn) {
+      app.state.draft.lcu_turn = null;
+    }
+    scheduleSave();
+    emit();
+    void refresh();
+    toast("Seguimiento LCU detenido. Ya puedes editar el draft.", "info");
+  } catch (error) {
+    toast(error.message ?? "No se pudo detener el seguimiento LCU.", "error");
+  }
+}
+
+export function isLcuAuto() {
+  return Boolean(app.lcu.auto);
+}
+
+function blockLcuEdit() {
+  if (!app.lcu.auto) return false;
+  toast("Detén el seguimiento LCU para editar el draft.", "warning");
+  return true;
+}
+
 export function setView(view) {
   app.view = view;
   emit();
 }
 
 export function undo() {
+  if (blockLcuEdit()) return;
   if (!app.undo.length) return;
   app.state.draft = app.undo.pop();
   afterDraftChange();
 }
 
 export function startNewDraft({ templateId, side, useExampleRoster }) {
+  if (blockLcuEdit()) return;
   if (!app.bootstrap) return;
   const example = app.bootstrap.example_state;
   if (useExampleRoster) {
@@ -291,6 +435,7 @@ export function startNewDraft({ templateId, side, useExampleRoster }) {
     priorities: [],
     current_player_id: null,
     manual: null,
+    lcu_turn: null,
   };
   app.undo = [];
   app.view = "draft";
@@ -300,6 +445,7 @@ export function startNewDraft({ templateId, side, useExampleRoster }) {
 }
 
 export function loadExample() {
+  if (blockLcuEdit()) return;
   if (!app.bootstrap) return;
   app.state = clone(app.bootstrap.example_state);
   app.undo = [];
@@ -310,6 +456,7 @@ export function loadExample() {
 }
 
 export function setStepIndex(index) {
+  if (blockLcuEdit()) return;
   const template = currentTemplate();
   if (!template) return;
   pushUndo();
@@ -319,6 +466,7 @@ export function setStepIndex(index) {
 }
 
 export function setCurrentPlayer(playerId) {
+  if (blockLcuEdit()) return;
   app.state.draft.current_player_id = playerId || null;
   afterDraftChange();
 }
@@ -347,6 +495,7 @@ function validateChampion(championId, side) {
 }
 
 export function recordPick(championId, role = null) {
+  if (blockLcuEdit()) return;
   const turn = currentTurn();
   if (!turn || turn.phase !== "PICK") {
     toast("Ahora mismo no toca un pick.", "error");
@@ -382,6 +531,7 @@ export function recordPick(championId, role = null) {
 }
 
 export function recordBan(championId, side = "our") {
+  if (blockLcuEdit()) return;
   const turn = currentTurn();
   if (!turn || turn.phase !== "BAN") {
     toast("Ahora mismo no toca un ban.", "error");
@@ -400,6 +550,7 @@ export function recordBan(championId, side = "our") {
 }
 
 export function togglePriority(need) {
+  if (blockLcuEdit()) return;
   pushUndo();
   const priorities = app.state.draft.priorities;
   const index = priorities.indexOf(need);
@@ -497,6 +648,7 @@ export function exportState() {
 }
 
 export async function importState(file) {
+  if (blockLcuEdit()) return;
   try {
     const text = await file.text();
     const parsed = JSON.parse(text);
@@ -506,6 +658,9 @@ export async function importState(file) {
       return;
     }
     app.state = parsed;
+    if (app.state?.draft?.lcu_turn) {
+      app.state.draft.lcu_turn = null;
+    }
     app.undo = [];
     app.view = "draft";
     afterDraftChange();

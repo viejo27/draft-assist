@@ -21,8 +21,11 @@ import {
   setSettings,
   setStepIndex,
   setView,
+  startLcuTracking,
   startNewDraft,
+  stopLcuTracking,
   subscribe,
+  refreshLcuStatus,
   toast,
   togglePriority,
   undo,
@@ -56,6 +59,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("new-draft-confirm")?.addEventListener("click", confirmNewDraft);
   document.getElementById("step-confirm")?.addEventListener("click", confirmStep);
+  document.getElementById("lcu-confirm")?.addEventListener("click", async () => {
+    document.getElementById("lcu-dialog")?.close();
+    await startLcuTracking();
+  });
   document.getElementById("import-file")?.addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     if (file) await importState(file);
@@ -120,6 +127,15 @@ function handleClick(event) {
       break;
     case "close-dialog":
       trigger.closest("dialog")?.close();
+      break;
+    case "start-lcu":
+      openLcuDialog();
+      break;
+    case "stop-lcu":
+      void stopLcuTracking();
+      break;
+    case "refresh-lcu":
+      void refreshLcuStatus();
       break;
     case "retry":
       void init();
@@ -240,7 +256,24 @@ function handleKeydown(event) {
   }
 }
 
+function openLcuDialog() {
+  if (app.preview) {
+    toast("El seguimiento LCU solo está disponible en la app de escritorio.", "warning");
+    return;
+  }
+  if (app.lcu.auto) {
+    void stopLcuTracking();
+    return;
+  }
+  const dialog = document.getElementById("lcu-dialog");
+  if (dialog && !dialog.open) dialog.showModal();
+}
+
 function openNewDraftDialog() {
+  if (app.lcu.auto) {
+    toast("Detén el seguimiento LCU para crear otro draft.", "warning");
+    return;
+  }
   if (!app.bootstrap) return;
   renderNewDraftOptions(app);
   const currentSide = app.state?.draft?.side ?? "BLUE";
@@ -264,6 +297,10 @@ function confirmNewDraft() {
 }
 
 function openStepDialog() {
+  if (app.lcu.auto) {
+    toast("Detén el seguimiento LCU para cambiar de turno.", "warning");
+    return;
+  }
   if (!app.state) return;
   renderStepOptions(app);
   const dialog = document.getElementById("step-dialog");
@@ -277,6 +314,10 @@ function confirmStep() {
 }
 
 function openPickerFromTrigger(trigger) {
+  if (app.lcu.auto) {
+    toast("El tablero es de solo lectura durante el seguimiento LCU.", "warning");
+    return;
+  }
   const { mode, side } = trigger.dataset;
   const turn = currentTurn();
   if (!mode || !side) return;
@@ -328,6 +369,10 @@ function openPoolPicker(playerId) {
 }
 
 function openChampionPicker({ mode, side, playerId, role }) {
+  if (app.lcu.auto) {
+    toast("El tablero es de solo lectura durante el seguimiento LCU.", "warning");
+    return;
+  }
   picker.mode = mode;
   picker.side = side;
   picker.playerId = playerId;
@@ -371,6 +416,10 @@ function updateChampionGrid() {
 
 function chooseChampion(championId) {
   if (!championId) return;
+  if (app.lcu.auto) {
+    toast("Detén el seguimiento LCU para editar el draft.", "warning");
+    return;
+  }
   const dialog = document.getElementById("champion-dialog");
   if (picker.mode === "pool") {
     addPoolEntry(picker.playerId, championId);
