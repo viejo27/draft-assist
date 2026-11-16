@@ -347,6 +347,7 @@ Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, pri
 - **Datos editables inválidos**: la app cae a los datos embebidos y muestra un aviso. Corrige el JSON en `app_data_dir/data/` y pulsa Recargar datos.
 - **Quiero volver al ejemplo**: botón **Cargar ejemplo** en la barra superior.
 - **El build falla con “file is being used”**: cierra la app abierta antes de ejecutar `npm.cmd run build`; Windows no puede parchear el `.exe` en uso.
+- **“Reconectando con League”**: es normal si el cliente se está abriendo, cerrando o reiniciando. La app reintenta sola y no muestra URLs ni puertos. Si persiste, comprueba que League esté abierto y logueado.
 
 ## Mejoras futuras
 

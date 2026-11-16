@@ -278,6 +278,8 @@ Cada snapshot construye un `DraftState` nuevo:
 
 La tarea emite `lcu-snapshot` solo cuando cambia el estado o el draft. El frontend aplica el draft, conserva prioridades y settings, y recalcula recomendaciones.
 
+Los errores de red del LCU se clasifican a mensajes amigables (`Cliente no disponible`, `Reconectando`, `Sesión cambiada`) y nunca incluyen URL, puerto ni detalles de `reqwest` en la UI. Los endpoints opcionales (`lobby`, `gameflow session`, `champ-select session`) son best-effort: un fallo puntual no invalida la fase ni fuerza una reconexión.
+
 ### UI
 
 - Indicador LCU en la barra de vistas con estado, cola y acción actual.

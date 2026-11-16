@@ -26,6 +26,17 @@ pub enum CredentialsError {
     InvalidPort,
 }
 
+impl CredentialsError {
+    pub fn user_message(&self) -> &'static str {
+        match self {
+            Self::NotFound => "Abre League of Legends para activar el seguimiento.",
+            Self::Io(_) | Self::InvalidLockfile | Self::InvalidPort => {
+                "No se pudo leer la sesión del cliente. Reintentando…"
+            }
+        }
+    }
+}
+
 pub fn resolve() -> Result<LcuCredentials, CredentialsError> {
     if let Some(credentials) = from_process() {
         return Ok(credentials);
@@ -142,7 +153,7 @@ fn arg_value(args: &[String], key: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{arg_value, parse_lockfile_content};
+    use super::{CredentialsError, arg_value, parse_lockfile_content};
 
     #[test]
     fn parses_a_valid_lockfile() {
@@ -159,6 +170,14 @@ mod tests {
         let error = parse_lockfile_content("LeagueClient:1234:51234::https").unwrap_err();
 
         assert!(error.to_string().contains("formato"));
+    }
+
+    #[test]
+    fn not_found_has_a_friendly_user_message() {
+        assert_eq!(
+            CredentialsError::NotFound.user_message(),
+            "Abre League of Legends para activar el seguimiento."
+        );
     }
 
     #[test]

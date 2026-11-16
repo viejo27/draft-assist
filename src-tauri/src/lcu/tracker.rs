@@ -93,14 +93,14 @@ pub async fn probe_status() -> LcuStatus {
         Ok(Err(error)) => {
             return LcuStatus {
                 state: "not_found".into(),
-                last_error: Some(error.to_string()),
+                last_error: Some(error.user_message().into()),
                 ..LcuStatus::default()
             };
         }
-        Err(error) => {
+        Err(_) => {
             return LcuStatus {
                 state: "error".into(),
-                last_error: Some(format!("No se pudo buscar el cliente: {error}")),
+                last_error: Some("No se pudo buscar el cliente. Reintentando…".into()),
                 ..LcuStatus::default()
             };
         }
@@ -111,7 +111,7 @@ pub async fn probe_status() -> LcuStatus {
         Err(error) => {
             return LcuStatus {
                 state: "error".into(),
-                last_error: Some(error.to_string()),
+                last_error: Some(error.user_message().into()),
                 ..LcuStatus::default()
             };
         }
@@ -141,8 +141,8 @@ pub async fn probe_status() -> LcuStatus {
             }
         }
         Err(error) => LcuStatus {
-            state: "error".into(),
-            last_error: Some(error.to_string()),
+            state: "reconnecting".into(),
+            last_error: Some(error.user_message().into()),
             ..LcuStatus::default()
         },
     }
@@ -205,27 +205,34 @@ async fn poll_tracking(
     if client.is_none() {
         let credentials = tokio::task::spawn_blocking(credentials::resolve)
             .await
-            .map_err(|error| format!("No se pudo buscar el cliente: {error}"))?
-            .map_err(|error| error.to_string())?;
-        *client = Some(LcuClient::new(&credentials).map_err(|error| error.to_string())?);
+            .map_err(|_| "No se pudo buscar el cliente. Reintentando…".to_string())?
+            .map_err(|error| error.user_message().to_string())?;
+        *client =
+            Some(LcuClient::new(&credentials).map_err(|error| error.user_message().to_string())?);
     }
 
     let lcu = client
         .as_ref()
-        .ok_or_else(|| "El cliente LCU no está inicializado.".to_string())?;
-    let phase = lcu.get_phase().await.map_err(|error| error.to_string())?;
+        .ok_or_else(|| "Cliente de League no disponible. Reintentando…".to_string())?;
+    let phase = lcu
+        .get_phase()
+        .await
+        .map_err(|error| error.user_message().to_string())?;
     let gameflow = lcu
         .get_optional_json::<GameflowSession>("/lol-gameflow/v1/session")
         .await
-        .map_err(|error| error.to_string())?;
+        .ok()
+        .flatten();
     let lobby = lcu
         .get_optional_json::<Lobby>("/lol-lobby/v2/lobby")
         .await
-        .map_err(|error| error.to_string())?;
+        .ok()
+        .flatten();
     let session = if phase == "ChampSelect" {
         lcu.get_optional_json::<ChampSelectSession>("/lol-champ-select/v1/session")
             .await
-            .map_err(|error| error.to_string())?
+            .ok()
+            .flatten()
     } else {
         None
     };

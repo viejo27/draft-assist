@@ -130,10 +130,7 @@ pub fn build_snapshot(
                     }
                 }
             }
-            None => {
-                status.last_error = Some("El cliente no expuso la sesión de champ select.".into());
-                None
-            }
+            None => None,
         }
     } else if phase == "Lobby" {
         Some(prepared_lobby_draft(&template_id, config))
@@ -687,6 +684,18 @@ mod tests {
         let draft = snapshot.draft.expect("draft mapeado");
 
         assert_eq!(draft.our_bans, vec!["Yuumi"]);
+    }
+
+    #[test]
+    fn missing_champ_select_session_is_not_reported_as_a_connection_error() {
+        let data = data();
+        let config = config();
+
+        let snapshot = build_snapshot("ChampSelect", None, None, None, &config, &data, true);
+
+        assert!(snapshot.status.connected);
+        assert!(snapshot.status.last_error.is_none());
+        assert!(snapshot.draft.is_none());
     }
 
     #[test]

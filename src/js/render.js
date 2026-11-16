@@ -129,7 +129,7 @@ function renderLcuControl(view) {
 
   root.innerHTML = `
     <span class="lcu-dot ${dot}"></span>
-    <span class="lcu-label" title="${escapeHtml(status?.last_error ?? label)}">${escapeHtml(label)}</span>
+    <span class="lcu-label">${escapeHtml(label)}</span>
     <button class="button button-small ${auto ? "button-danger-ghost" : "button-ghost"}" type="button"
       data-action="${auto ? "stop-lcu" : "start-lcu"}" ${disabled}>
       ${auto ? "Detener" : "Seguimiento"}
@@ -147,8 +147,7 @@ function lcuDotClass(status, auto) {
 function lcuShortLabel(status, auto) {
   if (!status) return auto ? "Buscando LCU…" : "LCU";
   if (status.state === "not_found") return "Sin cliente";
-  if (status.state === "reconnecting") return "Reconectando…";
-  if (status.state === "error") return "Error LCU";
+  if (status.state === "reconnecting" || status.state === "error") return "Reconectando…";
   if (!status.connected) return auto ? "Buscando LCU…" : "LCU";
   if (status.phase === "ChampSelect" && status.current_action) {
     return status.current_action.label;
@@ -215,9 +214,11 @@ function lcuBanner(view) {
   const label = lcuShortLabel(status, true);
   const detail = status?.current_action
     ? `${status.current_action.seconds_left ?? "—"} s restantes`
-    : status?.phase === "Lobby"
-      ? "Esperando champ select"
-      : "Sincronizando desde el cliente";
+    : !status?.connected
+      ? "Buscando cliente de League"
+      : status?.phase === "Lobby"
+        ? "Esperando champ select"
+        : "Sincronizando desde el cliente";
   return `
     <div class="lcu-banner" role="status">
       <span class="lcu-dot ${lcuDotClass(status, true)}"></span>
@@ -607,7 +608,7 @@ function lcuAdvicePanel(view, turn, completed) {
   const connected = Boolean(status?.connected);
   const inChampSelect = status?.phase === "ChampSelect";
   const ourTurn = Boolean(turn?.isOurTurn && action);
-  const notices = [...new Set([...(view.warnings ?? []), status?.last_error].filter(Boolean))];
+  const notices = [...new Set((view.warnings ?? []).filter(Boolean))];
   const banPhase = action?.phase === "BAN";
   const title = completed
     ? "Draft completo"
@@ -642,8 +643,8 @@ function lcuAdvicePanel(view, turn, completed) {
   if (!connected) {
     body = `
       <div class="empty-advice">
-        <p>${status?.last_error ? escapeHtml(status.last_error) : "League of Legends no está disponible."}</p>
-        <p>Abre el cliente y entra a un lobby. La app seguirá intentando conectarse.</p>
+        <p>${status?.state === "not_found" ? "Abre League of Legends para activar el seguimiento." : "No se pudo conectar con el cliente. La app seguirá intentando."}</p>
+        <p class="muted">El seguimiento se reanudará automáticamente cuando el cliente esté disponible.</p>
         <button class="button button-ghost" type="button" data-action="stop-lcu">Detener seguimiento</button>
       </div>
     `;
@@ -711,7 +712,7 @@ function lcuAdvicePanel(view, turn, completed) {
       </header>
       ${
         notices.length
-          ? `<div class="notice-list">${notices.slice(0, 3).map((warning) => `<p class="notice ${warning === status?.last_error ? "notice-error" : ""}">${escapeHtml(warning)}</p>`).join("")}</div>`
+          ? `<div class="notice-list">${notices.slice(0, 3).map((warning) => `<p class="notice">${escapeHtml(warning)}</p>`).join("")}</div>`
           : ""
       }
       ${body}
@@ -949,8 +950,8 @@ function lcuSettingsSection(view) {
         <code>${escapeHtml(formatSyncTime(status?.last_sync_ms))}</code>
       </div>
       ${
-        status?.last_error
-          ? `<p class="notice notice-error">${escapeHtml(status.last_error)}</p>`
+        status?.state === "reconnecting" || status?.state === "error"
+          ? `<p class="muted">La app reintentará automáticamente cuando el cliente esté disponible.</p>`
           : ""
       }
       <p class="muted lcu-settings-note">Solo lectura: la app no envía picks ni bans al cliente. Tampoco modifica la prioridad estricta del pool ni el flex fuera de rol.</p>
@@ -972,8 +973,7 @@ function lcuStatusText(status) {
   if (status.state === "preview") return "No disponible en la vista previa";
   if (status.state === "not_found") return "Cliente no encontrado";
   if (status.state === "connecting") return "Conectando";
-  if (status.state === "reconnecting") return "Reconectando";
-  if (status.state === "error") return "Error";
+  if (status.state === "reconnecting" || status.state === "error") return "Reconectando";
   if (status.connected) return "Conectado";
   return "Desconectado";
 }
