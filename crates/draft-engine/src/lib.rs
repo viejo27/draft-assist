@@ -1,4 +1,5 @@
 pub mod data;
+pub mod history;
 pub mod model;
 pub mod recommend;
 pub mod scoring;

@@ -23,6 +23,13 @@ lol-things
 *.tgz
 .impeccable/review
 
+# Personal draft history (never commit)
+ban-clash.txt
+private/
+*.private.json
+*.private.txt
+history.local.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

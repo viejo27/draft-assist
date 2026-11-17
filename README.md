@@ -14,6 +14,8 @@ Asistente de draft para League of Legends, hecho con **Rust + Tauri v2** y front
 - Bans recomendados por amenaza y protección de bans propios.
 - Próximos picks tentativos.
 - **Seguimiento LCU de solo lectura**: sincroniza lobby, formato, lado, posiciones, bans y picks desde el cliente.
+- **Historial local y scouting**: importa tu TXT de Clash, guarda picks, bans y resultados, y consulta estadísticas por campeón, bans, lado y rival.
+- **Pools rivales**: agrega por nombre los campeones que fuiste anotando y corrige nombres con alias.
 - Persistencia local con autosave, export/import.
 
 La app no automatiza picks ni bans; todas las acciones las confirma el usuario. El seguimiento LCU solo lee el cliente y actualiza el tablero.
@@ -90,6 +92,7 @@ La primera vez se abre con un **draft de ejemplo** cargado. Desde ahí puedes ed
    - justificación de 2–3 líneas y riesgos.
 5. Pulsa **Elegir** o **Banear** para bloquear la acción y avanzar el turno.
 6. Usa **Deshacer** (`Ctrl/Cmd+Z`) para corregir, o **Cambiar turno** para saltar a otro paso de la plantilla.
+7. **Historial** → importa tu TXT de Clash o guarda la partida actual. Revisa estadísticas, bans y rivales.
 
 ## Seguimiento LCU
 
@@ -136,6 +139,71 @@ El estado se guarda automáticamente en:
 ```
 
 Los JSON editables se copian a `%APPDATA%/viejo27.draft-assist/data/`.
+
+## Historial y scouting
+
+La pestaña **Historial** guarda partidas locales: picks, bans, resultado, lado, primer ban y los pools de los rivales que hayas scouteado. Todo queda en tu equipo.
+
+### Importar tu archivo de Clash
+
+1. Historial → **Importar Clash**.
+2. Selecciona el `.txt` con bloques separados por `////`.
+3. La app muestra un resumen: partidas, rebalanceos, nombres faltantes y tokens por revisar.
+4. Importa todo o solo las partidas de confianza alta.
+5. Corrige nombres desde **Rivales → Renombrar**.
+
+También puedes generar los archivos limpios fuera de la app:
+
+```powershell
+cargo run -p draft-engine --example import_history -- ban-clash.txt private
+```
+
+Genera `private/clash-history.json`, `private/clash-history.clean.txt`, `private/clash-history.review.md` y `private/clash-import-report.json`. La carpeta `private/` está en `.gitignore`.
+
+El parser:
+
+- Acepta roles `top`, `jungle`, `mid`, `adc`, `support`, `fill`, `comodin`, `random`, `aram`, `autofill`, `nada`.
+- Separa `main` y `last` por `/` o `|`.
+- Reconoce alias y typos: `fiddlestick`, `evelyn`, `renata`, `yummi`, `bardo`, `leblanck`, `lysandra`, `chogat`, `lilia`, `zaheen`, `huawei`, `negra`, `loca`, `cantautora`, etc.
+- Extrae rango con división: `Nombre Plata II` → nombre `Nombre`, rango `Plata II`.
+- Infiere el lado por el primer pick y el primer ban por la primera sección de bans.
+- Rebalancea picks/bans 6/4 a 5/5 moviendo la última entrada, con aviso.
+- No inventa resultados, fechas ni nombres.
+
+### Estadísticas
+
+- Resumen: partidas, winrate, racha, mejor campeón, amenaza rival y ban más repetido.
+- Nuestros picks: PJ, récord, winrate y veces que el rival lo baneó.
+- Amenazas rivales: PJ, récord, winrate en contra y nuestros bans.
+- Bans: propios y rivales, con winrate contextual y muestra.
+- Filtros por cola, resultado, lado, primer ban, completas y búsqueda por rival/campeón.
+
+### Scouting
+
+- **Rivales** agrega por nombre todos los pools que fuiste anotando.
+- Muestra roles vistos, main/last pool, récord contra él, notas y última partida.
+- **Ver partidas** filtra el historial por ese rival.
+- **Renombrar** corrige el nombre en todas sus partidas y guarda un alias para futuras importaciones.
+
+### Privacidad y archivos
+
+```text
+%APPDATA%/viejo27.draft-assist/history/history.json
+%APPDATA%/viejo27.draft-assist/history/history.backup-*.json
+%APPDATA%/viejo27.draft-assist/exports/history-*.json
+%APPDATA%/viejo27.draft-assist/exports/history-*.txt
+```
+
+- `private/` y `ban-clash.txt` están en `.gitignore`.
+- El ejemplo público usa nombres falsos: [`examples/clash-history.example.json`](examples/clash-history.example.json).
+- Cada guardado crea un backup y conserva los últimos 5.
+
+### Límites
+
+- El archivo viejo no registra nuestros nombres ni fechas; esas partidas dan estadística por campeón y rival, no por jugador.
+- Las partidas nuevas guardadas desde el draft sí incluyen el jugador que pickeó.
+- La integración del historial con las recomendaciones queda para 0.3.1.
+- `ff` se interpreta como derrota; `se rompió` como resultado desconocido.
 
 ## Modelo de entrada
 
@@ -320,25 +388,29 @@ Usa `scripts/vendor/champion.json` (copia local) o `lol-things/16.21.1/...` si e
 
 ```text
 crates/draft-engine/      motor Rust puro + datos + tests + demo
+crates/draft-engine/src/history/  parser, modelos y texto del historial
 src-tauri/                comandos Tauri, persistencia y ventana
 src-tauri/src/lcu/        cliente, credenciales, mapeo y tracker LCU
 src/                      UI vanilla, estilos e iconos
+src/js/history.js         estadísticas, filtros y perfiles de rivales
 scripts/                  generación de datos y preview
-examples/                 estado y salida de ejemplo
+examples/                 estado, recomendación e historial de ejemplo
 docs/DESIGN.md            arquitectura, modelo y scoring
 DESIGN.md                 sistema visual
 PRODUCT.md                contexto de producto
+private/                  historial personal (gitignored)
 ```
 
 ## Tests y calidad
 
 ```powershell
 cargo test --workspace
+node --test src/js/history.test.js
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
-Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late. También hay tests de lockfile/credenciales LCU, mapeo de posiciones, detección de ranked/competitivo, mapeo de picks/bans y `lcu_turn`.
+Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late. También hay tests de lockfile/credenciales LCU, mapeo de posiciones, detección de ranked/competitivo, mapeo de picks/bans y `lcu_turn`. El historial añade tests de bloques completos, rebalanceo 6/4, alias de campeones, rangos, fill/comodín, notas, importación y estadísticas/filtros/scouting en JavaScript.
 
 ## Problemas comunes
 
@@ -351,14 +423,14 @@ Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, pri
 
 ## Mejoras futuras
 
+- 0.3.1: usar el historial como desempate opcional en las recomendaciones, con peso bajo y apagado por defecto.
+- 0.3.1: capturar partidas desde el LCU al terminar el champ select, con resultado desde el fin de partida.
 - LCU por WebSocket para latencia menor que el polling actual.
 - Auto-hover/auto-lock opcional en el cliente (no implementado; solo con confirmación explícita, aviso de overrides de pool/flex y botón de emergencia).
 - Riot API para maestría y estadísticas propias (futuro, no implementado; requiere production key y aprobación de Riot).
-- Guardar datos de uso (picks, bans, resultados) localmente para estadística personal (próxima versión).
 - Draft fearless con bans acumulados por serie.
 - Optimización conjunta de los 5 bans de ranked.
 - Simulación de respuestas enemigas y Monte Carlo.
-- Notas de scouting del rival introducidas manualmente, solo con información pública (futuro).
 - Historial de drafts/scrims y vista de coach.
 - Tests E2E de UI y accesibilidad.
 

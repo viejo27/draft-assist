@@ -6,6 +6,7 @@ export const isPreview = !isTauri;
 
 let previewBootstrapCache = null;
 let previewRecommendationCache = null;
+let previewHistoryCache = null;
 
 async function loadPreviewJson(name) {
   const url = new URL(`../data/${name}`, import.meta.url);
@@ -26,6 +27,11 @@ async function previewBootstrap() {
 async function previewRecommendation() {
   previewRecommendationCache ??= await loadPreviewJson("preview-recommendation.json");
   return previewRecommendationCache;
+}
+
+async function previewHistory() {
+  previewHistoryCache ??= await loadPreviewJson("preview-history.json");
+  return previewHistoryCache;
 }
 
 export async function bootstrap() {
@@ -115,4 +121,34 @@ export async function listenLcuSnapshot(handler) {
   return window.__TAURI__.event.listen("lcu-snapshot", (event) => {
     handler(event.payload);
   });
+}
+
+export async function historyLoad() {
+  if (isTauri) return invoke("history_load");
+  return previewHistory();
+}
+
+export async function historySave(history) {
+  if (isTauri) return invoke("history_save", { history });
+  return { path: "vista previa" };
+}
+
+export async function historyImportLegacy(text) {
+  if (isTauri) return invoke("history_import_legacy", { text });
+  throw new Error("Importar Clash solo está disponible en la app de escritorio.");
+}
+
+export async function historyExport(history) {
+  if (isTauri) return invoke("history_export", { history });
+  throw new Error("Exportar historial solo está disponible en la app de escritorio.");
+}
+
+export async function historyMatchFromDraft(appState) {
+  if (isTauri) return invoke("history_match_from_draft", { appState });
+  throw new Error("Guardar partidas solo está disponible en la app de escritorio.");
+}
+
+export async function openHistoryDir() {
+  if (isTauri) return invoke("history_open_dir");
+  throw new Error("Abrir carpetas solo está disponible en la app de escritorio.");
 }

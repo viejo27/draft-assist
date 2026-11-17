@@ -38,6 +38,7 @@ const bootstrap = {
   data: {
     data_dir: "preview/data",
     state_path: "preview/state.json",
+    history_dir: "preview/history",
     stats: {
       version: catalog.version,
       champions: champions.length,

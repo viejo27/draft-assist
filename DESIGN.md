@@ -103,6 +103,16 @@ At ≤1050px the recommendation column moves below the board. Champion slots col
 - Settings → Cliente de League: 2×2 status grid (estado, cola, plantilla, lado), current action, last sync, and the read-only disclaimer.
 - Activation dialog: “Solo lectura”, “No se envían picks ni bans”, “No se modifica prioridad estricta del pool / flex fuera de rol”.
 
+### History and scouting
+
+- History tabs: 32px segmented control on a quiet surface; active tab is raised with an inset border, not a glow.
+- KPI cards: 6-column grid, 13px padding, 21px value, 10.5px detail. Green = good, red = bad, gold = bans. Empty values use `—`, never fake zeros.
+- Tables: 10px uppercase headers, tabular numbers right-aligned, 24px champion avatars in the first column. Row hover is a surface change only.
+- Match list: grid row with date, result pill, side, pick avatars, queue/first-ban meta and confidence badge. The whole row is one button.
+- Rival cards: 260px minimum, name + roles, record pill, 22px pool avatars, notes and two small actions.
+- Import dialog: 2×2 status grid, token chips, first warnings, then “Importar todo / Solo confianza alta”.
+- No charts in 0.3.0. Tables show sample size; the bans/lados winrate carries a contextual footnote.
+
 ### Dialogs
 
 - Native `<dialog>`, soft float shadow, no backdrop blur.

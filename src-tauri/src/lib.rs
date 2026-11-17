@@ -137,6 +137,12 @@ pub fn run() {
             commands::lcu_status,
             commands::lcu_start_tracking,
             commands::lcu_stop_tracking,
+            commands::history_load,
+            commands::history_save,
+            commands::history_import_legacy,
+            commands::history_export,
+            commands::history_match_from_draft,
+            commands::history_open_dir,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -19,6 +19,21 @@ import {
   sideLabel,
   tierClass,
 } from "./format.js";
+import {
+  banStarterLabel,
+  buildRivalProfiles,
+  confidenceLabel,
+  computeHistorySummary,
+  filterHistoryMatches,
+  filterRivalProfiles,
+  formatHistoryDate,
+  historySideLabel,
+  isCompleteMatch,
+  queueLabel,
+  recordText,
+  resultLabel,
+  winrateText,
+} from "./history.js";
 
 const ROLES = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
 
@@ -50,12 +65,15 @@ export function render(view) {
     root.innerHTML = loadingState();
   } else if (view.view === "roster") {
     root.innerHTML = rosterView(view);
+  } else if (view.view === "history") {
+    root.innerHTML = historyView(view);
   } else if (view.view === "settings") {
     root.innerHTML = settingsView(view);
   } else {
     root.innerHTML = draftView(view);
   }
 
+  renderHistoryDialogs(view);
   renderToasts(view);
 }
 
@@ -66,6 +84,15 @@ function renderTopbar(view) {
 
   if (!view.state) {
     context.innerHTML = `<span class="context-muted">Cargando draft…</span>`;
+  } else if (view.view === "history") {
+    const count = view.history?.store?.matches?.length ?? 0;
+    context.innerHTML = `
+      <span class="context-chip">Historial</span>
+      <span class="context-separator"></span>
+      <span class="context-turn">${count} partida${count === 1 ? "" : "s"}</span>
+      ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
+      ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
+    `;
   } else {
     const template = currentTemplate();
     const turn = currentTurn();
@@ -913,6 +940,773 @@ function poolEntry(player, entry) {
   `;
 }
 
+function championNameOf(championId) {
+  return championById(championId)?.name ?? championId;
+}
+
+function historyView(view) {
+  const history = view.history ?? {};
+  const store = history.store;
+  if (history.loading && !store) return historyLoading();
+  if (history.error && !store) return historyError(history.error);
+  if (!store) return historyLoading();
+
+  const matches = store.matches ?? [];
+  if (!matches.length) return historyEmpty();
+
+  const filtered = filterHistoryMatches(matches, history.filters, championNameOf);
+  const summary = computeHistorySummary(filtered, championNameOf);
+
+  return `
+    ${historyPageHead(store, matches.length)}
+    ${historyTabs(history.tab, matches.length, filtered.length)}
+    ${
+      history.tab === "matches"
+        ? historyMatches(view, filtered)
+        : history.tab === "rivals"
+          ? historyRivals(view, store)
+          : history.tab === "bans"
+            ? historyBans(view, summary, filtered)
+            : historySummary(view, summary, filtered)
+    }
+  `;
+}
+
+function historyPageHead(store, total) {
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Historial y scouting</h1>
+        <p class="muted">${total} partidas guardadas · picks, bans, resultados y pools rivales. Los datos son locales.</p>
+      </div>
+      <div class="inline-actions">
+        <button class="button button-ghost" type="button" data-action="history-import">Importar Clash</button>
+        <button class="button button-ghost" type="button" data-action="history-save-draft">Guardar partida actual</button>
+        <button class="button button-ghost" type="button" data-action="history-export">Exportar</button>
+        <button class="button button-ghost" type="button" data-action="history-open-dir">Carpeta</button>
+      </div>
+    </div>
+    ${
+      store?.updated_at
+        ? `<p class="history-save-note muted">Última actualización: ${escapeHtml(formatHistoryDate({ played_at: store.updated_at }))}</p>`
+        : ""
+    }
+  `;
+}
+
+function historyTabs(active, total, filtered) {
+  const tabs = [
+    ["summary", "Resumen", ""],
+    ["matches", "Partidas", `${filtered}/${total}`],
+    ["rivals", "Rivales", ""],
+    ["bans", "Bans", ""],
+  ];
+  return `
+    <div class="history-tabs" role="tablist" aria-label="Secciones del historial">
+      ${tabs
+        .map(
+          ([id, label, count]) => `
+          <button class="history-tab ${active === id ? "is-active" : ""}" type="button" role="tab" aria-selected="${active === id}"
+            data-action="history-tab" data-tab="${id}">
+            ${label}${count ? `<span>${count}</span>` : ""}
+          </button>
+        `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function historySummary(view, summary, matches) {
+  if (!matches.length) return historyFilteredEmpty(view);
+  return `
+    <div class="history-kpi-grid">
+      ${historyKpi("Partidas", matches.length, `${summary.wins}-${summary.losses} · ${summary.unknown} sin resultado`)}
+      ${historyKpi("Winrate", winrateText(summary.winrate), `${summary.games} con resultado`, summary.winrate !== null && summary.winrate >= 50 ? "is-good" : "")}
+      ${historyKpi("Racha", summary.streak.count ? `${summary.streak.count}${summary.streak.tone === "win" ? "V" : "D"}` : "—", "según el orden del historial", summary.streak.tone === "win" ? "is-good" : summary.streak.tone === "loss" ? "is-bad" : "")}
+      ${historyKpi("Mejor campeón", summary.bestChampion?.name ?? "—", summary.bestChampion ? `${winrateText(summary.bestChampion.winrate)} · ${summary.bestChampion.games} PJ` : "muestra mínima: 3 PJ", "is-good")}
+      ${historyKpi("Amenaza rival", summary.worstMatchup?.name ?? "—", summary.worstMatchup ? `${winrateText(summary.worstMatchup.winrate)} en contra · ${summary.worstMatchup.games} PJ` : "muestra mínima: 3 PJ", "is-bad")}
+      ${historyKpi("Ban más repetido", summary.mostBannedAgainst?.name ?? "—", summary.mostBannedAgainst ? `${summary.mostBannedAgainst.count} bans rivales` : "sin datos", "is-gold")}
+    </div>
+
+    <div class="history-columns">
+      ${historyOurPicksPanel(summary.topPicks)}
+      ${historyEnemyPicksPanel(summary.topEnemyPicks)}
+    </div>
+
+    <div class="history-columns">
+      ${historyBansPanel("Nuestros bans", "Lo que más baneamos.", summary.topOurBans)}
+      ${historyBansPanel("Bans rivales", "Lo que más nos banearon.", summary.topEnemyBans, true)}
+    </div>
+
+    ${historyContextPanel(summary)}
+    ${historyFilters(view)}
+  `;
+}
+
+function historyKpi(label, value, detail, tone = "") {
+  return `
+    <article class="history-kpi ${tone}">
+      <span class="field-label">${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+      <small>${escapeHtml(detail)}</small>
+    </article>
+  `;
+}
+
+function historyOurPicksPanel(rows) {
+  return `
+    <section class="history-panel">
+      <header class="panel-head">
+        <div><h2>Nuestros picks</h2><p class="muted">Campeones con los que más jugamos.</p></div>
+      </header>
+      <table class="history-table">
+        <thead><tr><th>Campeón</th><th>PJ</th><th>Récord</th><th>WR</th><th>Bans rivales</th></tr></thead>
+        <tbody>
+          ${
+            rows.length
+              ? rows
+                  .map(
+                    (row) => `
+                    <tr>
+                      <td>${historyChampionCell(row.championId)}</td>
+                      <td>${row.games}</td>
+                      <td>${recordText(row.wins, row.losses)}</td>
+                      <td>${winrateText(row.winrate)}</td>
+                      <td>${row.bansAgainst}</td>
+                    </tr>
+                  `,
+                  )
+                  .join("")
+              : `<tr><td colspan="5" class="history-empty-cell">Sin picks registrados.</td></tr>`
+          }
+        </tbody>
+      </table>
+    </section>
+  `;
+}
+
+function historyEnemyPicksPanel(rows) {
+  return `
+    <section class="history-panel">
+      <header class="panel-head">
+        <div><h2>Amenazas rivales</h2><p class="muted">Campeones rivales y cómo nos fue contra ellos.</p></div>
+      </header>
+      <table class="history-table">
+        <thead><tr><th>Campeón</th><th>PJ</th><th>Récord</th><th>WR contra</th><th>Nuestros bans</th></tr></thead>
+        <tbody>
+          ${
+            rows.length
+              ? rows
+                  .map(
+                    (row) => `
+                    <tr>
+                      <td>${historyChampionCell(row.championId)}</td>
+                      <td>${row.games}</td>
+                      <td>${recordText(row.wins, row.losses)}</td>
+                      <td>${winrateText(row.winrate)}</td>
+                      <td>${row.ourBans}</td>
+                    </tr>
+                  `,
+                  )
+                  .join("")
+              : `<tr><td colspan="5" class="history-empty-cell">Sin picks rivales registrados.</td></tr>`
+          }
+        </tbody>
+      </table>
+    </section>
+  `;
+}
+
+function historyBansPanel(title, subtitle, rows, enemy = false) {
+  const visibleRows = rows.filter((row) => row.count > 0);
+  return `
+    <section class="history-panel">
+      <header class="panel-head">
+        <div><h2>${escapeHtml(title)}</h2><p class="muted">${escapeHtml(subtitle)}</p></div>
+      </header>
+      <table class="history-table">
+        <thead><tr><th>Campeón</th><th>Bans</th><th>PJ</th><th>Récord</th><th>WR</th></tr></thead>
+        <tbody>
+          ${
+            visibleRows.length
+              ? visibleRows
+                  .map(
+                    (row) => `
+                    <tr>
+                      <td>${historyChampionCell(row.championId)}</td>
+                      <td>${row.count}${
+                        enemy
+                          ? row.ourBans
+                            ? `<span class="muted"> · ${row.ourBans} nuestros</span>`
+                            : ""
+                          : row.enemyBans
+                            ? `<span class="muted"> · ${row.enemyBans} rival</span>`
+                            : ""
+                      }</td>
+                      <td>${row.games}</td>
+                      <td>${recordText(row.wins, row.losses)}</td>
+                      <td>${winrateText(row.winrate)}</td>
+                    </tr>
+                  `,
+                  )
+                  .join("")
+              : `<tr><td colspan="5" class="history-empty-cell">Sin bans registrados.</td></tr>`
+          }
+        </tbody>
+      </table>
+    </section>
+  `;
+}
+
+function historyContextPanel(summary) {
+  return `
+    <div class="history-columns">
+      <section class="history-panel">
+        <header class="panel-head">
+          <div><h2>Primer ban</h2><p class="muted">Quién abrió la fase de bans.</p></div>
+        </header>
+        <div class="history-mini-grid">
+          ${historyMiniStat("Nosotros", summary.firstBan.us)}
+          ${historyMiniStat("Ellos", summary.firstBan.them)}
+          ${historyMiniStat("Sin dato", summary.firstBan.unknown)}
+        </div>
+      </section>
+      <section class="history-panel">
+        <header class="panel-head">
+          <div><h2>Lado</h2><p class="muted">Inferido por el orden del primer pick.</p></div>
+        </header>
+        <div class="history-mini-grid">
+          ${historyMiniStat("Azul", summary.sides.BLUE)}
+          ${historyMiniStat("Rojo", summary.sides.RED)}
+          ${historyMiniStat("Sin lado", summary.sides.unknown)}
+        </div>
+      </section>
+    </div>
+    <p class="history-footnote">El winrate asociado a bans y lados es contextual: muestra la relación con tus resultados, no una causalidad.</p>
+  `;
+}
+
+function historyMiniStat(label, line) {
+  const games = line.games;
+  const known = line.wins + line.losses;
+  const rate = known ? (line.wins / known) * 100 : null;
+  return `
+    <div class="history-mini-stat">
+      <span class="field-label">${escapeHtml(label)}</span>
+      <strong>${games}</strong>
+      <small>${line.wins}-${line.losses} · ${winrateText(rate)}</small>
+    </div>
+  `;
+}
+
+function historyFilters(view) {
+  const filters = view.history?.filters ?? {};
+  const select = (name, value, options) => `
+    <label class="history-filter-field">
+      <span class="field-label">${escapeHtml(name)}</span>
+      <select data-action="history-filter" data-filter="${options.filter}">
+        ${options.items
+          .map(
+            ([id, label]) =>
+              `<option value="${escapeHtml(id)}" ${value === id ? "selected" : ""}>${escapeHtml(label)}</option>`,
+          )
+          .join("")}
+      </select>
+    </label>
+  `;
+  return `
+    <section class="history-filters" aria-label="Filtros del historial">
+      <label class="search-field history-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        <input type="search" value="${escapeHtml(filters.search ?? "")}" placeholder="Buscar rival o campeón…" data-action="history-search" autocomplete="off" />
+      </label>
+      ${select("Cola", filters.queue, {
+        filter: "queue",
+        items: [
+          ["ALL", "Todas"],
+          ["clash", "Clash"],
+          ["ranked_solo", "Ranked Solo"],
+          ["ranked_flex", "Ranked Flex"],
+          ["normal_draft", "Normal Draft"],
+          ["custom", "Custom"],
+          ["unknown", "Sin cola"],
+        ],
+      })}
+      ${select("Resultado", filters.result, {
+        filter: "result",
+        items: [
+          ["ALL", "Todos"],
+          ["win", "Victoria"],
+          ["loss", "Derrota"],
+          ["unknown", "Sin resultado"],
+        ],
+      })}
+      ${select("Lado", filters.side, {
+        filter: "side",
+        items: [
+          ["ALL", "Todos"],
+          ["BLUE", "Azul"],
+          ["RED", "Rojo"],
+        ],
+      })}
+      ${select("Primer ban", filters.firstBan, {
+        filter: "firstBan",
+        items: [
+          ["ALL", "Todos"],
+          ["us", "Nosotros"],
+          ["them", "Ellos"],
+          ["unknown", "Sin dato"],
+        ],
+      })}
+      <label class="history-filter-field">
+        <span class="field-label">Orden</span>
+        <select data-action="history-filter" data-filter="order">
+          <option value="desc" ${filters.order === "desc" ? "selected" : ""}>Recientes primero</option>
+          <option value="asc" ${filters.order === "asc" ? "selected" : ""}>Antiguas primero</option>
+        </select>
+      </label>
+      <label class="history-filter-check">
+        <input type="checkbox" data-action="history-only-complete" ${filters.onlyComplete ? "checked" : ""} />
+        <span>Solo completas</span>
+      </label>
+      <button class="button button-ghost button-small" type="button" data-action="history-reset-filters">Limpiar filtros</button>
+    </section>
+  `;
+}
+
+function historyMatches(view, matches) {
+  if (!matches.length) return historyFilteredEmpty(view);
+  return `
+    ${historyFilters(view)}
+    <section class="history-panel history-matches-panel">
+      <header class="panel-head">
+        <div><h2>Partidas</h2><p class="muted">${matches.length} partidas con los filtros actuales.</p></div>
+      </header>
+      <div class="history-match-list">
+        ${matches.map(historyMatchRow).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function historyMatchRow(match) {
+  const ourPicks = (match.our_picks ?? []).map((pick) => historyMiniAvatar(pick.champion_id)).join("");
+  const enemyPicks = (match.enemy_picks ?? []).map((pick) => historyMiniAvatar(pick.champion_id)).join("");
+  return `
+    <button class="history-match-row" type="button" data-action="history-open-match" data-match="${escapeHtml(match.id)}">
+      <span class="history-match-date">${escapeHtml(formatHistoryDate(match))}</span>
+      <span class="history-result is-${escapeHtml(match.result)}">${escapeHtml(resultLabel(match.result))}</span>
+      <span class="history-match-side">${escapeHtml(historySideLabel(match.side))}</span>
+      <span class="history-match-picks">
+        <span class="history-pick-group">${ourPicks || "—"}</span>
+        <span class="history-vs">vs</span>
+        <span class="history-pick-group">${enemyPicks || "—"}</span>
+      </span>
+      <span class="history-match-meta">
+        ${escapeHtml(queueLabel(match.queue))}
+        <span class="muted">Primer ban: ${escapeHtml(banStarterLabel(match.first_ban))}</span>
+      </span>
+      <span class="history-confidence is-${escapeHtml(match.confidence)}">${escapeHtml(confidenceLabel(match.confidence))}</span>
+    </button>
+  `;
+}
+
+function historyMiniAvatar(championId) {
+  const champion = championById(championId);
+  if (!champion) {
+    return `<span class="history-mini-avatar is-missing" title="${escapeHtml(championId)}">?</span>`;
+  }
+  return `<span class="history-mini-avatar" title="${escapeHtml(champion.name)}">${championAvatar(champion, "history-mini-img")}</span>`;
+}
+
+function historyChampionCell(championId) {
+  const champion = championById(championId);
+  if (!champion) return `<span class="history-champion-cell">${escapeHtml(championId)}</span>`;
+  return `
+    <span class="history-champion-cell">
+      ${championAvatar(champion, "history-table-avatar")}
+      <span>${escapeHtml(champion.name)}</span>
+    </span>
+  `;
+}
+
+function historyRivals(view, store) {
+  const history = view.history;
+  const profiles = buildRivalProfiles(store.matches ?? [], championNameOf);
+  const filtered = filterRivalProfiles(profiles, history.rivalSearch, history.rivalRole);
+  const hasFilter = history.rivalSearch.trim() || history.rivalRole !== "ALL";
+  const visible = hasFilter ? filtered : filtered.slice(0, 60);
+  return `
+    <section class="history-filters" aria-label="Filtros de rivales">
+      <label class="search-field history-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        <input type="search" value="${escapeHtml(history.rivalSearch)}" placeholder="Buscar rival…" data-action="rival-search" autocomplete="off" />
+      </label>
+      <label class="history-filter-field">
+        <span class="field-label">Rol</span>
+        <select data-action="rival-role">
+          ${[
+            ["ALL", "Todos"],
+            ["TOP", "Top"],
+            ["JUNGLE", "Jungla"],
+            ["MID", "Mid"],
+            ["ADC", "ADC"],
+            ["SUPPORT", "Support"],
+            ["fill", "Fill"],
+            ["comodin", "Comodín"],
+            ["random", "Random"],
+            ["aram", "ARAM"],
+            ["autofill", "Autofill"],
+            ["nada", "Sin rol"],
+          ]
+            .map(
+              ([id, label]) =>
+                `<option value="${id}" ${history.rivalRole === id ? "selected" : ""}>${label}</option>`,
+            )
+            .join("")}
+        </select>
+      </label>
+      <span class="history-filter-count">${filtered.length} rivales${!hasFilter && filtered.length > visible.length ? ` · mostrando ${visible.length}` : ""}</span>
+    </section>
+    ${
+      visible.length
+        ? `<div class="rival-grid">${visible.map(historyRivalCard).join("")}</div>`
+        : `<div class="history-empty-panel"><p>No hay rivales que coincidan con el filtro.</p></div>`
+    }
+  `;
+}
+
+function historyRivalCard(profile) {
+  const roles = [...new Set([...profile.roles.map(roleLabel), ...profile.roleLabels])];
+  const pool = profile.champions
+    .slice(0, 6)
+    .map((champion) => historyMiniAvatar(champion.championId))
+    .join("");
+  return `
+    <article class="rival-card">
+      <header class="rival-card-head">
+        <div>
+          <h3>${escapeHtml(profile.name)}</h3>
+          <p class="muted">${escapeHtml(roles.join(" / ") || "Flex")} · ${profile.games} partida${profile.games === 1 ? "" : "s"}</p>
+        </div>
+        <span class="history-result is-${profile.wins === 0 && profile.losses === 0 ? "unknown" : profile.wins >= profile.losses ? "win" : "loss"}">${recordText(profile.wins, profile.losses)}</span>
+      </header>
+      <div class="rival-pool">${pool || `<span class="muted">Sin pool registrado</span>`}</div>
+      <div class="rival-card-meta">
+        <span>${winrateText(profile.winrate)} vs. ellos</span>
+        ${profile.ranks.length ? `<span>${escapeHtml(profile.ranks.join(" / "))}</span>` : ""}
+      </div>
+      ${
+        profile.notes.length
+          ? `<p class="rival-note">${escapeHtml(profile.notes.slice(0, 2).join(" · "))}</p>`
+          : ""
+      }
+      <footer class="rival-card-actions">
+        <button class="button button-ghost button-small" type="button" data-action="history-filter-rival" data-name="${escapeHtml(profile.name)}">Ver partidas</button>
+        <button class="button button-ghost button-small" type="button" data-action="history-rename-rival" data-name="${escapeHtml(profile.name)}">Renombrar</button>
+      </footer>
+    </article>
+  `;
+}
+
+function historyBans(view, summary, matches) {
+  if (!matches.length) return historyFilteredEmpty(view);
+  return `
+    ${historyContextPanel(summary)}
+    <div class="history-columns">
+      ${historyBansPanel("Nuestros bans", "Lo que baneamos y cómo nos fue.", summary.topOurBans)}
+      ${historyBansPanel("Bans rivales", "Lo que nos banearon y cómo nos fue.", summary.topEnemyBans, true)}
+    </div>
+    ${historyFilters(view)}
+  `;
+}
+
+function historyFilteredEmpty(view) {
+  return `
+    <div class="history-empty-panel">
+      <h2>Sin partidas con esos filtros</h2>
+      <p class="muted">Prueba a limpiar el filtro o buscar otro rival o campeón.</p>
+      <button class="button button-ghost" type="button" data-action="history-reset-filters">Limpiar filtros</button>
+    </div>
+  `;
+}
+
+function historyEmpty() {
+  return `
+    ${historyPageHead({}, 0)}
+    <div class="history-empty-panel history-empty-hero">
+      <div class="history-empty-mark">0</div>
+      <h2>Aún no hay historial</h2>
+      <p class="muted">Importa tu archivo de Clash o guarda una partida desde el draft actual. Los datos se quedan en tu equipo.</p>
+      <div class="inline-actions">
+        <button class="button button-primary" type="button" data-action="history-import">Importar Clash</button>
+        <button class="button button-ghost" type="button" data-action="history-save-draft">Guardar partida actual</button>
+      </div>
+      <p class="callout">Formato aceptado: tu TXT de Clash, con bloques separados por barras, o un JSON de historial de Draft Assist.</p>
+    </div>
+  `;
+}
+
+function historyLoading() {
+  return `
+    <div class="page-head">
+      <div><h1>Historial y scouting</h1><p class="muted">Cargando historial local…</p></div>
+    </div>
+    <div class="history-loading skeleton"></div>
+  `;
+}
+
+function historyError(message) {
+  return `
+    <div class="page-head">
+      <div><h1>Historial y scouting</h1><p class="muted">No se pudo cargar el historial.</p></div>
+    </div>
+    <div class="history-empty-panel">
+      <p class="notice notice-error">${escapeHtml(message)}</p>
+      <button class="button button-primary" type="button" data-action="history-retry">Reintentar</button>
+    </div>
+  `;
+}
+
+export function renderHistoryDialogs(view) {
+  renderHistoryImportBody(view);
+  renderHistoryMatchBody(view);
+  renderHistorySaveBody(view);
+  renderHistoryRenameBody(view);
+}
+
+function renderHistoryImportBody(view) {
+  const dialog = document.getElementById("history-import-dialog");
+  const body = document.getElementById("history-import-body");
+  if (!body) return;
+  if (dialog?.open) return;
+  const preview = view.history?.importPreview;
+  if (!preview) {
+    body.innerHTML = "";
+    return;
+  }
+  const stats = preview.stats ?? {};
+  const confidence = { high: 0, medium: 0, low: 0 };
+  for (const match of preview.matches ?? []) {
+    confidence[match.confidence] = (confidence[match.confidence] ?? 0) + 1;
+  }
+  body.innerHTML = `
+    <p class="muted">Archivo: ${escapeHtml(view.history?.importSource ?? "historial")}</p>
+    <div class="lcu-status-grid">
+      <div><span class="field-label">Bloques</span><strong>${stats.blocks ?? 0}</strong></div>
+      <div><span class="field-label">Partidas</span><strong>${stats.matches ?? 0}</strong></div>
+      <div><span class="field-label">Victorias / derrotas</span><strong>${stats.wins ?? 0} / ${stats.losses ?? 0}</strong></div>
+      <div><span class="field-label">Sin resultado</span><strong>${stats.unknown_results ?? 0}</strong></div>
+      <div><span class="field-label">Confianza alta</span><strong>${confidence.high}</strong></div>
+      <div><span class="field-label">Confianza media / baja</span><strong>${confidence.medium} / ${confidence.low}</strong></div>
+      <div><span class="field-label">Picks / bans rebalanceados</span><strong>${stats.rebalanced_picks ?? 0} / ${stats.rebalanced_bans ?? 0}</strong></div>
+      <div><span class="field-label">Tokens por revisar</span><strong>${stats.unknown_tokens ?? 0}</strong></div>
+    </div>
+    ${
+      preview.unknown_tokens?.length
+        ? `<div class="history-token-row">${preview.unknown_tokens
+            .slice(0, 16)
+            .map(
+              (token) =>
+                `<span class="history-token" title="${escapeHtml((token.examples ?? []).join(" · "))}">${escapeHtml(token.token)} <b>${token.count}</b></span>`,
+            )
+            .join("")}</div>`
+        : ""
+    }
+    ${
+      preview.blocks?.filter((block) => block.warnings?.length).length
+        ? `<div class="notice-list">${preview.blocks
+            .filter((block) => block.warnings?.length)
+            .slice(0, 6)
+            .map(
+              (block) =>
+                `<p class="notice">Bloque ${block.index}: ${escapeHtml(block.warnings[0])}</p>`,
+            )
+            .join("")}</div>`
+        : ""
+    }
+    <p class="callout">Se guardará una copia de seguridad del historial actual antes de importar. Los nombres se conservan; puedes renombrar rivales después.</p>
+  `;
+}
+
+function renderHistoryMatchBody(view) {
+  const dialog = document.getElementById("history-match-dialog");
+  const body = document.getElementById("history-match-body");
+  if (!body) return;
+  if (dialog?.open) return;
+  const match = view.history?.store?.matches?.find(
+    (item) => item.id === view.history.selectedMatchId,
+  );
+  if (!match) {
+    body.innerHTML = "";
+    return;
+  }
+  const rivals = match.rivals ?? [];
+  body.innerHTML = `
+    <div class="history-dialog-headline">
+      <span class="history-result is-${escapeHtml(match.result)}">${escapeHtml(resultLabel(match.result))}</span>
+      <span class="muted">${escapeHtml(formatHistoryDate(match))} · ${escapeHtml(queueLabel(match.queue))} · confianza ${escapeHtml(confidenceLabel(match.confidence))}</span>
+    </div>
+    <div class="history-dialog-grid">
+      <label class="field"><span class="field-label">Resultado</span>
+        <select id="history-match-result">
+          ${["win", "loss", "unknown"]
+            .map(
+              (value) =>
+                `<option value="${value}" ${match.result === value ? "selected" : ""}>${resultLabel(value)}</option>`,
+            )
+            .join("")}
+        </select>
+      </label>
+      <label class="field"><span class="field-label">Cola</span>
+        <select id="history-match-queue">
+          ${["clash", "ranked_solo", "ranked_flex", "normal_draft", "custom", "unknown"]
+            .map(
+              (value) =>
+                `<option value="${value}" ${match.queue === value ? "selected" : ""}>${queueLabel(value)}</option>`,
+            )
+            .join("")}
+        </select>
+      </label>
+      <label class="field"><span class="field-label">Lado</span>
+        <select id="history-match-side">
+          <option value="" ${!match.side ? "selected" : ""}>Sin lado</option>
+          <option value="BLUE" ${match.side === "BLUE" ? "selected" : ""}>Azul</option>
+          <option value="RED" ${match.side === "RED" ? "selected" : ""}>Rojo</option>
+        </select>
+      </label>
+      <label class="field"><span class="field-label">Primer ban</span>
+        <select id="history-match-first-ban">
+          <option value="" ${!match.first_ban ? "selected" : ""}>Sin dato</option>
+          <option value="us" ${match.first_ban === "us" ? "selected" : ""}>Nosotros</option>
+          <option value="them" ${match.first_ban === "them" ? "selected" : ""}>Ellos</option>
+        </select>
+      </label>
+    </div>
+    <label class="field"><span class="field-label">Notas</span>
+      <textarea id="history-match-notes" rows="3">${escapeHtml((match.notes ?? []).join("\n"))}</textarea>
+    </label>
+    <div class="history-detail-section">
+      <h3>Nosotros</h3>
+      <p class="muted">Bans: ${historyChampionInline(match.our_bans)}</p>
+      <p class="muted">Picks: ${historyPickInline(match.our_picks)}</p>
+    </div>
+    <div class="history-detail-section">
+      <h3>Rivales</h3>
+      <p class="muted">Bans: ${historyChampionInline(match.enemy_bans)}</p>
+      <p class="muted">Picks: ${historyPickInline(match.enemy_picks)}</p>
+    </div>
+    ${
+      rivals.length
+        ? `<div class="history-detail-section">
+            <h3>Scouting rival</h3>
+            <div class="history-rival-list">
+              ${rivals
+                .map(
+                  (rival) => `
+                  <div class="history-rival-line">
+                    <span class="role-badge">${escapeHtml(rival.role ? roleShort(rival.role) : rival.role_label ?? "FLEX")}</span>
+                    <strong>${escapeHtml(rival.name)}</strong>
+                    <span class="muted">${escapeHtml(
+                      (rival.pool_groups ?? [])
+                        .flat()
+                        .slice(0, 6)
+                        .map(championNameOf)
+                        .join(", ") || "sin pool",
+                    )}</span>
+                  </div>
+                `,
+                )
+                .join("")}
+            </div>
+          </div>`
+        : ""
+    }
+    ${
+      match.warnings?.length
+        ? `<div class="notice-list">${match.warnings
+            .map((warning) => `<p class="notice">${escapeHtml(warning)}</p>`)
+            .join("")}</div>`
+        : ""
+    }
+  `;
+}
+
+function renderHistorySaveBody(view) {
+  const dialog = document.getElementById("history-save-dialog");
+  const body = document.getElementById("history-save-body");
+  if (!body) return;
+  if (dialog?.open) return;
+  const match = view.history?.pendingMatch;
+  if (!match) {
+    body.innerHTML = "";
+    return;
+  }
+  const complete = isCompleteMatch(match);
+  body.innerHTML = `
+    <div class="history-dialog-headline">
+      <span class="history-result is-unknown">Partida del draft actual</span>
+      <span class="muted">${escapeHtml(queueLabel(match.queue))} · ${escapeHtml(historySideLabel(match.side))}</span>
+    </div>
+    <div class="history-detail-section">
+      <p class="muted">Nuestros picks: ${historyPickInline(match.our_picks)}</p>
+      <p class="muted">Picks rivales: ${historyPickInline(match.enemy_picks)}</p>
+      <p class="muted">Bans: ${historyChampionInline([...(match.our_bans ?? []), ...(match.enemy_bans ?? [])])}</p>
+    </div>
+    ${
+      complete
+        ? ""
+        : `<p class="notice">La partida está incompleta. Se guardará con confianza media y no contará para algunas estadísticas.</p>`
+    }
+    <div class="history-dialog-grid">
+      <label class="field"><span class="field-label">Resultado</span>
+        <select id="history-save-result">
+          <option value="unknown">Sin resultado</option>
+          <option value="win">Victoria</option>
+          <option value="loss">Derrota</option>
+        </select>
+      </label>
+    </div>
+    <label class="field"><span class="field-label">Notas</span>
+      <textarea id="history-save-notes" rows="3" placeholder="Ej.: ff, afk, remontada, draft raro…"></textarea>
+    </label>
+  `;
+}
+
+function renderHistoryRenameBody(view) {
+  const dialog = document.getElementById("history-rename-dialog");
+  const body = document.getElementById("history-rename-body");
+  if (!body) return;
+  if (dialog?.open) return;
+  const rename = view.history?.renameRival;
+  if (!rename) {
+    body.innerHTML = "";
+    return;
+  }
+  body.innerHTML = `
+    <label class="field">
+      <span class="field-label">Nombre del rival</span>
+      <input id="history-rename-input" type="text" maxlength="48" value="${escapeHtml(rename.from)}" />
+    </label>
+    <p class="callout">Se actualizarán todas las partidas donde aparezca este nombre. También se guardará como alias para futuras importaciones.</p>
+  `;
+}
+
+function historyChampionInline(champions) {
+  if (!champions?.length) return "—";
+  return champions
+    .map((championId) => escapeHtml(championNameOf(championId)))
+    .join(", ");
+}
+
+function historyPickInline(picks) {
+  if (!picks?.length) return "—";
+  return picks
+    .map((pick) => escapeHtml(championNameOf(pick.champion_id)))
+    .join(", ");
+}
+
 function lcuSettingsSection(view) {
   const status = view.lcu?.status;
   const auto = Boolean(view.lcu?.auto);
@@ -963,6 +1757,37 @@ function lcuSettingsSection(view) {
         <button class="button button-ghost" type="button" data-action="refresh-lcu" ${disabled}>
           Actualizar estado
         </button>
+      </div>
+    </section>
+  `;
+}
+
+function historySettingsSection(view) {
+  const data = view.bootstrap?.data;
+  const count = view.history?.store?.matches?.length ?? 0;
+  return `
+    <section class="settings-section">
+      <header class="panel-head">
+        <div>
+          <h2>Historial local</h2>
+        </div>
+        <span class="status-dot ${count ? "is-ok" : ""}"></span>
+      </header>
+      <div class="data-grid">
+        <div><dt>Partidas</dt><dd>${count}</dd></div>
+        <div><dt>Scouting</dt><dd>Rivales</dd></div>
+        <div><dt>Formato</dt><dd>JSON</dd></div>
+        <div><dt>Privado</dt><dd>Sí</dd></div>
+      </div>
+      <div class="path-block">
+        <span class="field-label">Carpeta del historial</span>
+        <code>${escapeHtml(data?.history_dir ?? "—")}</code>
+      </div>
+      <p class="muted">El historial se guarda en tu equipo. Puedes importar tu TXT de Clash, exportarlo a JSON/TXT y corregir nombres de rivales desde la pestaña Historial.</p>
+      <div class="inline-actions">
+        <button class="button button-ghost" type="button" data-action="history-import">Importar Clash</button>
+        <button class="button button-ghost" type="button" data-action="history-export">Exportar historial</button>
+        <button class="button button-ghost" type="button" data-action="history-open-dir">Abrir carpeta</button>
       </div>
     </section>
   `;
@@ -1040,6 +1865,7 @@ function settingsView(view) {
       </section>
 
       ${lcuSettingsSection(view)}
+      ${historySettingsSection(view)}
 
       <section class="settings-section">
         <header class="panel-head">
@@ -1086,7 +1912,7 @@ function settingsView(view) {
           </div>
         </header>
         <p>La app no automatiza picks ni bans; todas las acciones las confirma el usuario.</p>
-        <p class="muted">Los datos son locales y editables. No hay llamadas a la Riot API ni scraping; el seguimiento LCU solo habla con el cliente local de League of Legends. En una próxima versión se podrán guardar datos de uso localmente para estadística personal.</p>
+        <p class="muted">Los datos son locales y editables. No hay llamadas a la Riot API ni scraping; el seguimiento LCU solo habla con el cliente local de League of Legends. El historial de partidas, picks, bans y resultados se guarda solo en tu equipo.</p>
         <p class="muted">Draft Assist isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</p>
         <p class="muted">Los datos e imágenes de campeones son propiedad de Riot Games y se usan bajo la política de Riot/Data Dragon. No están cubiertos por la licencia MIT ni pueden usarse comercialmente.</p>
       </section>

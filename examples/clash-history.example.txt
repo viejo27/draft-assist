@@ -1,0 +1,175 @@
+top
+RivalTop
+darius sett garen / darius pyke zed
+
+jungle
+RivalJungla
+kayn nunu master yi / shaco katarina vi
+
+mid
+RivalMid
+sylas diana wukong / ahri sylas
+
+adc
+RivalAdc
+caitlyn jinx ashe / miss fortune ezreal
+
+support
+RivalSup
+nautilus leona lulu / rell
+
+ban ellos
+shen
+darius
+lux
+pyke
+caitlyn
+
+pick nos
+orianna
+sejuani
+ornn
+jinx
+nautilus
+
+ban nos
+kayn
+ahri
+zed
+mundo
+veigar
+
+pick ellos
+sivir
+diana
+ezreal
+leona
+sett
+
+win
+
+///////////////////////////////////
+
+top
+RivalTop Plata II
+jax fiora riven / jax
+
+jungle
+RivalJungla
+lee sin viego sejuani / lee sin
+
+mid
+RivalMid
+azir orianna syndra / ahri
+
+adc
+RivalAdc
+aphelios jinx xayah / kaisa
+
+fill
+RivalFill
+nautilus rell lulu / nautilus
+
+ban nos
+kled
+shen
+yone
+akali
+mordekaiser
+
+pick ellos
+kaisa
+rakan
+orianna
+jax
+jinx
+
+ban ellos
+caitlyn
+poppy
+velkoz
+viego
+leblanc
+
+pick nos
+sivir
+nautilus
+ornn
+ahri
+sejuani
+
+loss
+
+///////////////////////////////////
+
+top
+RivalTop4
+ornn ksante malphite / ornn
+
+jungle
+RivalJungla4
+sejuani viego / sejuani
+
+mid
+RivalMid4
+orianna syndra / orianna
+
+adc
+RivalAdc4
+jinx caitlyn / jinx
+
+support
+RivalSup4
+nautilus rell / nautilus
+
+ban ellos
+caitlyn
+poppy
+velkoz
+viego
+leblanc
+
+pick nos
+orianna
+sejuani
+ornn
+jinx
+nautilus
+
+ban nos
+kled
+shen
+yone
+akali
+mordekaiser
+
+pick ellos
+caitlyn
+miss fortune
+lux
+morgana
+rakan
+
+win
+
+///////////////////////////////////
+
+top
+RivalTop3
+urgot kled / urgot
+
+jungle
+RivalJungla3
+kayn / kayn
+
+mid
+
+adc
+RivalAdc3
+zeri / zeri
+
+support
+RivalSup3
+milio / milio
+
+se rompió

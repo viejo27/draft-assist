@@ -1,0 +1,713 @@
+{
+  "version": 1,
+  "matches": [
+    {
+      "id": "legacy-0001",
+      "source": "legacy_text",
+      "played_at": null,
+      "queue": "clash",
+      "result": "win",
+      "result_note": null,
+      "side": "BLUE",
+      "side_inferred": true,
+      "first_ban": "them",
+      "first_ban_inferred": true,
+      "our_bans": [
+        "Kayn",
+        "Ahri",
+        "Zed",
+        "DrMundo",
+        "Veigar"
+      ],
+      "enemy_bans": [
+        "Shen",
+        "Darius",
+        "Lux",
+        "Pyke",
+        "Caitlyn"
+      ],
+      "our_picks": [
+        {
+          "champion_id": "Orianna",
+          "role": null,
+          "player_name": null,
+          "order": 1,
+          "turn": null
+        },
+        {
+          "champion_id": "Sejuani",
+          "role": null,
+          "player_name": null,
+          "order": 2,
+          "turn": null
+        },
+        {
+          "champion_id": "Ornn",
+          "role": null,
+          "player_name": null,
+          "order": 3,
+          "turn": null
+        },
+        {
+          "champion_id": "Jinx",
+          "role": null,
+          "player_name": null,
+          "order": 4,
+          "turn": null
+        },
+        {
+          "champion_id": "Nautilus",
+          "role": null,
+          "player_name": null,
+          "order": 5,
+          "turn": null
+        }
+      ],
+      "enemy_picks": [
+        {
+          "champion_id": "Sivir",
+          "role": null,
+          "player_name": null,
+          "order": 1,
+          "turn": null
+        },
+        {
+          "champion_id": "Diana",
+          "role": null,
+          "player_name": null,
+          "order": 2,
+          "turn": null
+        },
+        {
+          "champion_id": "Ezreal",
+          "role": null,
+          "player_name": null,
+          "order": 3,
+          "turn": null
+        },
+        {
+          "champion_id": "Leona",
+          "role": null,
+          "player_name": null,
+          "order": 4,
+          "turn": null
+        },
+        {
+          "champion_id": "Sett",
+          "role": null,
+          "player_name": null,
+          "order": 5,
+          "turn": null
+        }
+      ],
+      "rivals": [
+        {
+          "name": "RivalTop",
+          "raw_name": "RivalTop",
+          "role": "TOP",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Darius",
+              "Sett",
+              "Garen"
+            ],
+            [
+              "Darius",
+              "Pyke",
+              "Zed"
+            ]
+          ],
+          "pool_raw": "darius sett garen / darius pyke zed",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalJungla",
+          "raw_name": "RivalJungla",
+          "role": "JUNGLE",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Kayn",
+              "Nunu",
+              "MasterYi"
+            ],
+            [
+              "Shaco",
+              "Katarina",
+              "Vi"
+            ]
+          ],
+          "pool_raw": "kayn nunu master yi / shaco katarina vi",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalMid",
+          "raw_name": "RivalMid",
+          "role": "MID",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Sylas",
+              "Diana",
+              "MonkeyKing"
+            ],
+            [
+              "Ahri",
+              "Sylas"
+            ]
+          ],
+          "pool_raw": "sylas diana wukong / ahri sylas",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalAdc",
+          "raw_name": "RivalAdc",
+          "role": "ADC",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Caitlyn",
+              "Jinx",
+              "Ashe"
+            ],
+            [
+              "MissFortune",
+              "Ezreal"
+            ]
+          ],
+          "pool_raw": "caitlyn jinx ashe / miss fortune ezreal",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalSup",
+          "raw_name": "RivalSup",
+          "role": "SUPPORT",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Nautilus",
+              "Leona",
+              "Lulu"
+            ],
+            [
+              "Rell"
+            ]
+          ],
+          "pool_raw": "nautilus leona lulu / rell",
+          "rank": null,
+          "notes": []
+        }
+      ],
+      "notes": [],
+      "warnings": [],
+      "confidence": "high",
+      "rebalanced": false,
+      "legacy_index": 1
+    },
+    {
+      "id": "legacy-0002",
+      "source": "legacy_text",
+      "played_at": null,
+      "queue": "clash",
+      "result": "loss",
+      "result_note": null,
+      "side": "RED",
+      "side_inferred": true,
+      "first_ban": "us",
+      "first_ban_inferred": true,
+      "our_bans": [
+        "Kled",
+        "Shen",
+        "Yone",
+        "Akali",
+        "Mordekaiser"
+      ],
+      "enemy_bans": [
+        "Caitlyn",
+        "Poppy",
+        "Velkoz",
+        "Viego",
+        "Leblanc"
+      ],
+      "our_picks": [
+        {
+          "champion_id": "Sivir",
+          "role": null,
+          "player_name": null,
+          "order": 1,
+          "turn": null
+        },
+        {
+          "champion_id": "Nautilus",
+          "role": null,
+          "player_name": null,
+          "order": 2,
+          "turn": null
+        },
+        {
+          "champion_id": "Ornn",
+          "role": null,
+          "player_name": null,
+          "order": 3,
+          "turn": null
+        },
+        {
+          "champion_id": "Ahri",
+          "role": null,
+          "player_name": null,
+          "order": 4,
+          "turn": null
+        },
+        {
+          "champion_id": "Sejuani",
+          "role": null,
+          "player_name": null,
+          "order": 5,
+          "turn": null
+        }
+      ],
+      "enemy_picks": [
+        {
+          "champion_id": "Kaisa",
+          "role": null,
+          "player_name": null,
+          "order": 1,
+          "turn": null
+        },
+        {
+          "champion_id": "Rakan",
+          "role": null,
+          "player_name": null,
+          "order": 2,
+          "turn": null
+        },
+        {
+          "champion_id": "Orianna",
+          "role": null,
+          "player_name": null,
+          "order": 3,
+          "turn": null
+        },
+        {
+          "champion_id": "Jax",
+          "role": null,
+          "player_name": null,
+          "order": 4,
+          "turn": null
+        },
+        {
+          "champion_id": "Jinx",
+          "role": null,
+          "player_name": null,
+          "order": 5,
+          "turn": null
+        }
+      ],
+      "rivals": [
+        {
+          "name": "RivalTop",
+          "raw_name": "RivalTop Plata II",
+          "role": "TOP",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Jax",
+              "Fiora",
+              "Riven"
+            ],
+            [
+              "Jax"
+            ]
+          ],
+          "pool_raw": "jax fiora riven / jax",
+          "rank": "Plata II",
+          "notes": []
+        },
+        {
+          "name": "RivalJungla",
+          "raw_name": "RivalJungla",
+          "role": "JUNGLE",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "LeeSin",
+              "Viego",
+              "Sejuani"
+            ],
+            [
+              "LeeSin"
+            ]
+          ],
+          "pool_raw": "lee sin viego sejuani / lee sin",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalMid",
+          "raw_name": "RivalMid",
+          "role": "MID",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Azir",
+              "Orianna",
+              "Syndra"
+            ],
+            [
+              "Ahri"
+            ]
+          ],
+          "pool_raw": "azir orianna syndra / ahri",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalAdc",
+          "raw_name": "RivalAdc",
+          "role": "ADC",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Aphelios",
+              "Jinx",
+              "Xayah"
+            ],
+            [
+              "Kaisa"
+            ]
+          ],
+          "pool_raw": "aphelios jinx xayah / kaisa",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalFill",
+          "raw_name": "RivalFill",
+          "role": null,
+          "role_label": "fill",
+          "pool_groups": [
+            [
+              "Nautilus",
+              "Rell",
+              "Lulu"
+            ],
+            [
+              "Nautilus"
+            ]
+          ],
+          "pool_raw": "nautilus rell lulu / nautilus",
+          "rank": null,
+          "notes": []
+        }
+      ],
+      "notes": [],
+      "warnings": [],
+      "confidence": "high",
+      "rebalanced": false,
+      "legacy_index": 2
+    },
+    {
+      "id": "legacy-0003",
+      "source": "legacy_text",
+      "played_at": null,
+      "queue": "clash",
+      "result": "win",
+      "result_note": null,
+      "side": "BLUE",
+      "side_inferred": true,
+      "first_ban": "them",
+      "first_ban_inferred": true,
+      "our_bans": [
+        "Kled",
+        "Shen",
+        "Yone",
+        "Akali",
+        "Mordekaiser"
+      ],
+      "enemy_bans": [
+        "Caitlyn",
+        "Poppy",
+        "Velkoz",
+        "Viego",
+        "Leblanc"
+      ],
+      "our_picks": [
+        {
+          "champion_id": "Orianna",
+          "role": null,
+          "player_name": null,
+          "order": 1,
+          "turn": null
+        },
+        {
+          "champion_id": "Sejuani",
+          "role": null,
+          "player_name": null,
+          "order": 2,
+          "turn": null
+        },
+        {
+          "champion_id": "Ornn",
+          "role": null,
+          "player_name": null,
+          "order": 3,
+          "turn": null
+        },
+        {
+          "champion_id": "Jinx",
+          "role": null,
+          "player_name": null,
+          "order": 4,
+          "turn": null
+        },
+        {
+          "champion_id": "Nautilus",
+          "role": null,
+          "player_name": null,
+          "order": 5,
+          "turn": null
+        }
+      ],
+      "enemy_picks": [
+        {
+          "champion_id": "Caitlyn",
+          "role": null,
+          "player_name": null,
+          "order": 1,
+          "turn": null
+        },
+        {
+          "champion_id": "MissFortune",
+          "role": null,
+          "player_name": null,
+          "order": 2,
+          "turn": null
+        },
+        {
+          "champion_id": "Lux",
+          "role": null,
+          "player_name": null,
+          "order": 3,
+          "turn": null
+        },
+        {
+          "champion_id": "Morgana",
+          "role": null,
+          "player_name": null,
+          "order": 4,
+          "turn": null
+        },
+        {
+          "champion_id": "Rakan",
+          "role": null,
+          "player_name": null,
+          "order": 5,
+          "turn": null
+        }
+      ],
+      "rivals": [
+        {
+          "name": "RivalTop4",
+          "raw_name": "RivalTop4",
+          "role": "TOP",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Ornn",
+              "KSante",
+              "Malphite"
+            ],
+            [
+              "Ornn"
+            ]
+          ],
+          "pool_raw": "ornn ksante malphite / ornn",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalJungla4",
+          "raw_name": "RivalJungla4",
+          "role": "JUNGLE",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Sejuani",
+              "Viego"
+            ],
+            [
+              "Sejuani"
+            ]
+          ],
+          "pool_raw": "sejuani viego / sejuani",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalMid4",
+          "raw_name": "RivalMid4",
+          "role": "MID",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Orianna",
+              "Syndra"
+            ],
+            [
+              "Orianna"
+            ]
+          ],
+          "pool_raw": "orianna syndra / orianna",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalAdc4",
+          "raw_name": "RivalAdc4",
+          "role": "ADC",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Jinx",
+              "Caitlyn"
+            ],
+            [
+              "Jinx"
+            ]
+          ],
+          "pool_raw": "jinx caitlyn / jinx",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalSup4",
+          "raw_name": "RivalSup4",
+          "role": "SUPPORT",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Nautilus",
+              "Rell"
+            ],
+            [
+              "Nautilus"
+            ]
+          ],
+          "pool_raw": "nautilus rell / nautilus",
+          "rank": null,
+          "notes": []
+        }
+      ],
+      "notes": [],
+      "warnings": [],
+      "confidence": "high",
+      "rebalanced": false,
+      "legacy_index": 3
+    },
+    {
+      "id": "legacy-0004",
+      "source": "legacy_text",
+      "played_at": null,
+      "queue": "clash",
+      "result": "unknown",
+      "result_note": "se rompió",
+      "side": null,
+      "side_inferred": false,
+      "first_ban": null,
+      "first_ban_inferred": false,
+      "our_bans": [],
+      "enemy_bans": [],
+      "our_picks": [],
+      "enemy_picks": [],
+      "rivals": [
+        {
+          "name": "RivalTop3",
+          "raw_name": "RivalTop3",
+          "role": "TOP",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Urgot",
+              "Kled"
+            ],
+            [
+              "Urgot"
+            ]
+          ],
+          "pool_raw": "urgot kled / urgot",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalJungla3",
+          "raw_name": "RivalJungla3",
+          "role": "JUNGLE",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Kayn"
+            ],
+            [
+              "Kayn"
+            ]
+          ],
+          "pool_raw": "kayn / kayn",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalAdc3",
+          "raw_name": "RivalAdc3",
+          "role": "ADC",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Zeri"
+            ],
+            [
+              "Zeri"
+            ]
+          ],
+          "pool_raw": "zeri / zeri",
+          "rank": null,
+          "notes": []
+        },
+        {
+          "name": "RivalSup3",
+          "raw_name": "RivalSup3",
+          "role": "SUPPORT",
+          "role_label": null,
+          "pool_groups": [
+            [
+              "Milio"
+            ],
+            [
+              "Milio"
+            ]
+          ],
+          "pool_raw": "milio / milio",
+          "rank": null,
+          "notes": []
+        }
+      ],
+      "notes": [],
+      "warnings": [
+        "Sin resultado: no cuenta para el winrate.",
+        "Picks incompletos: 0-0.",
+        "Bans incompletos: 0-0.",
+        "No se pudo inferir el lado.",
+        "No se pudo inferir quién empezó los bans."
+      ],
+      "confidence": "low",
+      "rebalanced": false,
+      "legacy_index": 4
+    }
+  ],
+  "name_aliases": [],
+  "updated_at": null
+}

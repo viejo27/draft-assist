@@ -12,13 +12,14 @@ src/ (WebView)
   js/api.js       -> invoke() o preview estática
   js/state.js     -> estado, undo, autosave
   js/render.js    -> vistas y tarjetas
+  js/history.js   -> estadísticas, filtros y perfiles de rivales
   js/format.js    -> helpers de presentación
         |
         | comandos Tauri
         v
 src-tauri/
-  commands.rs     -> bootstrap, recommend, save/load, reload, validate, LCU
-  persistence.rs  -> state.json
+  commands.rs     -> bootstrap, recommend, save/load, reload, validate, LCU, historial
+  persistence.rs  -> state.json + history/history.json
   lcu/            -> credenciales, cliente HTTP, mapeo y tracker LCU
   lib.rs          -> RuntimeState + carga de datos
         |
@@ -30,6 +31,7 @@ crates/draft-engine/
   templates.rs    -> turno actual, avance y pasos futuros
   scoring.rs      -> componentes, needs, sinergia, bans
   recommend.rs    -> ranking, resumen, próximos picks
+  history/        -> modelos, parser de TXT, normalización y texto limpio
   data/*.json     -> dataset 16.21.1
   tests/          -> integración del motor
 ```
@@ -201,6 +203,9 @@ Se simula el pick actual con la recomendación top, se avanza a los siguientes p
 ## 8. Persistencia y datos editables
 
 - Estado: `app_data_dir/state.json`, autosave con debounce de 260 ms.
+- Historial: `app_data_dir/history/history.json`, guardado explícito con backup.
+- Backups: `history.backup-<timestamp>.json`, se conservan los últimos 5.
+- Exportaciones: `app_data_dir/exports/history-<timestamp>.json` y `.txt`.
 - Datos: en el primer arranque se copian los JSON embebidos a `app_data_dir/data/`.
 - Si un JSON editable falla, el motor cae a los datos embebidos y muestra un aviso.
 - “Recargar datos” reconstruye el motor desde disco.
@@ -288,17 +293,100 @@ Los errores de red del LCU se clasifican a mensajes amigables (`Cliente no dispo
 - Tablero de solo lectura mientras está activo.
 - Sección **Cliente de League** en Ajustes con estado, cola, plantilla, lado, acción y última sincronización.
 
-## 10. UI
+## 10. Historial y scouting
 
-Vistas: Draft, Equipo, Ajustes.
+### Modelo
+
+`crates/draft-engine/src/history/`:
+
+- `model.rs`: `HistoryStore`, `MatchRecord`, `HistoryPick`, `RivalPlayer`, enums de cola/resultado/primer ban/confianza.
+- `normalize.rs`: resolución de campeones, alias, roles, secciones y nombres con rango.
+- `parse.rs`: parser del TXT viejo de Clash y clasificación de bloques.
+- `text.rs`: exportación a TXT limpio y reporte de revisión.
+
+`HistoryStore`:
+
+```rust
+pub struct HistoryStore {
+    pub version: u32,
+    pub matches: Vec<MatchRecord>,
+    pub name_aliases: Vec<NameAlias>,
+    pub updated_at: Option<String>,
+}
+```
+
+`MatchRecord` guarda:
+
+- `source`: `legacy_text`, `manual` o `lcu`.
+- `played_at`: fecha ISO opcional; null en el historial viejo.
+- `queue`: `clash`, `ranked_solo`, `ranked_flex`, `normal_draft`, `custom`, `unknown`.
+- `result`: `win`, `loss`, `unknown`; `result_note` para `ff`, `afk`, `se rompió`.
+- `side`, `side_inferred`, `first_ban`, `first_ban_inferred`.
+- `our_bans`, `enemy_bans`, `our_picks`, `enemy_picks` en orden.
+- `rivals`: nombre, rol o etiqueta flex, grupos de pool (`main`, `last`), rango, notas.
+- `warnings`, `confidence`, `rebalanced`, `legacy_index`.
+
+### Parser legacy
+
+1. Los bloques se separan por líneas de 3+ barras (`////`).
+2. Una máquina de estados recorre rol → nombre → pool, y bans/picks → resultado.
+3. Roles aceptados: `top`, `jungle`, `mid`, `adc`, `support`, `fill`, `comodin`, `random`, `aram`, `autofill`, `nada`; también `jungle x`/`support x`.
+4. El primer renglón tras un rol es el nombre; si trae varios campeones, se marca “rol sin nombre” y se usa como pool.
+5. Los pools se separan por `/` o `|` en grupos; el primero es `main`, el segundo `last`, el resto `extra`.
+6. Los campeones se resuelven con nombre de Data Dragon, ID y una tabla de alias: `fiddlestick`, `evelyn`, `renata`, `yummi`, `bardo`, `leblanck`, `lysandra`, `chogat`, `lilia`, `zaheen`, `huawei`, `negra`, `loca`, `cantautora`, etc.
+7. Los nombres se conservan; solo se recortan espacios y se separa un rango con división (`Nombre Plata II`). No se renombra a ciegas.
+8. Si hay varios `pick ellos` y ningún `pick nos`, el último se interpreta como nuestro. Lo mismo al revés.
+9. Los picks/bans 6/4 se rebalancean a 5/5 moviendo la última entrada del lado con 6; queda `rebalanced` y un aviso con el campeón movido.
+10. El lado se infiere por la primera sección de pick (el que pickea primero es azul). El primer ban se infiere por la primera sección de bans.
+11. `win`/`won` → victoria; `loss`/`lost`/`ff` → derrota; `se rompió` → desconocido. Los motivos se guardan como nota.
+12. Cada bloque se clasifica como `match`, `incomplete`, `scratch` o `broken`; la confianza es alta/media/baja según resultado, picks, bans y avisos.
+
+El CLI `cargo run -p draft-engine --example import_history -- <txt> <out>` genera:
+
+- `clash-history.json`;
+- `clash-history.clean.txt`;
+- `clash-history.review.md`;
+- `clash-import-report.json`.
+
+### Persistencia y comandos
+
+- `history_load` / `history_save`: leen y escriben `history/history.json`; antes de guardar copian a `history.backup-<timestamp>.json`.
+- `history_import_legacy`: parser puro; devuelve preview, no guarda.
+- `history_export`: escribe JSON + TXT limpio en `exports/` y abre la carpeta.
+- `history_match_from_draft`: convierte el draft actual en `MatchRecord` con jugadores del roster.
+- `history_open_dir`: abre la carpeta del historial.
+
+### Estadísticas
+
+`src/js/history.js` es puro y testeable:
+
+- `filterHistoryMatches`: cola, resultado, lado, primer ban, completas, búsqueda por rival/campeón.
+- `computeHistorySummary`: winrate, racha, picks propios/rivales, bans propios/rivales, primer ban, lados, mejor campeón y amenaza.
+- `buildRivalProfiles`: agrega por nombre, deduplica partidas, roles vistos, pools ponderados (`main` pesa 3, `last` 1), récord y notas.
+- Las tablas muestran tamaño de muestra; el winrate de bans/lados es contextual, no causal.
+
+### UI
+
+- Pestaña **Historial** con Resumen, Partidas, Rivales y Bans.
+- Resumen: KPIs + tablas de picks, amenazas, bans, primer ban y lados.
+- Partidas: lista filtrable; detalle editable (resultado, cola, lado, primer ban, notas) y borrado.
+- Rivales: búsqueda, filtro por rol, pool principal, récord, “Ver partidas” y “Renombrar”.
+- Importación: preview con bloques, confianza, rebalanceos, nombres faltantes y tokens; importar todo o solo confianza alta.
+- Guardar partida actual: crea un `MatchRecord` desde el draft, con resultado y notas.
+- El ejemplo público usa nombres falsos; `private/` y `ban-clash.txt` están en `.gitignore`.
+
+## 11. UI
+
+Vistas: Draft, Equipo, Historial, Ajustes.
 
 - **Draft:** tablero enemigo/aliado, bans, resumen de composición, recomendaciones Top N, próximos picks.
 - **Equipo:** 5 jugadores, orden de picks, pools con comfort y winrate.
-- **Ajustes:** Top N, prioridad de pool, flex fuera de rol, datos, export/import, explicación del scoring.
+- **Historial:** resumen, partidas, rivales y bans; importación de Clash, guardado del draft actual, exportación y edición.
+- **Ajustes:** Top N, prioridad de pool, flex fuera de rol, cliente de League, historial local, datos, export/import, explicación del scoring.
 
 La UI está descrita en `DESIGN.md` (sistema visual) y sigue modo Operate: densidad escaneable, acciones a un clic, estados vacío/error/loading.
 
-## 11. Tests
+## 12. Tests
 
 `crates/draft-engine/tests/engine_tests.rs`:
 
@@ -317,6 +405,14 @@ La UI está descrita en `DESIGN.md` (sistema visual) y sigue modo Operate: densi
 - early vs late (meta/flex vs counter);
 - `lcu_turn` sobreescribiendo el turno de plantilla.
 
+`crates/draft-engine/src/history/`:
+
+- parseo de bloques completos, 6/4, doble `pick ellos`, rangos, fill/comodín, alias y notas;
+- detección de lado y primer ban;
+- rebalanceo a 5/5 y avisos;
+- clasificación y confianza;
+- exportación a TXT limpio.
+
 `src-tauri/src/lcu/`:
 
 - parseo de lockfile y argumentos del proceso;
@@ -326,13 +422,20 @@ La UI está descrita en `DESIGN.md` (sistema visual) y sigue modo Operate: densi
 - validación de roster;
 - acción LCU actual y fallback sin acción.
 
-Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` (si clippy está instalado) y el ejemplo CLI.
+`src/js/history.test.js`:
 
-## 12. Limitaciones
+- resumen, winrate, picks, bans, primer ban y lados;
+- filtros por resultado, lado, primer ban y búsqueda;
+- perfiles de rivales, pools, roles y récord;
+- detección de partidas completas.
+
+Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` (si clippy está instalado), `node --test src/js/history.test.js` y los ejemplos CLI.
+
+## 13. Limitaciones
 
 - Prioridad meta estática del parche 16.21.1; no es un tier list vivo.
 - Counters/sinergias son un seed curado, no estadística agregada.
-- No hay pools enemigos, así que `denial` es neutral.
+- El motor aún no usa los pools rivales del historial; `denial` sigue neutral en las recomendaciones de 0.3.0.
 - El rol enemigo se infiere si no se registra.
 - La UI no expone el modo manual completo; el motor lo soporta y la UI permite saltar de turno.
 - El seguimiento LCU usa polling de 1 s, no WebSocket.
@@ -340,17 +443,21 @@ Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warn
 - El LCU debe estar abierto en el mismo PC y con la misma sesión.
 - No hay Riot API ni scraping de terceros.
 - El modo es solo lectura: no hay auto-hover ni auto-lock.
+- El historial viejo no tiene fechas ni nuestros nombres; la estadística por jugador solo está completa en partidas nuevas.
+- El rebalanceo 6/4 → 5/5 es una reconstrucción: queda marcado y se puede corregir.
+- `ff` se interpreta como derrota; `se rompió` como desconocido.
+- La importación de TXT es heurística: los bloques de confianza baja deben revisarse.
 
-## 13. Mejoras futuras
+## 14. Mejoras futuras
 
+- 0.3.1: usar historial como desempate opcional en las recomendaciones, con peso bajo y apagado por defecto.
+- 0.3.1: capturar partidas desde el LCU al terminar el champ select, con resultado desde el fin de partida.
 - LCU por WebSocket para menor latencia.
 - Auto-hover/auto-lock opcional con confirmación explícita, overrides temporales de pool/flex y botón de emergencia.
 - Riot API para maestría y estadísticas propias (futuro, no implementado; requiere production key y aprobación de Riot).
-- Guardar datos de uso (picks, bans, resultados) localmente para estadística personal (próxima versión).
 - Draft fearless con bans acumulados.
 - Optimización conjunta de los 5 bans.
 - Simulación Monte Carlo de respuestas enemigas.
-- Notas de scouting del rival introducidas manualmente, solo con información pública (futuro).
 - Historial de drafts/scrims y comparación de composiciones.
 - Multiusuario/cloud para coaches.
 - Tests E2E de la UI y accesibilidad.

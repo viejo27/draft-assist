@@ -1,40 +1,61 @@
 import {
   app,
   addPoolEntry,
+  cancelHistoryImport,
+  cancelPendingMatch,
+  cancelRenameRival,
+  commitHistoryImport,
+  confirmPendingMatch,
+  confirmRenameRival,
   currentTurn,
+  deleteHistoryMatch,
   emit,
+  exportHistory,
   exportState,
+  importHistoryFile,
   importState,
   init,
   loadExample,
+  loadHistory,
   openDataDir,
+  openHistoryDir,
+  prepareMatchFromDraft,
   recordBan,
   recordPick,
   refresh,
   reloadData,
   removePoolEntry,
   renamePlayer,
+  resetHistoryFilters,
+  selectHistoryMatch,
   setCurrentPlayer,
+  setHistoryFilter,
+  setHistoryTab,
   setPickOrder,
   setPoolComfort,
   setPoolWinrate,
+  setRivalRole,
+  setRivalSearch,
   setSettings,
   setStepIndex,
   setView,
   startLcuTracking,
   startNewDraft,
+  startRenameRival,
   stopLcuTracking,
   subscribe,
   refreshLcuStatus,
   toast,
   togglePriority,
   undo,
+  updateHistoryMatch,
 } from "./js/state.js";
 import {
   championDialogBody,
   render,
   renderChampionRoleFilter,
   renderEnemyRoleExtra,
+  renderHistoryDialogs,
   renderNewDraftOptions,
   renderStepOptions,
 } from "./js/render.js";
@@ -68,6 +89,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (file) await importState(file);
     event.target.value = "";
   });
+  document.getElementById("history-import-file")?.addEventListener("change", async (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const preview = await importHistoryFile(file);
+      if (preview) {
+        renderHistoryDialogs(app);
+        document.getElementById("history-import-dialog")?.showModal();
+      }
+    }
+    event.target.value = "";
+  });
 
   document.addEventListener(
     "error",
@@ -95,6 +127,16 @@ function bindGlobalEvents() {
       if (event.target === dialog) dialog.close();
     });
   }
+
+  document.getElementById("history-import-dialog")?.addEventListener("close", () => {
+    if (app.history.importPreview) cancelHistoryImport();
+  });
+  document.getElementById("history-save-dialog")?.addEventListener("close", () => {
+    if (app.history.pendingMatch) cancelPendingMatch();
+  });
+  document.getElementById("history-rename-dialog")?.addEventListener("close", () => {
+    if (app.history.renameRival) cancelRenameRival();
+  });
 }
 
 function handleClick(event) {
@@ -136,6 +178,56 @@ function handleClick(event) {
       break;
     case "refresh-lcu":
       void refreshLcuStatus();
+      break;
+    case "history-tab":
+      setHistoryTab(trigger.dataset.tab);
+      break;
+    case "history-import":
+      document.getElementById("history-import-file")?.click();
+      break;
+    case "history-export":
+      void exportHistory();
+      break;
+    case "history-open-dir":
+      void openHistoryDir();
+      break;
+    case "history-retry":
+      void loadHistory();
+      break;
+    case "history-reset-filters":
+      resetHistoryFilters();
+      break;
+    case "history-save-draft":
+      void openHistorySaveDialog();
+      break;
+    case "history-open-match":
+      openHistoryMatchDialog(trigger.dataset.match);
+      break;
+    case "history-delete-match":
+      void deleteHistoryMatch(app.history.selectedMatchId);
+      document.getElementById("history-match-dialog")?.close();
+      break;
+    case "history-save-match":
+      void saveHistoryMatchEdits();
+      break;
+    case "history-confirm-save":
+      void confirmHistorySave();
+      break;
+    case "history-import-all":
+      void confirmHistoryImport("all");
+      break;
+    case "history-import-high":
+      void confirmHistoryImport("high");
+      break;
+    case "history-rename-rival":
+      openHistoryRenameDialog(trigger.dataset.name);
+      break;
+    case "history-confirm-rename":
+      void confirmHistoryRename();
+      break;
+    case "history-filter-rival":
+      setHistoryFilter("search", trigger.dataset.name);
+      setHistoryTab("matches");
       break;
     case "retry":
       void init();
@@ -224,6 +316,21 @@ function handleChange(event) {
     case "set-winrate":
       setPoolWinrate(target.dataset.player, target.dataset.champion, target.value);
       break;
+    case "history-search":
+      setHistoryFilter("search", target.value);
+      break;
+    case "history-filter":
+      setHistoryFilter(target.dataset.filter, target.value);
+      break;
+    case "history-only-complete":
+      setHistoryFilter("onlyComplete", target.checked);
+      break;
+    case "rival-search":
+      setRivalSearch(target.value);
+      break;
+    case "rival-role":
+      setRivalRole(target.value);
+      break;
     default:
       break;
   }
@@ -311,6 +418,68 @@ function confirmStep() {
   const value = Number(document.getElementById("step-select")?.value ?? 0);
   setStepIndex(value);
   document.getElementById("step-dialog")?.close();
+}
+
+async function openHistorySaveDialog() {
+  const match = await prepareMatchFromDraft();
+  if (!match) return;
+  renderHistoryDialogs(app);
+  document.getElementById("history-save-dialog")?.showModal();
+}
+
+function openHistoryMatchDialog(matchId) {
+  const match = selectHistoryMatch(matchId);
+  if (!match) return;
+  renderHistoryDialogs(app);
+  document.getElementById("history-match-dialog")?.showModal();
+}
+
+function openHistoryRenameDialog(name) {
+  startRenameRival(name);
+  renderHistoryDialogs(app);
+  document.getElementById("history-rename-dialog")?.showModal();
+}
+
+async function saveHistoryMatchEdits() {
+  const matchId = app.history.selectedMatchId;
+  if (!matchId) return;
+  const result = document.getElementById("history-match-result")?.value ?? "unknown";
+  const queue = document.getElementById("history-match-queue")?.value ?? "unknown";
+  const side = document.getElementById("history-match-side")?.value ?? "";
+  const firstBan = document.getElementById("history-match-first-ban")?.value ?? "";
+  const notes = (document.getElementById("history-match-notes")?.value ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  await updateHistoryMatch(matchId, {
+    result,
+    queue,
+    side: side || null,
+    side_inferred: false,
+    first_ban: firstBan || null,
+    first_ban_inferred: false,
+    notes,
+  });
+  document.getElementById("history-match-dialog")?.close();
+}
+
+async function confirmHistorySave() {
+  const result = document.getElementById("history-save-result")?.value ?? "unknown";
+  const notes = document.getElementById("history-save-notes")?.value ?? "";
+  await confirmPendingMatch({ result, notes });
+  document.getElementById("history-save-dialog")?.close();
+}
+
+async function confirmHistoryImport(mode) {
+  await commitHistoryImport(mode);
+  document.getElementById("history-import-dialog")?.close();
+}
+
+async function confirmHistoryRename() {
+  const name = document.getElementById("history-rename-input")?.value ?? "";
+  if (!name.trim()) return;
+  await confirmRenameRival(name);
+  document.getElementById("history-rename-dialog")?.close();
 }
 
 function openPickerFromTrigger(trigger) {

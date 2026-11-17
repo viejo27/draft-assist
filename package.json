@@ -1,7 +1,7 @@
 {
   "name": "draft-assist",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/viejo27/draft-assist.git"
@@ -13,7 +13,8 @@
     "tauri": "tauri",
     "prepare-data": "node scripts/prepare-data.mjs",
     "test:engine": "cargo test -p draft-engine",
-    "test": "cargo test --workspace"
+    "test:history": "node --test src/js/history.test.js",
+    "test": "cargo test --workspace && node --test src/js/history.test.js"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.4"

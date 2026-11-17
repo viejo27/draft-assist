@@ -37,6 +37,7 @@
       <nav class="viewbar" aria-label="Vistas">
         <button class="view-tab is-active" type="button" data-action="view" data-view="draft">Draft</button>
         <button class="view-tab" type="button" data-action="view" data-view="roster">Equipo</button>
+        <button class="view-tab" type="button" data-action="view" data-view="history">Historial</button>
         <button class="view-tab" type="button" data-action="view" data-view="settings">Ajustes</button>
         <div class="lcu-control" id="lcu-control" hidden></div>
         <span class="viewbar-note" id="viewbar-note"></span>
@@ -152,6 +153,78 @@
       </div>
     </dialog>
 
+    <dialog class="dialog dialog-wide" id="history-import-dialog">
+      <form method="dialog" class="dialog-head">
+        <div>
+          <h2>Importar historial</h2>
+          <p class="muted">Revisa el resultado antes de guardarlo.</p>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="Cerrar" type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </form>
+      <div class="dialog-body" id="history-import-body"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-action="close-dialog">Cancelar</button>
+        <button class="button button-ghost" type="button" data-action="history-import-high">Solo confianza alta</button>
+        <button class="button button-primary" type="button" data-action="history-import-all">Importar todo</button>
+      </div>
+    </dialog>
+
+    <dialog class="dialog dialog-wide" id="history-match-dialog">
+      <form method="dialog" class="dialog-head">
+        <div>
+          <h2>Detalle de partida</h2>
+          <p class="muted">Edita el resultado, el lado o las notas. Los datos son locales.</p>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="Cerrar" type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </form>
+      <div class="dialog-body" id="history-match-body"></div>
+      <div class="dialog-actions">
+        <button class="button button-danger-ghost" type="button" data-action="history-delete-match">Eliminar</button>
+        <span class="dialog-actions-spacer"></span>
+        <button class="button button-ghost" type="button" data-action="close-dialog">Cerrar</button>
+        <button class="button button-primary" type="button" data-action="history-save-match">Guardar cambios</button>
+      </div>
+    </dialog>
+
+    <dialog class="dialog" id="history-save-dialog">
+      <form method="dialog" class="dialog-head">
+        <div>
+          <h2>Guardar partida</h2>
+          <p class="muted">Se guarda el draft actual en el historial local.</p>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="Cerrar" type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </form>
+      <div class="dialog-body" id="history-save-body"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-action="close-dialog">Cancelar</button>
+        <button class="button button-primary" type="button" data-action="history-confirm-save">Guardar partida</button>
+      </div>
+    </dialog>
+
+    <dialog class="dialog" id="history-rename-dialog">
+      <form method="dialog" class="dialog-head">
+        <div>
+          <h2>Renombrar rival</h2>
+          <p class="muted">Corrige el nombre y se aplicará a todas sus partidas.</p>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="Cerrar" type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </form>
+      <div class="dialog-body" id="history-rename-body"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-action="close-dialog">Cancelar</button>
+        <button class="button button-primary" type="button" data-action="history-confirm-rename">Guardar nombre</button>
+      </div>
+    </dialog>
+
     <input type="file" id="import-file" accept="application/json,.json" hidden />
+    <input type="file" id="history-import-file" accept=".txt,.json,text/plain,application/json" hidden />
   </body>
 </html>

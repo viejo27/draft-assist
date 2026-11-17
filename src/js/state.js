@@ -1,4 +1,5 @@
 import * as api from "./api.js";
+import { emptyHistoryFilters, isCompleteMatch } from "./history.js";
 
 export const app = {
   bootstrap: null,
@@ -23,6 +24,22 @@ export const app = {
     connected: false,
     starting: false,
     lastError: null,
+  },
+  history: {
+    store: null,
+    loading: false,
+    saving: false,
+    error: null,
+    tab: "summary",
+    filters: emptyHistoryFilters(),
+    selectedMatchId: null,
+    rivalSearch: "",
+    rivalRole: "ALL",
+    importPreview: null,
+    importSource: null,
+    pendingMatch: null,
+    renameRival: null,
+    lastSaved: null,
   },
 };
 
@@ -406,7 +423,335 @@ function blockLcuEdit() {
 
 export function setView(view) {
   app.view = view;
+  if (
+    (view === "history" || view === "settings") &&
+    !app.history.store &&
+    !app.history.loading
+  ) {
+    void loadHistory();
+  }
   emit();
+}
+
+function normalizeHistoryStore(store) {
+  return {
+    version: store?.version ?? 1,
+    matches: Array.isArray(store?.matches) ? store.matches : [],
+    name_aliases: Array.isArray(store?.name_aliases) ? store.name_aliases : [],
+    updated_at: store?.updated_at ?? null,
+  };
+}
+
+export async function loadHistory() {
+  if (app.history.loading) return;
+  app.history.loading = true;
+  app.history.error = null;
+  emit();
+  try {
+    app.history.store = normalizeHistoryStore(await api.historyLoad());
+  } catch (error) {
+    app.history.error = error.message ?? String(error);
+    toast(app.history.error, "error");
+  } finally {
+    app.history.loading = false;
+    emit();
+  }
+}
+
+async function saveHistoryStore() {
+  if (!app.history.store) return;
+  app.history.store.updated_at = new Date().toISOString();
+  app.history.saving = true;
+  emit();
+  try {
+    const result = await api.historySave(app.history.store);
+    app.history.lastSaved = result.path;
+    app.history.error = null;
+  } catch (error) {
+    app.history.error = error.message ?? String(error);
+    toast(app.history.error, "error");
+  } finally {
+    app.history.saving = false;
+    emit();
+  }
+}
+
+export function setHistoryTab(tab) {
+  app.history.tab = tab;
+  emit();
+}
+
+export function setHistoryFilter(key, value) {
+  app.history.filters = {
+    ...app.history.filters,
+    [key]: key === "minGames" ? Math.max(1, Math.min(20, Number(value) || 3)) : value,
+  };
+  emit();
+}
+
+export function resetHistoryFilters() {
+  app.history.filters = emptyHistoryFilters();
+  emit();
+}
+
+export function setRivalSearch(value) {
+  app.history.rivalSearch = value;
+  emit();
+}
+
+export function setRivalRole(value) {
+  app.history.rivalRole = value;
+  emit();
+}
+
+export function historyMatchById(matchId) {
+  return app.history.store?.matches.find((match) => match.id === matchId) ?? null;
+}
+
+export function selectHistoryMatch(matchId) {
+  app.history.selectedMatchId = matchId;
+  emit();
+  return historyMatchById(matchId);
+}
+
+export async function updateHistoryMatch(matchId, patch) {
+  const match = historyMatchById(matchId);
+  if (!match) return;
+  Object.assign(match, patch);
+  await saveHistoryStore();
+  emit();
+  toast("Partida actualizada.", "success");
+}
+
+export async function deleteHistoryMatch(matchId) {
+  if (!app.history.store) return;
+  const match = historyMatchById(matchId);
+  if (!match) return;
+  const label = match.legacy_index
+    ? `la partida #${String(match.legacy_index).padStart(3, "0")}`
+    : "esta partida";
+  if (!window.confirm(`¿Eliminar ${label} del historial?`)) return;
+  app.history.store.matches = app.history.store.matches.filter(
+    (item) => item.id !== matchId,
+  );
+  app.history.selectedMatchId = null;
+  await saveHistoryStore();
+  emit();
+  toast("Partida eliminada.", "info");
+}
+
+export async function importHistoryFile(file) {
+  try {
+    const text = await file.text();
+    if (text.trim().startsWith("{")) {
+      const parsed = JSON.parse(text);
+      if (!Array.isArray(parsed.matches)) {
+        throw new Error("El JSON no tiene una lista de partidas.");
+      }
+      const importedAt = Date.now();
+      const matches = parsed.matches.map((match, index) => ({
+        ...match,
+        id: match.id ?? `imported-${importedAt}-${index + 1}`,
+        source: match.source ?? "manual",
+        result: match.result ?? "unknown",
+        queue: match.queue ?? "unknown",
+        confidence: match.confidence ?? "low",
+        rivals: match.rivals ?? [],
+        our_bans: match.our_bans ?? [],
+        enemy_bans: match.enemy_bans ?? [],
+        our_picks: match.our_picks ?? [],
+        enemy_picks: match.enemy_picks ?? [],
+        notes: match.notes ?? [],
+        warnings: match.warnings ?? [],
+      }));
+      const wins = matches.filter((match) => match.result === "win").length;
+      const losses = matches.filter((match) => match.result === "loss").length;
+      const preview = {
+        matches,
+        blocks: [],
+        unknown_tokens: [],
+        stats: {
+          blocks: matches.length,
+          matches: matches.length,
+          wins,
+          losses,
+          unknown_results: matches.length - wins - losses,
+          rebalanced_picks: 0,
+          rebalanced_bans: 0,
+          unknown_tokens: 0,
+          missing_names: 0,
+          fill_players: 0,
+        },
+      };
+      app.history.importPreview = preview;
+      app.history.importSource = file.name;
+      emit();
+      return preview;
+    }
+    const preview = await api.historyImportLegacy(text);
+    app.history.importPreview = preview;
+    app.history.importSource = file.name;
+    emit();
+    return preview;
+  } catch (error) {
+    toast(error.message ?? "No se pudo leer el archivo.", "error");
+    return null;
+  }
+}
+
+export async function commitHistoryImport(mode = "all") {
+  const preview = app.history.importPreview;
+  if (!preview) return;
+  if (!app.history.store) {
+    app.history.store = normalizeHistoryStore(null);
+  }
+  const incoming = (preview.matches ?? []).filter((match) =>
+    mode === "high" ? match.confidence === "high" : true,
+  );
+  const aliases = app.history.store.name_aliases ?? [];
+  for (const match of incoming) {
+    for (const rival of match.rivals ?? []) {
+      const alias = aliases.find(
+        (item) => item.from.toLowerCase() === rival.name.toLowerCase(),
+      );
+      if (alias) rival.name = alias.to;
+    }
+  }
+  const byId = new Map(app.history.store.matches.map((match) => [match.id, match]));
+  for (const match of incoming) {
+    byId.set(match.id, match);
+  }
+  app.history.store.matches = [...byId.values()];
+  app.history.importPreview = null;
+  app.history.importSource = null;
+  app.history.tab = "matches";
+  await saveHistoryStore();
+  emit();
+  toast(
+    `Historial importado: ${incoming.length} partidas.${
+      mode === "high" ? " Solo se incluyeron las de confianza alta." : ""
+    }`,
+    "success",
+  );
+}
+
+export function cancelHistoryImport() {
+  app.history.importPreview = null;
+  app.history.importSource = null;
+  emit();
+}
+
+export async function prepareMatchFromDraft() {
+  if (!app.state) return null;
+  try {
+    const match = await api.historyMatchFromDraft(app.state);
+    app.history.pendingMatch = match;
+    emit();
+    return match;
+  } catch (error) {
+    toast(error.message ?? "No se pudo preparar la partida.", "error");
+    return null;
+  }
+}
+
+export async function confirmPendingMatch({ result, notes }) {
+  const match = app.history.pendingMatch;
+  if (!match) return;
+  if (!app.history.store) {
+    app.history.store = normalizeHistoryStore(null);
+  }
+  match.result = result;
+  match.result_note = null;
+  match.played_at = new Date().toISOString();
+  if (notes?.trim()) {
+    match.notes = [...(match.notes ?? []), notes.trim()];
+  }
+  if (!isCompleteMatch(match) && !match.warnings.includes("Partida guardada con picks o bans incompletos.")) {
+    match.warnings = [
+      ...(match.warnings ?? []),
+      "Partida guardada con picks o bans incompletos.",
+    ];
+    match.confidence = "medium";
+  }
+  app.history.store.matches = [match, ...app.history.store.matches];
+  app.history.pendingMatch = null;
+  app.history.tab = "matches";
+  app.view = "history";
+  await saveHistoryStore();
+  emit();
+  toast("Partida guardada en el historial.", "success");
+}
+
+export function cancelPendingMatch() {
+  app.history.pendingMatch = null;
+  emit();
+}
+
+export function startRenameRival(name) {
+  app.history.renameRival = { from: name, to: name };
+  emit();
+}
+
+export async function confirmRenameRival(newName) {
+  const rename = app.history.renameRival;
+  if (!rename || !app.history.store) return;
+  const target = newName.trim();
+  if (!target) return;
+  const oldLower = rename.from.toLowerCase();
+  for (const match of app.history.store.matches) {
+    for (const rival of match.rivals ?? []) {
+      if (rival.name.toLowerCase() === oldLower) {
+        rival.name = target;
+      }
+    }
+  }
+  const aliases = app.history.store.name_aliases.filter(
+    (alias) => alias.from.toLowerCase() !== oldLower,
+  );
+  aliases.push({ from: rename.from, to: target });
+  app.history.store.name_aliases = aliases;
+  app.history.renameRival = null;
+  await saveHistoryStore();
+  emit();
+  toast("Rival renombrado.", "success");
+}
+
+export function cancelRenameRival() {
+  app.history.renameRival = null;
+  emit();
+}
+
+export async function exportHistory() {
+  if (!app.history.store) return;
+  if (app.preview) {
+    const blob = new Blob([JSON.stringify(app.history.store, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "draft-assist-history.json";
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    toast("Historial exportado.", "success");
+    return;
+  }
+  try {
+    const result = await api.historyExport(app.history.store);
+    toast(`Historial exportado en ${result.dir}`, "success");
+  } catch (error) {
+    toast(error.message ?? "No se pudo exportar el historial.", "error");
+  }
+}
+
+export async function openHistoryDir() {
+  try {
+    await api.openHistoryDir();
+  } catch (error) {
+    toast(error.message ?? "No se pudo abrir la carpeta de historial.", "error");
+  }
 }
 
 export function undo() {

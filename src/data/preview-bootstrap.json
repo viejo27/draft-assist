@@ -2916,6 +2916,7 @@
   "data": {
     "data_dir": "preview/data",
     "state_path": "preview/state.json",
+    "history_dir": "preview/history",
     "stats": {
       "version": "16.21.1",
       "champions": 173,
@@ -3138,5 +3139,5 @@
     }
   },
   "warnings": [],
-  "app_version": "0.2.1"
+  "app_version": "0.3.0"
 }

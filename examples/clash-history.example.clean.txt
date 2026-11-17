@@ -1,0 +1,53 @@
+# Draft Assist · Historial de Clash
+# Formato: un bloque por partida. Los pools conservan main / last.
+# Los campos marcados como (inferido) se pueden corregir en la app.
+
+### 001 · Clash · victoria · lado azul (inferido) · primer ban: ellos (inferido)
+Top: RivalTop · main: Darius, Sett, Garen · last: Darius, Pyke, Zed
+Jungla: RivalJungla · main: Kayn, Nunu & Willump, Master Yi · last: Shaco, Katarina, Vi
+Mid: RivalMid · main: Sylas, Diana, Wukong · last: Ahri, Sylas
+ADC: RivalAdc · main: Caitlyn, Jinx, Ashe · last: Miss Fortune, Ezreal
+Support: RivalSup · main: Nautilus, Leona, Lulu · last: Rell
+
+bans nosotros (orden): Kayn, Ahri, Zed, Dr. Mundo, Veigar
+picks nosotros (orden): Orianna, Sejuani, Ornn, Jinx, Nautilus
+bans rivales (orden): Shen, Darius, Lux, Pyke, Caitlyn
+picks rivales (orden): Sivir, Diana, Ezreal, Leona, Sett
+
+### 002 · Clash · derrota · lado rojo (inferido) · primer ban: nosotros (inferido)
+Top: RivalTop [Plata II] · main: Jax, Fiora, Riven · last: Jax
+Jungla: RivalJungla · main: Lee Sin, Viego, Sejuani · last: Lee Sin
+Mid: RivalMid · main: Azir, Orianna, Syndra · last: Ahri
+ADC: RivalAdc · main: Aphelios, Jinx, Xayah · last: Kai'Sa
+fill: RivalFill · main: Nautilus, Rell, Lulu · last: Nautilus
+
+bans nosotros (orden): Kled, Shen, Yone, Akali, Mordekaiser
+picks nosotros (orden): Sivir, Nautilus, Ornn, Ahri, Sejuani
+bans rivales (orden): Caitlyn, Poppy, Vel'Koz, Viego, LeBlanc
+picks rivales (orden): Kai'Sa, Rakan, Orianna, Jax, Jinx
+
+### 003 · Clash · victoria · lado azul (inferido) · primer ban: ellos (inferido)
+Top: RivalTop4 · main: Ornn, K'Sante, Malphite · last: Ornn
+Jungla: RivalJungla4 · main: Sejuani, Viego · last: Sejuani
+Mid: RivalMid4 · main: Orianna, Syndra · last: Orianna
+ADC: RivalAdc4 · main: Jinx, Caitlyn · last: Jinx
+Support: RivalSup4 · main: Nautilus, Rell · last: Nautilus
+
+bans nosotros (orden): Kled, Shen, Yone, Akali, Mordekaiser
+picks nosotros (orden): Orianna, Sejuani, Ornn, Jinx, Nautilus
+bans rivales (orden): Caitlyn, Poppy, Vel'Koz, Viego, LeBlanc
+picks rivales (orden): Caitlyn, Miss Fortune, Lux, Morgana, Rakan
+
+### 004 · Clash · sin resultado · lado sin lado · primer ban: sin dato
+resultado: se rompió
+Top: RivalTop3 · main: Urgot, Kled · last: Urgot
+Jungla: RivalJungla3 · main: Kayn · last: Kayn
+ADC: RivalAdc3 · main: Zeri · last: Zeri
+Support: RivalSup3 · main: Milio · last: Milio
+
+bans nosotros (orden): —
+picks nosotros (orden): —
+bans rivales (orden): —
+picks rivales (orden): —
+revisión: Sin resultado: no cuenta para el winrate. · Picks incompletos: 0-0. · Bans incompletos: 0-0. · No se pudo inferir el lado. · No se pudo inferir quién empezó los bans.
+
