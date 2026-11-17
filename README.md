@@ -164,7 +164,7 @@ El parser:
 
 - Acepta roles `top`, `jungle`, `mid`, `adc`, `support`, `fill`, `comodin`, `random`, `aram`, `autofill`, `nada`.
 - Separa `main` y `last` por `/` o `|`.
-- Reconoce alias y typos: `fiddlestick`, `evelyn`, `renata`, `yummi`, `bardo`, `leblanck`, `lysandra`, `chogat`, `lilia`, `zaheen`, `huawei`, `negra`, `loca`, `cantautora`, etc.
+- Reconoce alias y typos: `fiddlestick`, `evelyn`, `renata`, `yummi`, `bardo`, `leblanck`, `lysandra`, `chogat`, `lilia`, `zaheen`, `huawei`, `cantautora`, etc.
 - Extrae rango con división: `Nombre Plata II` → nombre `Nombre`, rango `Plata II`.
 - Infiere el lado por el primer pick y el primer ban por la primera sección de bans.
 - Rebalancea picks/bans 6/4 a 5/5 moviendo la última entrada, con aviso.
