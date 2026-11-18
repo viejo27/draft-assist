@@ -85,6 +85,7 @@
   "settings": {
     "top_n": 5,
     "allow_offrole_flex": false,
-    "pool_precedence": true
+    "pool_precedence": true,
+    "use_history": false
   }
 }

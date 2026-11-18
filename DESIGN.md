@@ -85,6 +85,7 @@ At ≤1050px the recommendation column moves below the board. Champion slots col
 
 - Grid: rank, 42px portrait, text block, score block, action.
 - Text: champion name, role, comfort meter or off-pool badge; two-line justification; meta row with role, comfort, and one risk.
+- History line: 10.5px gold, single line, only when the optional tiebreaker contributed; it sits above the risk line and never replaces it.
 - Score: tier badge, one-decimal score, 54px score track.
 - Action: gold “Elegir” for picks; red outline “Banear” for bans.
 - Off-pool: dashed gold badge, “Fuera de pool”, muted gold-tinted surface. Ban cards in our pool show “En tu pool”.
@@ -111,7 +112,8 @@ At ≤1050px the recommendation column moves below the board. Champion slots col
 - Match list: grid row with date, result pill, side, pick avatars, queue/first-ban meta and confidence badge. The whole row is one button.
 - Rival cards: 260px minimum, name + roles, record pill, 22px pool avatars, notes and two small actions.
 - Import dialog: 2×2 status grid, token chips, first warnings, then “Importar todo / Solo confianza alta”.
-- No charts in 0.3.0. Tables show sample size; the bans/lados winrate carries a contextual footnote.
+- Settings → Recomendación: switch “Usar historial como desempate” with the copy “±2 puntos, 3+ partidas; no cambia pool ni flex”. Off by default.
+- No charts yet. Tables show sample size; the bans/lados winrate carries a contextual footnote.
 
 ### Dialogs
 

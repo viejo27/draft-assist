@@ -282,10 +282,9 @@ pub fn section_header(line: &str) -> Option<(SectionKind, SideLabel, String)> {
         (SectionKind::Ban, rest)
     } else if let Some(rest) = normalized.strip_prefix("picks") {
         (SectionKind::Pick, rest)
-    } else if let Some(rest) = normalized.strip_prefix("pick") {
-        (SectionKind::Pick, rest)
     } else {
-        return None;
+        let rest = normalized.strip_prefix("pick")?;
+        (SectionKind::Pick, rest)
     };
 
     let rest = rest.trim();

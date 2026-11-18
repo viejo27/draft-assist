@@ -22,6 +22,7 @@
 - El **historial** guarda partidas, picks, bans, resultados y pools rivales. Se importa desde el TXT viejo de Clash o se guarda desde el draft actual.
 - El **scouting** agrega rivales por nombre, muestra sus pools y permite corregir nombres con alias.
 - Las estadísticas son locales y descriptivas: winrate, picks, bans, lados y amenazas, con tamaño de muestra.
+- El historial se puede usar como **desempate opcional** de las recomendaciones: apagado por defecto, ±2 puntos y muestra mínima de 3 partidas.
 - No hay Riot API, scraping ni recomendaciones en vivo. El LCU solo se usa para leer el cliente local.
 
 ## Product principles
@@ -32,6 +33,7 @@
 4. **Fast under pressure.** Densa pero escaneable; acciones a un clic; sin modales innecesarios.
 5. **Local and editable.** El equipo puede ajustar pools, datos, pesos e historial sin depender de un servicio.
 6. **Scout memory.** Los pools rivales que el equipo ya anotó no se pierden: se importan, se corrigen y se consultan en segundos.
+7. **History is a tiebreaker, not the model.** El historial solo desempata; el pool, el matchup y la composición siguen mandando.
 
 ## Non-goals
 
@@ -40,4 +42,4 @@
 - No promete winrates reales ni tier lists vivas.
 - No sustituye la decisión del coach: ordena opciones y expone el porqué.
 - No usa scraping de terceros. La estadística personal es local y descriptiva, no una verdad competitiva.
-- En 0.3.0 el historial no altera las recomendaciones; esa integración queda para 0.3.1.
+- El historial solo ajusta como máximo ±2 puntos y no cambia la prioridad estricta del pool ni el flex fuera de rol.

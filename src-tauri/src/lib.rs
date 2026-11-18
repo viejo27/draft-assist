@@ -73,6 +73,31 @@ fn migrate_template_labels(data_dir: &Path) {
     let _ = std::fs::write(&path, updated);
 }
 
+fn migrate_scoring_history(data_dir: &Path) {
+    let path = data_dir.join("data").join("scoring.json");
+    let Ok(content) = std::fs::read_to_string(&path) else {
+        return;
+    };
+    let Ok(mut value) = serde_json::from_str::<serde_json::Value>(&content) else {
+        return;
+    };
+    let Some(object) = value.as_object_mut() else {
+        return;
+    };
+    let mut changed = false;
+    if !object.contains_key("history_weight") {
+        object.insert("history_weight".into(), serde_json::json!(0.02));
+        changed = true;
+    }
+    if !object.contains_key("history_min_games") {
+        object.insert("history_min_games".into(), serde_json::json!(3));
+        changed = true;
+    }
+    if changed && let Ok(json) = serde_json::to_string_pretty(&value) {
+        let _ = std::fs::write(&path, format!("{json}\n"));
+    }
+}
+
 pub fn load_engine(data_dir: &Path) -> Result<(Engine, Vec<String>), String> {
     let data_path = data_dir.join("data");
     let mut warnings = Vec::new();
@@ -110,6 +135,7 @@ pub fn run() {
                 .map_err(|error| std::io::Error::other(error.to_string()))?;
             std::fs::create_dir_all(&data_dir)?;
             migrate_template_labels(&data_dir);
+            migrate_scoring_history(&data_dir);
             if let Some(window) = app.get_webview_window("main")
                 && let Some(icon) = app.default_window_icon().cloned()
             {
@@ -150,7 +176,7 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::migrate_template_labels;
+    use super::{migrate_scoring_history, migrate_template_labels};
 
     #[test]
     fn migrates_the_old_competitive_template_label() {
@@ -172,6 +198,27 @@ mod tests {
         let content = std::fs::read_to_string(&path).unwrap();
         assert!(content.contains(r#""name":"Competitivo""#));
         assert!(!content.contains("Competitivo / Clash"));
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn adds_history_defaults_to_old_scoring_files() {
+        let dir = std::env::temp_dir().join(format!(
+            "draft-assist-scoring-migration-{}",
+            std::process::id()
+        ));
+        let data_dir = dir.join("data");
+        std::fs::create_dir_all(&data_dir).unwrap();
+        let path = data_dir.join("scoring.json");
+        std::fs::write(&path, r#"{"profiles":{}}"#).unwrap();
+
+        migrate_scoring_history(&dir);
+
+        let content = std::fs::read_to_string(&path).unwrap();
+        let value: serde_json::Value = serde_json::from_str(&content).unwrap();
+        assert_eq!(value["history_weight"], 0.02);
+        assert_eq!(value["history_min_games"], 3);
 
         let _ = std::fs::remove_dir_all(&dir);
     }

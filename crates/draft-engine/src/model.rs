@@ -513,6 +513,18 @@ pub struct ScoringConfig {
     pub early_pick_max: u8,
     #[serde(default = "default_late_min")]
     pub late_pick_min: u8,
+    #[serde(default = "default_history_weight")]
+    pub history_weight: f32,
+    #[serde(default = "default_history_min_games")]
+    pub history_min_games: u32,
+}
+
+fn default_history_weight() -> f32 {
+    0.02
+}
+
+fn default_history_min_games() -> u32 {
+    3
 }
 
 fn default_true() -> bool {
@@ -535,6 +547,8 @@ pub struct Settings {
     pub allow_offrole_flex: bool,
     #[serde(default = "default_true")]
     pub pool_precedence: bool,
+    #[serde(default)]
+    pub use_history: bool,
 }
 
 fn default_top_n() -> usize {
@@ -547,6 +561,7 @@ impl Default for Settings {
             top_n: 5,
             allow_offrole_flex: false,
             pool_precedence: true,
+            use_history: false,
         }
     }
 }
@@ -571,6 +586,8 @@ pub struct RecommendOptions {
     pub pool_precedence: bool,
     #[serde(default = "default_true")]
     pub include_next_picks: bool,
+    #[serde(default)]
+    pub use_history: bool,
 }
 
 impl Default for RecommendOptions {
@@ -580,6 +597,7 @@ impl Default for RecommendOptions {
             allow_offrole_flex: false,
             pool_precedence: true,
             include_next_picks: true,
+            use_history: false,
         }
     }
 }
@@ -591,6 +609,7 @@ impl From<&Settings> for RecommendOptions {
             allow_offrole_flex: settings.allow_offrole_flex,
             pool_precedence: settings.pool_precedence,
             include_next_picks: true,
+            use_history: settings.use_history,
         }
     }
 }
@@ -601,6 +620,41 @@ pub struct RecommendRequest {
     pub roster: Roster,
     #[serde(default)]
     pub options: RecommendOptions,
+    #[serde(default)]
+    pub history: Option<HistorySignals>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct HistoryLine {
+    #[serde(default)]
+    pub games: u32,
+    #[serde(default)]
+    pub wins: u32,
+    #[serde(default)]
+    pub losses: u32,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct HistorySignals {
+    #[serde(default)]
+    pub sample_matches: u32,
+    #[serde(default)]
+    pub our_picks: BTreeMap<ChampionId, HistoryLine>,
+    #[serde(default)]
+    pub enemy_picks: BTreeMap<ChampionId, HistoryLine>,
+    #[serde(default)]
+    pub our_bans: BTreeMap<ChampionId, u32>,
+    #[serde(default)]
+    pub enemy_bans: BTreeMap<ChampionId, u32>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct HistoryEvidence {
+    pub points: f32,
+    pub games: u32,
+    pub wins: u32,
+    pub losses: u32,
+    pub note: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -727,6 +781,8 @@ pub struct Recommendation {
     pub reasons: Vec<String>,
     pub risks: Vec<String>,
     pub breakdown: ScoreBreakdown,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub history: Option<HistoryEvidence>,
 }
 
 #[derive(Debug, Clone, Serialize)]

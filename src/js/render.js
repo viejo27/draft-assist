@@ -799,6 +799,11 @@ function recommendationCard(rec, index, banPhase, showAction = true) {
           <span>${escapeHtml(roleText)}</span>
           ${rec.comfort ? `<span>Comfort ${rec.comfort}/5</span>` : ""}
         </div>
+        ${
+          rec.history?.note
+            ? `<p class="rec-history-line" title="Ajuste por historial: ${rec.history.points > 0 ? "+" : ""}${formatScore(rec.history.points)}">Historial · ${escapeHtml(rec.history.note)}</p>`
+            : ""
+        }
         ${risk ? `<p class="rec-risk-line" title="${escapeHtml(risk)}">Riesgo · ${escapeHtml(risk)}</p>` : ""}
       </div>
       <div class="rec-scorebox">
@@ -1859,6 +1864,16 @@ function settingsView(view) {
           </div>
           <label class="switch">
             <input type="checkbox" data-action="toggle-offrole-flex" ${settings.allow_offrole_flex ? "checked" : ""} />
+            <span class="switch-track"></span>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div>
+            <strong>Usar historial como desempate</strong>
+            <p>Solo ajusta ±2 puntos con 3+ partidas. No cambia la prioridad estricta del pool ni el flex fuera de rol.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" data-action="toggle-use-history" ${settings.use_history ? "checked" : ""} />
             <span class="switch-track"></span>
           </label>
         </div>

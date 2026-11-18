@@ -2911,7 +2911,8 @@
   "settings": {
     "top_n": 5,
     "allow_offrole_flex": false,
-    "pool_precedence": true
+    "pool_precedence": true,
+    "use_history": false
   },
   "data": {
     "data_dir": "preview/data",
@@ -3135,9 +3136,10 @@
     "settings": {
       "top_n": 5,
       "allow_offrole_flex": false,
-      "pool_precedence": true
+      "pool_precedence": true,
+      "use_history": false
     }
   },
   "warnings": [],
-  "app_version": "0.3.0"
+  "app_version": "0.3.1"
 }

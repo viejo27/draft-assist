@@ -13,7 +13,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             allow_offrole_flex: state.settings.allow_offrole_flex,
             pool_precedence: state.settings.pool_precedence,
             include_next_picks: true,
+            use_history: state.settings.use_history,
         },
+        history: None,
     };
     let response = engine.recommend(&request)?;
     println!("{}", serde_json::to_string_pretty(&response)?);

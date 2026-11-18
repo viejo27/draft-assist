@@ -16,6 +16,7 @@ Asistente de draft para League of Legends, hecho con **Rust + Tauri v2** y front
 - **Seguimiento LCU de solo lectura**: sincroniza lobby, formato, lado, posiciones, bans y picks desde el cliente.
 - **Historial local y scouting**: importa tu TXT de Clash, guarda picks, bans y resultados, y consulta estadísticas por campeón, bans, lado y rival.
 - **Pools rivales**: agrega por nombre los campeones que fuiste anotando y corrige nombres con alias.
+- **Historial como desempate opcional**: ±2 puntos, muestra mínima de 3 partidas y apagado por defecto.
 - Persistencia local con autosave, export/import.
 
 La app no automatiza picks ni bans; todas las acciones las confirma el usuario. El seguimiento LCU solo lee el cliente y actualiza el tablero.
@@ -185,6 +186,24 @@ El parser:
 - **Ver partidas** filtra el historial por ese rival.
 - **Renombrar** corrige el nombre en todas sus partidas y guarda un alias para futuras importaciones.
 
+### Historial como desempate
+
+En Ajustes puedes activar **Usar historial como desempate**. Está apagado por defecto y nunca sustituye al scoring principal:
+
+- **Picks:** winrate propio por campeón, centrado en 50%, con 3+ partidas.
+- **Bans:** amenaza rival por winrate en contra y frecuencia de bans rivales.
+- **Ajuste máximo:** ±2 puntos sobre 100.
+- No cambia la prioridad estricta del pool ni el flex fuera de rol.
+- Si un campeón está en tu pool, el historial no le da bonus positivo como ban.
+- Cuando aporta, la carta muestra una línea `Historial · ...`.
+
+El peso y la muestra mínima se pueden editar en `scoring.json`:
+
+```json
+"history_weight": 0.02,
+"history_min_games": 3
+```
+
 ### Privacidad y archivos
 
 ```text
@@ -202,7 +221,8 @@ El parser:
 
 - El archivo viejo no registra nuestros nombres ni fechas; esas partidas dan estadística por campeón y rival, no por jugador.
 - Las partidas nuevas guardadas desde el draft sí incluyen el jugador que pickeó.
-- La integración del historial con las recomendaciones queda para 0.3.1.
+- El historial es global por campeón; el archivo viejo no permite atribuir nuestros picks a jugadores concretos.
+- El historial es solo un desempate opcional, no sustituye al scoring principal.
 - `ff` se interpreta como derrota; `se rompió` como resultado desconocido.
 
 ## Modelo de entrada
@@ -253,10 +273,14 @@ El comando `recommend` recibe:
     "top_n": 5,
     "allow_offrole_flex": false,
     "pool_precedence": true,
-    "include_next_picks": true
-  }
+    "include_next_picks": true,
+    "use_history": false
+  },
+  "history": null
 }
 ```
+
+`options.use_history` activa el desempate por historial. `history` es opcional y lleva señales compactas por campeón; no se envía el historial completo. Si se omite, no hay ajuste.
 
 > El roster de ejemplo completo está en [`examples/example-state.json`](examples/example-state.json). Incluye los 5 jugadores.
 
@@ -323,7 +347,7 @@ El comando `recommend` recibe:
 }
 ```
 
-La salida completa del ejemplo está en [`examples/example-recommendation.json`](examples/example-recommendation.json).
+La salida completa del ejemplo está en [`examples/example-recommendation.json`](examples/example-recommendation.json). Si el desempate por historial está activo y aporta, cada recomendación incluye un objeto `history` con puntos, récord y nota; si no aporta, se omite.
 
 ## Ejemplo completo
 
@@ -358,6 +382,7 @@ Componentes: comfort, matchup de línea, riesgo de counters, sinergia curada/est
 - **Picks tardíos:** pesan más matchup y counter directo.
 - **Pool primero:** por defecto, todos los campeones del pool se ordenan antes que los off-pool. Los off-pool siguen visibles con advertencia.
 - **Bans:** priorizan amenaza a tus picks/pools y penalizan los bans propios.
+- **Historial (opcional):** con 3+ partidas, ajusta como máximo ±2 puntos. En picks usa tu winrate por campeón; en bans usa el winrate rival en contra y la frecuencia de bans. No cambia la prioridad del pool ni el flex.
 
 El detalle técnico está en [`docs/DESIGN.md`](docs/DESIGN.md). El sistema visual está en [`DESIGN.md`](DESIGN.md).
 
@@ -370,7 +395,7 @@ crates/draft-engine/data/
 ├─ matchups.json         # counters con valor -1..1 y severidad 1..3
 ├─ synergies.json        # pares con valor 0..1
 ├─ templates.json        # ranked / tournament
-├─ scoring.json          # pesos, umbrales y tiers
+├─ scoring.json          # pesos, umbrales, tiers, history_weight, history_min_games
 └─ example-state.json    # ejemplo ejecutable
 ```
 
@@ -410,7 +435,7 @@ cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
-Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late. También hay tests de lockfile/credenciales LCU, mapeo de posiciones, detección de ranked/competitivo, mapeo de picks/bans y `lcu_turn`. El historial añade tests de bloques completos, rebalanceo 6/4, alias de campeones, rangos, fill/comodín, notas, importación y estadísticas/filtros/scouting en JavaScript.
+Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late. También hay tests de lockfile/credenciales LCU, mapeo de posiciones, detección de ranked/competitivo, mapeo de picks/bans y `lcu_turn`. El historial añade tests de bloques completos, rebalanceo 6/4, alias de campeones, rangos, fill/comodín, notas, importación y estadísticas/filtros/scouting en JavaScript. El desempate por historial añade tests de muestra mínima, dirección del ajuste, protección de bans propios y prioridad de pool.
 
 ## Problemas comunes
 
@@ -423,8 +448,7 @@ Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, pri
 
 ## Mejoras futuras
 
-- 0.3.1: usar el historial como desempate opcional en las recomendaciones, con peso bajo y apagado por defecto.
-- 0.3.1: capturar partidas desde el LCU al terminar el champ select, con resultado desde el fin de partida.
+- Captura automática de resultados con el Live Client Data API (`https://127.0.0.1:2999/liveclientdata/allgamedata`): al terminar la partida indica victoria/derrota y se integraría con los datos de la partida en vivo.
 - LCU por WebSocket para latencia menor que el polling actual.
 - Auto-hover/auto-lock opcional en el cliente (no implementado; solo con confirmación explícita, aviso de overrides de pool/flex y botón de emergencia).
 - Riot API para maestría y estadísticas propias (futuro, no implementado; requiere production key y aprobación de Riot).

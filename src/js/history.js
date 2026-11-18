@@ -1,3 +1,51 @@
+export function buildHistorySignals(store) {
+  const signals = {
+    sample_matches: 0,
+    our_picks: {},
+    enemy_picks: {},
+    our_bans: {},
+    enemy_bans: {},
+  };
+
+  for (const match of store?.matches ?? []) {
+    const known = match.result === "win" || match.result === "loss";
+    if (known) signals.sample_matches += 1;
+
+    if (known) {
+      const win = match.result === "win";
+      for (const pick of match.our_picks ?? []) {
+        const line = (signals.our_picks[pick.champion_id] ??= {
+          games: 0,
+          wins: 0,
+          losses: 0,
+        });
+        line.games += 1;
+        if (win) line.wins += 1;
+        else line.losses += 1;
+      }
+      for (const pick of match.enemy_picks ?? []) {
+        const line = (signals.enemy_picks[pick.champion_id] ??= {
+          games: 0,
+          wins: 0,
+          losses: 0,
+        });
+        line.games += 1;
+        if (win) line.wins += 1;
+        else line.losses += 1;
+      }
+    }
+
+    for (const championId of match.our_bans ?? []) {
+      signals.our_bans[championId] = (signals.our_bans[championId] ?? 0) + 1;
+    }
+    for (const championId of match.enemy_bans ?? []) {
+      signals.enemy_bans[championId] = (signals.enemy_bans[championId] ?? 0) + 1;
+    }
+  }
+
+  return signals;
+}
+
 export function emptyHistoryFilters() {
   return {
     search: "",

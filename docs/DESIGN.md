@@ -364,6 +364,19 @@ El CLI `cargo run -p draft-engine --example import_history -- <txt> <out>` gener
 - `computeHistorySummary`: winrate, racha, picks propios/rivales, bans propios/rivales, primer ban, lados, mejor campeón y amenaza.
 - `buildRivalProfiles`: agrega por nombre, deduplica partidas, roles vistos, pools ponderados (`main` pesa 3, `last` 1), récord y notas.
 - Las tablas muestran tamaño de muestra; el winrate de bans/lados es contextual, no causal.
+- `buildHistorySignals`: señal compacta por campeón; no se envía el historial completo al motor.
+
+### Historial como desempate
+
+- `Settings.use_history` está apagado por defecto.
+- `RecommendRequest.history` es opcional y lleva `HistorySignals { sample_matches, our_picks, enemy_picks, our_bans, enemy_bans }`.
+- `scoring.json` define `history_weight` (0.02) y `history_min_games` (3).
+- Pick: winrate propio centrado en 50%, con al menos 3 partidas; ajuste máximo ±2 puntos.
+- Ban: 70% amenaza rival (winrate en contra) + 30% frecuencia de bans rivales; máximo ±2 puntos.
+- Si el campeón está en nuestro pool, el ajuste de ban nunca es positivo.
+- El ajuste se aplica después del score base y antes de ordenar. El comparador de picks sigue comprobando `in_pool` primero, así que el historial no rompe la prioridad estricta del pool.
+- `Recommendation.history` devuelve puntos, récord y nota; la carta muestra `Historial · ...` solo cuando aporta.
+- El historial viejo no atribuye nuestros picks a jugadores concretos; la señal es global por campeón.
 
 ### UI
 
@@ -382,7 +395,7 @@ Vistas: Draft, Equipo, Historial, Ajustes.
 - **Draft:** tablero enemigo/aliado, bans, resumen de composición, recomendaciones Top N, próximos picks.
 - **Equipo:** 5 jugadores, orden de picks, pools con comfort y winrate.
 - **Historial:** resumen, partidas, rivales y bans; importación de Clash, guardado del draft actual, exportación y edición.
-- **Ajustes:** Top N, prioridad de pool, flex fuera de rol, cliente de League, historial local, datos, export/import, explicación del scoring.
+- **Ajustes:** Top N, prioridad de pool, flex fuera de rol, desempate por historial, cliente de League, historial local, datos, export/import, explicación del scoring.
 
 La UI está descrita en `DESIGN.md` (sistema visual) y sigue modo Operate: densidad escaneable, acciones a un clic, estados vacío/error/loading.
 
@@ -403,7 +416,9 @@ La UI está descrita en `DESIGN.md` (sistema visual) y sigue modo Operate: densi
 - round-trip JSON;
 - flex fuera de rol con opción explícita;
 - early vs late (meta/flex vs counter);
-- `lcu_turn` sobreescribiendo el turno de plantilla.
+- `lcu_turn` sobreescribiendo el turno de plantilla;
+- muestra mínima y dirección del ajuste por historial;
+- protección de bans propios y prioridad de pool con historial activo.
 
 `crates/draft-engine/src/history/`:
 
@@ -427,7 +442,8 @@ La UI está descrita en `DESIGN.md` (sistema visual) y sigue modo Operate: densi
 - resumen, winrate, picks, bans, primer ban y lados;
 - filtros por resultado, lado, primer ban y búsqueda;
 - perfiles de rivales, pools, roles y récord;
-- detección de partidas completas.
+- detección de partidas completas;
+- señales compactas de historial (`buildHistorySignals`).
 
 Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` (si clippy está instalado), `node --test src/js/history.test.js` y los ejemplos CLI.
 
@@ -435,7 +451,9 @@ Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warn
 
 - Prioridad meta estática del parche 16.21.1; no es un tier list vivo.
 - Counters/sinergias son un seed curado, no estadística agregada.
-- El motor aún no usa los pools rivales del historial; `denial` sigue neutral en las recomendaciones de 0.3.0.
+- El motor aún no usa los pools rivales del historial; `denial` sigue neutral.
+- El desempate por historial es global por campeón, no por jugador, en el historial viejo.
+- El desempate por historial está limitado a ±2 puntos y no es un modelo predictivo.
 - El rol enemigo se infiere si no se registra.
 - La UI no expone el modo manual completo; el motor lo soporta y la UI permite saltar de turno.
 - El seguimiento LCU usa polling de 1 s, no WebSocket.
@@ -450,8 +468,7 @@ Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warn
 
 ## 14. Mejoras futuras
 
-- 0.3.1: usar historial como desempate opcional en las recomendaciones, con peso bajo y apagado por defecto.
-- 0.3.1: capturar partidas desde el LCU al terminar el champ select, con resultado desde el fin de partida.
+- Captura automática de resultados con el Live Client Data API (`https://127.0.0.1:2999/liveclientdata/allgamedata`), integrada con los datos de la partida en vivo.
 - LCU por WebSocket para menor latencia.
 - Auto-hover/auto-lock opcional con confirmación explícita, overrides temporales de pool/flex y botón de emergencia.
 - Riot API para maestría y estadísticas propias (futuro, no implementado; requiere production key y aprobación de Riot).

@@ -310,6 +310,9 @@ function handleChange(event) {
     case "toggle-offrole-flex":
       setSettings({ allow_offrole_flex: target.checked });
       break;
+    case "toggle-use-history":
+      setSettings({ use_history: target.checked });
+      break;
     case "rename-player":
       renamePlayer(target.dataset.player, target.value.trim() || "Jugador");
       break;

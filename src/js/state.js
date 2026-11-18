@@ -1,5 +1,9 @@
 import * as api from "./api.js";
-import { emptyHistoryFilters, isCompleteMatch } from "./history.js";
+import {
+  buildHistorySignals,
+  emptyHistoryFilters,
+  isCompleteMatch,
+} from "./history.js";
 
 export const app = {
   bootstrap: null,
@@ -243,14 +247,28 @@ function scheduleSave() {
 let refreshToken = 0;
 export async function refresh() {
   if (!app.state) return;
+  if (
+    app.state.settings.use_history &&
+    !app.history.store &&
+    !app.history.error
+  ) {
+    if (!app.history.loading) void loadHistory();
+    emit();
+    return;
+  }
   const token = ++refreshToken;
   app.busy = true;
   emit();
   try {
+    const history =
+      app.state.settings.use_history && app.history.store
+        ? buildHistorySignals(app.history.store)
+        : null;
     const response = await api.recommend({
       draft: app.state.draft,
       roster: app.state.roster,
       options: app.state.settings,
+      history,
     });
     if (token !== refreshToken) return;
     app.response = response;
@@ -295,6 +313,7 @@ export async function init() {
     app.loading = false;
     emit();
     await refresh();
+    void loadHistory();
     if (api.isTauri) {
       void initLcu();
     }
@@ -455,6 +474,9 @@ export async function loadHistory() {
   } finally {
     app.history.loading = false;
     emit();
+    if (app.state?.settings?.use_history && app.history.store) {
+      void refresh();
+    }
   }
 }
 
@@ -473,6 +495,9 @@ async function saveHistoryStore() {
   } finally {
     app.history.saving = false;
     emit();
+    if (app.state?.settings?.use_history) {
+      void refresh();
+    }
   }
 }
 
@@ -906,6 +931,9 @@ export function togglePriority(need) {
 
 export function setSettings(partial) {
   app.state.settings = { ...app.state.settings, ...partial };
+  if (partial.use_history && !app.history.store) {
+    void loadHistory();
+  }
   scheduleSave();
   emit();
   void refresh();

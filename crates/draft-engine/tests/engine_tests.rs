@@ -1,9 +1,11 @@
 use draft_engine::Engine;
 use draft_engine::data::{GameData, example_state};
 use draft_engine::model::{
-    AppState, DraftState, LcuTurn, Phase, PoolEntry, RecommendOptions, RecommendRequest, Settings,
-    Side,
+    AppState, DraftState, HistoryLine, HistorySignals, LcuTurn, Phase, PoolEntry, RecommendOptions,
+    RecommendRequest, Settings, Side,
 };
+use draft_engine::scoring::{ban_history_adjustment, pick_history_adjustment};
+use std::collections::BTreeMap;
 
 fn engine() -> Engine {
     Engine::embedded().expect("los datos embebidos deben ser válidos")
@@ -18,6 +20,7 @@ fn request(state: AppState) -> RecommendRequest {
         draft: state.draft,
         roster: state.roster,
         options: RecommendOptions::from(&state.settings),
+        history: None,
     }
 }
 
@@ -318,6 +321,7 @@ fn offrole_flex_requires_the_explicit_option() {
         allow_offrole_flex: false,
         pool_precedence: false,
         include_next_picks: false,
+        use_history: false,
     };
     let response_without = engine()
         .recommend(&without_flex)
@@ -335,6 +339,7 @@ fn offrole_flex_requires_the_explicit_option() {
         allow_offrole_flex: true,
         pool_precedence: false,
         include_next_picks: false,
+        use_history: false,
     };
     let response_with = engine().recommend(&with_flex).expect("consulta con flex");
     let wukong = response_with
@@ -418,5 +423,215 @@ fn early_pick_prefers_meta_and_late_pick_can_prefer_the_counter() {
     assert!(
         late_sivir < late_jinx,
         "en late contra Caitlyn, Sivir debe superar a Jinx: Sivir {late_sivir}, Jinx {late_jinx}"
+    );
+}
+
+#[test]
+fn history_pick_adjustment_requires_sample_and_moves_both_ways() {
+    let engine = engine();
+    let config = &engine.data().config;
+    let mut our_picks = BTreeMap::new();
+    our_picks.insert(
+        "Jinx".to_string(),
+        HistoryLine {
+            games: 5,
+            wins: 4,
+            losses: 1,
+        },
+    );
+    our_picks.insert(
+        "Ashe".to_string(),
+        HistoryLine {
+            games: 2,
+            wins: 2,
+            losses: 0,
+        },
+    );
+    our_picks.insert(
+        "Sivir".to_string(),
+        HistoryLine {
+            games: 4,
+            wins: 1,
+            losses: 3,
+        },
+    );
+    let signals = HistorySignals {
+        sample_matches: 6,
+        our_picks,
+        ..HistorySignals::default()
+    };
+
+    let jinx = pick_history_adjustment(Some(&signals), "Jinx", config).expect("Jinx con muestra");
+    assert!(jinx.points > 0.0);
+    assert!(jinx.points <= 2.0);
+    assert!(pick_history_adjustment(Some(&signals), "Ashe", config).is_none());
+    let sivir =
+        pick_history_adjustment(Some(&signals), "Sivir", config).expect("Sivir con muestra");
+    assert!(sivir.points < 0.0);
+}
+
+#[test]
+fn history_ban_adjustment_handles_threat_and_self_pool() {
+    let engine = engine();
+    let config = &engine.data().config;
+    let mut enemy_picks = BTreeMap::new();
+    enemy_picks.insert(
+        "Caitlyn".to_string(),
+        HistoryLine {
+            games: 5,
+            wins: 1,
+            losses: 4,
+        },
+    );
+    let mut enemy_bans = BTreeMap::new();
+    enemy_bans.insert("Caitlyn".to_string(), 3);
+    let signals = HistorySignals {
+        sample_matches: 6,
+        enemy_picks,
+        enemy_bans,
+        ..HistorySignals::default()
+    };
+
+    let caitlyn =
+        ban_history_adjustment(Some(&signals), "Caitlyn", false, config).expect("Caitlyn");
+    assert!(caitlyn.points > 0.0);
+    assert!(caitlyn.points <= 2.0);
+    let self_pool = ban_history_adjustment(Some(&signals), "Caitlyn", true, config);
+    assert!(
+        self_pool.is_none() || self_pool.is_some_and(|adjustment| adjustment.points <= 0.0),
+        "un campeón de nuestro pool no debe recibir bonus positivo por historial"
+    );
+
+    let no_results = HistorySignals {
+        sample_matches: 0,
+        enemy_bans: {
+            let mut bans = BTreeMap::new();
+            bans.insert("Caitlyn".to_string(), 3);
+            bans
+        },
+        ..HistorySignals::default()
+    };
+    assert!(
+        ban_history_adjustment(Some(&no_results), "Caitlyn", false, config).is_none(),
+        "sin resultados conocidos no debe inventarse una señal de bans"
+    );
+}
+
+#[test]
+fn accepts_the_compact_history_payload_sent_by_the_ui() {
+    let engine = engine();
+    let state = example();
+    let payload = serde_json::json!({
+        "draft": state.draft,
+        "roster": state.roster,
+        "options": {
+            "top_n": 5,
+            "allow_offrole_flex": false,
+            "pool_precedence": true,
+            "include_next_picks": true,
+            "use_history": true
+        },
+        "history": {
+            "sample_matches": 5,
+            "our_picks": {
+                "Jinx": { "games": 5, "wins": 5, "losses": 0 }
+            },
+            "enemy_picks": {},
+            "our_bans": {},
+            "enemy_bans": {}
+        }
+    });
+    let request: RecommendRequest = serde_json::from_value(payload).expect("payload de la UI");
+    let response = engine.recommend(&request).expect("consulta con historial");
+    let jinx = response
+        .recommendations
+        .iter()
+        .find(|rec| rec.champion.id == "Jinx")
+        .expect("Jinx en las recomendaciones");
+    let history = jinx.history.as_ref().expect("evidencia de historial");
+    assert!(history.points > 0.0);
+    assert!(history.note.contains("5-0"));
+}
+
+#[test]
+fn history_cannot_break_pool_precedence() {
+    let engine = engine();
+    let mut state = example();
+    state.settings.top_n = 30;
+    state.settings.use_history = true;
+    let base = engine
+        .recommend(&request(state.clone()))
+        .expect("consulta base");
+    let pool_champion = base
+        .recommendations
+        .iter()
+        .find(|rec| rec.in_pool && rec.action == Phase::Pick)
+        .expect("pick de pool")
+        .champion
+        .id
+        .clone();
+    let off_pool_champion = base
+        .recommendations
+        .iter()
+        .find(|rec| !rec.in_pool && rec.action == Phase::Pick)
+        .expect("pick fuera de pool")
+        .champion
+        .id
+        .clone();
+
+    let mut our_picks = BTreeMap::new();
+    our_picks.insert(
+        pool_champion.clone(),
+        HistoryLine {
+            games: 5,
+            wins: 0,
+            losses: 5,
+        },
+    );
+    our_picks.insert(
+        off_pool_champion.clone(),
+        HistoryLine {
+            games: 5,
+            wins: 5,
+            losses: 0,
+        },
+    );
+    let mut request = request(state);
+    request.options.use_history = true;
+    request.history = Some(HistorySignals {
+        sample_matches: 5,
+        our_picks,
+        ..HistorySignals::default()
+    });
+    let response = engine.recommend(&request).expect("consulta con historial");
+    let first = response
+        .recommendations
+        .first()
+        .expect("hay recomendaciones");
+    assert!(
+        first.in_pool,
+        "el historial no debe romper la prioridad del pool: primera {}",
+        first.champion.id
+    );
+    let pool_position = response
+        .recommendations
+        .iter()
+        .position(|rec| rec.champion.id == pool_champion)
+        .expect("pool presente");
+    let off_pool_position = response
+        .recommendations
+        .iter()
+        .position(|rec| rec.champion.id == off_pool_champion)
+        .expect("off-pool presente");
+    assert!(
+        pool_position < off_pool_position,
+        "el pool debe seguir por delante aunque el off-pool tenga historial perfecto"
+    );
+    assert!(
+        response
+            .recommendations
+            .iter()
+            .any(|rec| rec.history.is_some()),
+        "la evidencia del historial debe llegar a la respuesta"
     );
 }

@@ -56,5 +56,7 @@
     "anti_tank_min": 2.0
   },
   "early_pick_max": 2,
-  "late_pick_min": 4
+  "late_pick_min": 4,
+  "history_weight": 0.02,
+  "history_min_games": 3
 }

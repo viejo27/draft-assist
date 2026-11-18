@@ -1,8 +1,8 @@
 use crate::data::GameData;
 use crate::model::{
     Archetype, BanWeights, ChampionMeta, DamageSplit, DamageType, DraftState, EnemyPick,
-    NeedAssessment, Player, ProfileWeights, RecommendOptions, Role, Roster, ScoreBreakdown,
-    TeamNeed, TeamPick, Traits,
+    HistorySignals, NeedAssessment, Player, ProfileWeights, RecommendOptions, Role, Roster,
+    ScoreBreakdown, ScoringConfig, TeamNeed, TeamPick, Traits,
 };
 use std::collections::HashSet;
 
@@ -406,7 +406,7 @@ fn flex_score(meta: &ChampionMeta, risk: f32) -> f32 {
     (0.4 * role_norm + 0.4 * blind + 0.2 * (f32::from(meta.priority) / 5.0)).clamp(0.0, 1.0)
 }
 
-fn tier_for(score: f32, data: &GameData) -> String {
+pub fn tier_for(score: f32, data: &GameData) -> String {
     if score >= data.config.tiers.s {
         "S".into()
     } else if score >= data.config.tiers.a {
@@ -760,4 +760,89 @@ pub fn evaluate_ban(
         reasons,
         risks,
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct HistoryAdjustment {
+    pub points: f32,
+    pub games: u32,
+    pub wins: u32,
+    pub losses: u32,
+    pub enemy_bans: u32,
+}
+
+pub fn pick_history_adjustment(
+    history: Option<&HistorySignals>,
+    champion_id: &str,
+    config: &ScoringConfig,
+) -> Option<HistoryAdjustment> {
+    let line = history?.our_picks.get(champion_id)?;
+    let known = line.wins + line.losses;
+    if known < config.history_min_games {
+        return None;
+    }
+    let winrate = line.wins as f32 / known as f32;
+    let signal = ((winrate - 0.5) * 2.0).clamp(-1.0, 1.0);
+    let points = config.history_weight * 100.0 * signal;
+    if points.abs() < 0.05 {
+        return None;
+    }
+    Some(HistoryAdjustment {
+        points,
+        games: known,
+        wins: line.wins,
+        losses: line.losses,
+        enemy_bans: 0,
+    })
+}
+
+pub fn ban_history_adjustment(
+    history: Option<&HistorySignals>,
+    champion_id: &str,
+    self_pool: bool,
+    config: &ScoringConfig,
+) -> Option<HistoryAdjustment> {
+    let history = history?;
+    let enemy_bans = history.enemy_bans.get(champion_id).copied().unwrap_or(0);
+    let (known, wins, losses, threat_signal) = history
+        .enemy_picks
+        .get(champion_id)
+        .filter(|line| line.wins + line.losses >= config.history_min_games)
+        .map(|line| {
+            let known = line.wins + line.losses;
+            let winrate = line.wins as f32 / known as f32;
+            (
+                known,
+                line.wins,
+                line.losses,
+                ((0.5 - winrate) * 2.0).clamp(-1.0, 1.0),
+            )
+        })
+        .unwrap_or((0, 0, 0, 0.0));
+
+    if known == 0 && enemy_bans == 0 {
+        return None;
+    }
+
+    let contest_signal = if history.sample_matches > 0 {
+        let ban_rate = enemy_bans as f32 / history.sample_matches as f32;
+        ((ban_rate - 0.10) / 0.30).clamp(-1.0, 1.0)
+    } else {
+        0.0
+    };
+    let signal = (0.7 * threat_signal + 0.3 * contest_signal).clamp(-1.0, 1.0);
+    let mut points = config.history_weight * 100.0 * signal;
+    if self_pool {
+        points = points.min(0.0);
+    }
+    if points.abs() < 0.05 {
+        return None;
+    }
+    Some(HistoryAdjustment {
+        points,
+        games: known,
+        wins,
+        losses,
+        enemy_bans,
+    })
 }

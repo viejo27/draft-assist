@@ -2,13 +2,14 @@ use crate::EngineError;
 use crate::data::GameData;
 use crate::model::{
     AppState, ChampionRef, ChampionView, CompositionSummary, DraftState, DraftSummary,
-    EnemyPickView, NextPickSuggestions, Phase, Player, PlayerView, ProfileWeights,
+    EnemyPickView, HistoryEvidence, NextPickSuggestions, Phase, Player, PlayerView, ProfileWeights,
     RecommendOptions, RecommendRequest, Recommendation, RecommendationResponse, Role, Roster,
     TeamPick, TeamPickView, TurnInfo,
 };
 use crate::scoring::{
-    BanEvaluationContext, PickEvaluationContext, compute_archetype, compute_needs, damage_split,
-    evaluate_ban, evaluate_pick, lane_opponent, sum_traits,
+    BanEvaluationContext, PickEvaluationContext, ban_history_adjustment, compute_archetype,
+    compute_needs, damage_split, evaluate_ban, evaluate_pick, lane_opponent,
+    pick_history_adjustment, sum_traits, tier_for,
 };
 use crate::templates::{TurnContext, current_turn, is_simultaneous_ban_step, pick_steps_after};
 
@@ -379,6 +380,29 @@ fn recommend_picks(
         }
 
         let mut evaluation = evaluate_pick(&context, &champion.id, meta);
+        let mut history_evidence = None;
+        if options.use_history
+            && let Some(adjustment) =
+                pick_history_adjustment(request.history.as_ref(), &champion.id, &data.config)
+        {
+            evaluation.score = (evaluation.score + adjustment.points).clamp(0.0, 100.0);
+            evaluation.tier = tier_for(evaluation.score, data);
+            let winrate = if adjustment.games > 0 {
+                adjustment.wins as f32 / adjustment.games as f32 * 100.0
+            } else {
+                0.0
+            };
+            history_evidence = Some(HistoryEvidence {
+                points: round1(adjustment.points),
+                games: adjustment.games,
+                wins: adjustment.wins,
+                losses: adjustment.losses,
+                note: format!(
+                    "{} PJ propios, {}-{} ({:.0}%)",
+                    adjustment.games, adjustment.wins, adjustment.losses, winrate
+                ),
+            });
+        }
         if offrole_flex {
             evaluation.risks.push(format!(
                 "Flex fuera de rol: {} no es su línea principal.",
@@ -389,10 +413,10 @@ fn recommend_picks(
                 player.role.label_es()
             ));
         }
-        scored.push((champion, evaluation));
+        scored.push((champion, evaluation, history_evidence));
     }
 
-    scored.sort_by(|(champion_a, eval_a), (champion_b, eval_b)| {
+    scored.sort_by(|(champion_a, eval_a, _), (champion_b, eval_b, _)| {
         if options.pool_precedence && eval_a.in_pool != eval_b.in_pool {
             return eval_b.in_pool.cmp(&eval_a.in_pool);
         }
@@ -426,7 +450,7 @@ fn recommend_picks(
         .into_iter()
         .take(top_n)
         .enumerate()
-        .filter_map(|(index, (champion, evaluation))| {
+        .filter_map(|(index, (champion, evaluation, history))| {
             let justification = justification(&evaluation.reasons);
             Some(Recommendation {
                 rank: index + 1,
@@ -442,6 +466,7 @@ fn recommend_picks(
                 reasons: evaluation.reasons,
                 risks: evaluation.risks,
                 breakdown: evaluation.breakdown,
+                history,
             })
         })
         .collect()
@@ -471,11 +496,40 @@ fn recommend_bans(
         let Some(meta) = data.meta(&champion.id) else {
             continue;
         };
-        let evaluation = evaluate_ban(&context, &champion.id, meta);
-        scored.push((champion, evaluation));
+        let mut evaluation = evaluate_ban(&context, &champion.id, meta);
+        let mut history_evidence = None;
+        if options.use_history
+            && let Some(adjustment) = ban_history_adjustment(
+                request.history.as_ref(),
+                &champion.id,
+                evaluation.self_pool_comfort.is_some(),
+                &data.config,
+            )
+        {
+            evaluation.score = (evaluation.score + adjustment.points).clamp(0.0, 100.0);
+            evaluation.tier = tier_for(evaluation.score, data);
+            let mut parts = Vec::new();
+            if adjustment.games > 0 {
+                parts.push(format!(
+                    "{} PJ rivales, {}-{} contra él",
+                    adjustment.games, adjustment.wins, adjustment.losses
+                ));
+            }
+            if adjustment.enemy_bans > 0 {
+                parts.push(format!("{} bans rivales", adjustment.enemy_bans));
+            }
+            history_evidence = Some(HistoryEvidence {
+                points: round1(adjustment.points),
+                games: adjustment.games,
+                wins: adjustment.wins,
+                losses: adjustment.losses,
+                note: parts.join(" · "),
+            });
+        }
+        scored.push((champion, evaluation, history_evidence));
     }
 
-    scored.sort_by(|(champion_a, eval_a), (champion_b, eval_b)| {
+    scored.sort_by(|(champion_a, eval_a, _), (champion_b, eval_b, _)| {
         eval_b
             .score
             .partial_cmp(&eval_a.score)
@@ -492,7 +546,7 @@ fn recommend_bans(
         .into_iter()
         .take(top_n)
         .enumerate()
-        .filter_map(|(index, (champion, evaluation))| {
+        .filter_map(|(index, (champion, evaluation, history))| {
             let meta = data.meta(&champion.id)?;
             Some(Recommendation {
                 rank: index + 1,
@@ -508,6 +562,7 @@ fn recommend_bans(
                 reasons: evaluation.reasons,
                 risks: evaluation.risks,
                 breakdown: evaluation.breakdown,
+                history,
             })
         })
         .collect()
@@ -561,7 +616,9 @@ fn side_next_picks(
                 allow_offrole_flex: request.options.allow_offrole_flex,
                 pool_precedence: request.options.pool_precedence,
                 include_next_picks: false,
+                use_history: request.options.use_history,
             },
+            history: request.history.clone(),
         };
 
         match recommend(data, &next_request) {

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildHistorySignals,
   buildRivalProfiles,
   computeHistorySummary,
   filterHistoryMatches,
@@ -193,6 +194,20 @@ test("does not invent a most-banned champion when there are no bans", () => {
   const summary = computeHistorySummary(matches, nameOf);
   assert.equal(summary.mostBannedAgainst, null);
   assert.equal(summary.mostBannedByUs, null);
+});
+
+test("builds compact history signals from known results", () => {
+  const signals = buildHistorySignals(store);
+  assert.equal(signals.sample_matches, 3);
+  assert.deepEqual(signals.our_picks.Lux, { games: 3, wins: 2, losses: 1 });
+  assert.deepEqual(signals.enemy_picks.Caitlyn, {
+    games: 2,
+    wins: 1,
+    losses: 1,
+  });
+  assert.equal(signals.our_bans.Kled, 3);
+  assert.equal(signals.enemy_bans.Caitlyn, 2);
+  assert.equal(signals.enemy_bans.Poppy, 3);
 });
 
 test("streak uses played_at for newer manual matches", () => {
