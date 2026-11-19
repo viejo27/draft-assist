@@ -14,12 +14,13 @@ Asistente de draft para League of Legends, hecho con **Rust + Tauri v2** y front
 - Bans recomendados por amenaza y protección de bans propios.
 - Próximos picks tentativos.
 - **Seguimiento LCU de solo lectura**: sincroniza lobby, formato, lado, posiciones, bans y picks desde el cliente.
+- **Rival de Clash**: chip en el header al abrir la app, bracket, próximo partido, roster propio y rival, rangos, maestrías y últimas partidas desde el LCU.
 - **Historial local y scouting**: importa tu TXT de Clash, guarda picks, bans y resultados, y consulta estadísticas por campeón, bans, lado y rival.
 - **Pools rivales**: agrega por nombre los campeones que fuiste anotando y corrige nombres con alias.
 - **Historial como desempate opcional**: ±2 puntos, muestra mínima de 3 partidas y apagado por defecto.
 - Persistencia local con autosave, export/import.
 
-La app no automatiza picks ni bans; todas las acciones las confirma el usuario. El seguimiento LCU solo lee el cliente y actualiza el tablero.
+La app no automatiza picks ni bans; todas las acciones las confirma el usuario. El seguimiento LCU y la vista Rival solo leen el cliente; nunca envían acciones.
 
 ## Requisitos
 
@@ -94,6 +95,7 @@ La primera vez se abre con un **draft de ejemplo** cargado. Desde ahí puedes ed
 5. Pulsa **Elegir** o **Banear** para bloquear la acción y avanzar el turno.
 6. Usa **Deshacer** (`Ctrl/Cmd+Z`) para corregir, o **Cambiar turno** para saltar a otro paso de la plantilla.
 7. **Historial** → importa tu TXT de Clash o guarda la partida actual. Revisa estadísticas, bans y rivales.
+8. **Rival** → si hay un torneo de Clash activo, revisa el bracket, el próximo rival, sus rangos, maestrías y últimas partidas.
 
 ## Seguimiento LCU
 
@@ -140,6 +142,43 @@ El estado se guarda automáticamente en:
 ```
 
 Los JSON editables se copian a `%APPDATA%/viejo27.draft-assist/data/`.
+
+## Rival de Clash
+
+La pestaña **Rival** lee el bracket de Clash desde el cliente local y arma la ficha del equipo contrario.
+
+Qué muestra:
+
+- torneo, estado y próximo cambio de fase;
+- nuestro roster, récord y bracket;
+- próximo partido: ronda, estado, horario y rival;
+- por cada jugador rival: posición, nivel, rango Solo/Duo y Flex con LP y winrate;
+- campeones más jugados de la temporada con PJ, winrate y KDA;
+- maestrías principales;
+- últimas 5 partidas con campeón, resultado, KDA y cola.
+
+Cómo lo obtiene:
+
+- `/lol-clash/v1/tournament-summary`
+- `/lol-clash/v1/bracket/{bracketId}`
+- `/lol-clash/v1/roster/{rosterId}`
+- `/lol-summoner/v2/summoners`
+- `/lol-clash/v1/scouting/champions`
+- `/lol-ranked/v1/cached-ranked-stats/{puuid}` y `/lol-ranked/v1/ranked-stats/{puuid}`
+- `/lol-match-history/v1/products/lol/{puuid}/matches`
+
+Al abrir la app se hace **una sola consulta** para saber si hay Clash. Si hay torneo, el header muestra un chip con el día y horario de la próxima fase. No hay polling automático: la vista Rival se actualiza al abrirla o al pulsar **Actualizar**.
+
+Si todavía no tenés equipo, la vista muestra una leyenda para **crear un equipo o unirte a uno desde League of Legends**. Si ya tenés equipo, muestra el roster propio con sus miembros, posiciones y estados (aceptado, no listo o invitación pendiente) antes de que empiece el Clash.
+
+Todo es de solo lectura y no consulta la Riot API ni un proxy externo: los datos salen del cliente local.
+
+Límites:
+
+- Necesita Clash habilitado en la región. Antes de que se forme el bracket solo se muestra el torneo y nuestro equipo.
+- El cliente puede no exponer el roster rival hasta que el bracket esté listo.
+- Si el cliente no tiene historial cacheado de un jugador, esa sección aparece vacía.
+- LCU no es una API oficial; los endpoints pueden cambiar entre parches.
 
 ## Historial y scouting
 
@@ -435,7 +474,7 @@ cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
-Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late. También hay tests de lockfile/credenciales LCU, mapeo de posiciones, detección de ranked/competitivo, mapeo de picks/bans y `lcu_turn`. El historial añade tests de bloques completos, rebalanceo 6/4, alias de campeones, rangos, fill/comodín, notas, importación y estadísticas/filtros/scouting en JavaScript. El desempate por historial añade tests de muestra mínima, dirección del ajuste, protección de bans propios y prioridad de pool.
+Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late. También hay tests de lockfile/credenciales LCU, mapeo de posiciones, detección de ranked/competitivo, mapeo de picks/bans y `lcu_turn`. El módulo de Clash agrega tests de selección de torneo/bracket, identificación del roster, próximo partido, resultados, rangos y parseo de match history. El historial añade tests de bloques completos, rebalanceo 6/4, alias de campeones, rangos, fill/comodín, notas, importación y estadísticas/filtros/scouting en JavaScript. El desempate por historial añade tests de muestra mínima, dirección del ajuste, protección de bans propios y prioridad de pool.
 
 ## Problemas comunes
 
@@ -452,6 +491,7 @@ Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, pri
 - LCU por WebSocket para latencia menor que el polling actual.
 - Auto-hover/auto-lock opcional en el cliente (no implementado; solo con confirmación explícita, aviso de overrides de pool/flex y botón de emergencia).
 - Riot API para maestría y estadísticas propias (futuro, no implementado; requiere production key y aprobación de Riot).
+- Proxy propio sobre Riot API para enriquecer la vista Rival con datos que el LCU no expone.
 - Draft fearless con bans acumulados por serie.
 - Optimización conjunta de los 5 bans de ranked.
 - Simulación de respuestas enemigas y Monte Carlo.

@@ -102,6 +102,34 @@ impl LcuClient {
         response.json::<T>().await.map(Some).map_err(LcuError::Http)
     }
 
+    pub async fn get_optional_json_query<T: DeserializeOwned>(
+        &self,
+        path: &str,
+        query: &[(&str, String)],
+    ) -> Result<Option<T>, LcuError> {
+        let response = self
+            .http
+            .get(format!("{}{path}", self.base_url))
+            .query(query)
+            .header("Authorization", &self.authorization)
+            .header("Accept", "application/json")
+            .send()
+            .await?;
+
+        if response.status() == StatusCode::NOT_FOUND {
+            return Ok(None);
+        }
+
+        if !response.status().is_success() {
+            return Err(LcuError::Status {
+                status: response.status().as_u16(),
+                path: path.into(),
+            });
+        }
+
+        response.json::<T>().await.map(Some).map_err(LcuError::Http)
+    }
+
     pub async fn get_phase(&self) -> Result<String, LcuError> {
         self.get_json("/lol-gameflow/v1/gameflow-phase").await
     }

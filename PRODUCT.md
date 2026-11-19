@@ -19,6 +19,8 @@
 - El pool del jugador manda por defecto sobre el meta desconocido.
 - Los datos de campeones salen de Data Dragon 16.21.1 y están empaquetados. Counters y sinergias son un seed curado editable.
 - La app persiste el draft y el roster en JSON local; se puede exportar e importar.
+- Al abrir la app se consulta una vez si hay Clash; si hay torneo, el header muestra el día y horario de la próxima fase.
+- La **vista Rival de Clash** lee el torneo, nuestro roster, el bracket, el próximo partido, el roster rival, rangos, maestrías e historial reciente desde el LCU local. Si no hay equipo, muestra la leyenda para crear uno o unirse.
 - El **historial** guarda partidas, picks, bans, resultados y pools rivales. Se importa desde el TXT viejo de Clash o se guarda desde el draft actual.
 - El **scouting** agrega rivales por nombre, muestra sus pools y permite corregir nombres con alias.
 - Las estadísticas son locales y descriptivas: winrate, picks, bans, lados y amenazas, con tamaño de muestra.

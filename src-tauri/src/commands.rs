@@ -1,5 +1,5 @@
 use crate::RuntimeState;
-use crate::lcu::{LcuStatus, TrackingConfig, validate_roster};
+use crate::lcu::{ClashOverview, ClashView, LcuStatus, TrackingConfig, validate_roster};
 use crate::{load_engine, persistence};
 use draft_engine::data::example_state;
 use draft_engine::history::{
@@ -210,6 +210,23 @@ pub fn lcu_start_tracking(
 #[tauri::command]
 pub fn lcu_stop_tracking(state: State<'_, RuntimeState>) -> Result<LcuStatus, String> {
     Ok(state.lcu.stop())
+}
+
+#[tauri::command]
+pub async fn clash_overview() -> Result<ClashOverview, String> {
+    crate::lcu::clash_overview().await
+}
+
+#[tauri::command]
+pub async fn clash_status(state: State<'_, RuntimeState>) -> Result<ClashView, String> {
+    let data = {
+        let engine = state
+            .engine
+            .lock()
+            .map_err(|_| "El motor está bloqueado; reinicia la aplicación.".to_string())?;
+        engine.data().clone()
+    };
+    crate::lcu::clash_view(&data).await
 }
 
 #[tauri::command]

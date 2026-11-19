@@ -65,6 +65,8 @@ export function render(view) {
     root.innerHTML = loadingState();
   } else if (view.view === "roster") {
     root.innerHTML = rosterView(view);
+  } else if (view.view === "clash") {
+    root.innerHTML = clashView(view);
   } else if (view.view === "history") {
     root.innerHTML = historyView(view);
   } else if (view.view === "settings") {
@@ -84,12 +86,38 @@ function renderTopbar(view) {
 
   if (!view.state) {
     context.innerHTML = `<span class="context-muted">Cargando draft…</span>`;
+  } else if (view.view === "clash") {
+    context.innerHTML = `
+      <span class="context-chip">Rival</span>
+      <span class="context-separator"></span>
+      ${clashHeaderChip(view, true)}
+      ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
+      ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
+    `;
   } else if (view.view === "history") {
     const count = view.history?.store?.matches?.length ?? 0;
     context.innerHTML = `
       <span class="context-chip">Historial</span>
       <span class="context-separator"></span>
       <span class="context-turn">${count} partida${count === 1 ? "" : "s"}</span>
+      ${clashHeaderChip(view)}
+      ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
+      ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
+    `;
+  } else if (view.view === "roster") {
+    const count = view.state.roster?.players?.length ?? 0;
+    context.innerHTML = `
+      <span class="context-chip">Equipo</span>
+      <span class="context-separator"></span>
+      <span class="context-turn">${count} jugador${count === 1 ? "" : "es"}</span>
+      ${clashHeaderChip(view)}
+      ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
+      ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
+    `;
+  } else if (view.view === "settings") {
+    context.innerHTML = `
+      <span class="context-chip">Ajustes</span>
+      ${clashHeaderChip(view)}
       ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
       ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
     `;
@@ -103,6 +131,7 @@ function renderTopbar(view) {
         ${sideLabel(view.state.draft.side)}
       </span>
       <span class="context-turn">${escapeHtml(turn?.label ?? "Draft completo")}</span>
+      ${clashHeaderChip(view)}
       ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
       ${view.isExample ? `<span class="context-chip context-example">Ejemplo</span>` : ""}
       ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
@@ -253,6 +282,11 @@ function lcuBanner(view) {
         <strong>Seguimiento LCU activo</strong>
         <span>${escapeHtml(label)} · ${escapeHtml(detail)} · tablero de solo lectura</span>
       </div>
+      ${
+        status?.queue_id === 700
+          ? `<button class="button button-small button-ghost" type="button" data-action="view" data-view="clash">Ver rival</button>`
+          : ""
+      }
       <button class="button button-small button-danger-ghost" type="button" data-action="stop-lcu">Detener</button>
     </div>
   `;
@@ -1712,6 +1746,536 @@ function historyPickInline(picks) {
     .join(", ");
 }
 
+const CLASH_TIERS = {
+  IRON: "Hierro",
+  BRONZE: "Bronce",
+  SILVER: "Plata",
+  GOLD: "Oro",
+  PLATINUM: "Platino",
+  EMERALD: "Esmeralda",
+  DIAMOND: "Diamante",
+  MASTER: "Maestro",
+  GRANDMASTER: "Gran Maestro",
+  CHALLENGER: "Retador",
+};
+
+function clashHeaderChip(view, includeInClash = false) {
+  if (view.view === "clash" && !includeInClash) return "";
+  const live = view.clash?.data;
+  const overview = view.clashOverview?.data;
+  const enabled = live?.enabled ?? overview?.enabled ?? false;
+  if (!enabled) return "";
+  const tournament = live?.tournament ?? overview?.tournament;
+  if (!tournament) return "";
+  if (tournament.state === "RESULTS" || tournament.state === "CANCELLED") return "";
+  if (tournament.end_time_ms && Number(tournament.end_time_ms) < Date.now()) return "";
+  const team = live?.roster ?? overview?.team;
+  const when =
+    tournament.next_state_change_ms ??
+    tournament.lockin_start_ms ??
+    tournament.start_time_ms;
+  const whenText = when
+    ? formatClashHeaderTime(when)
+    : tournament.state_label ?? "Clash";
+  const teamText = team?.name ?? team?.short_name ?? "Sin equipo";
+  const label = `Clash · ${tournament.subtitle ?? tournament.name} · ${whenText} · ${teamText}`;
+  return `<button class="context-chip context-clash" type="button" data-action="view" data-view="clash" title="Abrir Rival de Clash">${escapeHtml(label)}</button>`;
+}
+
+function formatClashHeaderTime(ms) {
+  const date = new Date(Number(ms));
+  if (Number.isNaN(date.getTime())) return "Sin horario";
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  const time = new Intl.DateTimeFormat("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+  if (sameLocalDay(date, now)) return `hoy ${time}`;
+  if (sameLocalDay(date, tomorrow)) return `mañana ${time}`;
+  const weekday = new Intl.DateTimeFormat("es-AR", { weekday: "short" })
+    .format(date)
+    .replace(/\.$/, "");
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${weekday} ${day}/${month} ${time}`;
+}
+
+function sameLocalDay(left, right) {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
+}
+
+function clashView(view) {
+  const clash = view.clash ?? {};
+  const data = clash.data;
+  const loading = Boolean(clash.loading);
+  let body = "";
+  if (data) {
+    body = clashBody(data);
+  } else if (loading) {
+    body = clashLoading();
+  } else if (!clash.error) {
+    body = clashEmpty("Abrí League of Legends y esperá a que el cliente esté disponible.");
+  }
+
+  return `
+    ${clashPageHead(view)}
+    ${clash.error ? clashError(clash.error) : ""}
+    ${body}
+  `;
+}
+
+function clashPageHead(view) {
+  const clash = view.clash ?? {};
+  const loading = Boolean(clash.loading);
+  const enabled = Boolean(clash.data?.enabled);
+  return `
+    <div class="page-head">
+      <div>
+        <h1>Rival de Clash</h1>
+        <p class="muted">Bracket, rival, rangos y últimas partidas leídos del cliente local. Todo es solo lectura.</p>
+      </div>
+      <div class="inline-actions clash-head-actions">
+        <span class="status-dot ${enabled ? "is-ok" : ""}" title="${enabled ? "Clash habilitado" : "Clash no disponible"}"></span>
+        <button class="button button-ghost" type="button" data-action="refresh-clash" ${loading ? "disabled" : ""}>
+          ${loading ? "Actualizando…" : "Actualizar"}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function clashBody(data) {
+  const hasInfo = Boolean(
+    data.tournament || data.roster || data.bracket || data.next_match || data.opponent,
+  );
+  if (!hasInfo) {
+    return clashEmpty(data.message ?? "No hay un torneo de Clash activo para tu cuenta.");
+  }
+  const showNotice = Boolean(
+    data.message && (data.roster || data.opponent || data.bracket || data.next_match),
+  );
+  return `
+    ${showNotice ? `<p class="notice clash-notice">${escapeHtml(data.message)}</p>` : ""}
+    ${clashSummaryGrid(data)}
+    ${data.tournament ? clashSchedulePanel(data.tournament) : ""}
+    ${data.roster ? clashOurTeamPanel(data.roster) : data.tournament ? clashNoTeamPanel() : ""}
+    ${data.next_match ? clashMatchPanel(data) : ""}
+    ${data.opponent ? clashOpponentPanel(data.opponent) : ""}
+    <p class="clash-footnote">Datos del cliente local de League of Legends. La app no envía picks, bans ni consultas a Riot.</p>
+  `;
+}
+
+function clashSummaryGrid(data) {
+  const tournament = data.tournament;
+  const roster = data.roster;
+  const bracket = data.bracket;
+  const match = data.next_match;
+  const tournamentDetail = tournament
+    ? tournament.next_state_change_ms
+      ? `${tournament.state_label} · ${formatClashTime(tournament.next_state_change_ms)}`
+      : tournament.state_label
+    : "Sin torneo";
+  const rosterDetail = roster
+    ? `Tier ${roster.tier ?? "—"} · ${roster.accepted_count ?? 0}/${roster.member_count ?? 5} aceptados${roster.pending_count ? ` · ${roster.pending_count} pendientes` : ""} · ${roster.wins}-${roster.losses}`
+    : "Creá un equipo o unite a uno";
+  const bracketDetail = bracket
+    ? `${bracket.size ?? "?"} equipos · ${bracket.roster_count} rosters${bracket.is_complete ? " · completo" : ""}`
+    : "Esperando que se forme";
+  const matchDetail = match
+    ? `${match.status_label}${match.game_start_time_ms ? ` · ${formatClashTime(match.game_start_time_ms)}` : ""}`
+    : "Sin partido asignado";
+  const tournamentSubtitle = tournament?.subtitle
+    ? `${tournament.subtitle} · ${tournamentDetail}`
+    : tournamentDetail;
+  return `
+    <section class="clash-summary-grid" aria-label="Resumen de Clash">
+      ${clashSummaryCard("Torneo", tournament?.name ?? "Clash", tournamentSubtitle)}
+      ${clashSummaryCard("Nuestro equipo", roster?.name ?? roster?.short_name ?? "Sin equipo", rosterDetail)}
+      ${clashSummaryCard("Bracket", bracket ? `#${bracket.id}` : "Sin bracket", bracketDetail)}
+      ${clashSummaryCard("Próximo partido", match?.opponent_name ? `vs ${match.opponent_name}` : "Sin rival", matchDetail)}
+    </section>
+  `;
+}
+
+function clashSummaryCard(label, value, detail) {
+  return `
+    <article class="clash-summary-card">
+      <span class="field-label">${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+      <small>${escapeHtml(detail)}</small>
+    </article>
+  `;
+}
+
+function clashSchedulePanel(tournament) {
+  const now = Date.now();
+  const items = [
+    ["Lock-in", tournament.lockin_start_ms],
+    ["Scouting", tournament.scouting_start_ms],
+    ["Inicio", tournament.start_time_ms],
+    ["Fin", tournament.end_time_ms],
+  ].filter(([, ms]) => {
+    if (!ms) return false;
+    return ms >= now || ms === tournament.end_time_ms;
+  });
+  if (!items.length) return "";
+  return `
+    <section class="clash-panel clash-schedule-panel">
+      <header class="panel-head">
+        <div>
+          <h2>Calendario de Clash</h2>
+          <p class="muted">${escapeHtml(tournament.state_label ?? "Sin estado")}</p>
+        </div>
+      </header>
+      <div class="clash-schedule-grid">
+        ${items
+          .map(
+            ([label, ms]) => `
+              <div class="clash-schedule-item">
+                <span class="field-label">${escapeHtml(label)}</span>
+                <strong>${escapeHtml(formatClashTime(ms))}</strong>
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
+    </section>
+  `;
+}
+
+function clashOurTeamPanel(roster) {
+  const members = roster.members ?? [];
+  const state = roster.state_label ?? "Sin estado";
+  const registered = roster.is_registered ? "Registrado" : "No registrado";
+  return `
+    <section class="clash-panel clash-team-panel">
+      <header class="panel-head">
+        <div>
+          <h2>Nuestro equipo: ${escapeHtml(roster.name ?? "Sin nombre")}${roster.short_name ? ` <span class="clash-tag">(${escapeHtml(roster.short_name)})</span>` : ""}</h2>
+          <p class="muted">
+            ${escapeHtml(state)} · Tier ${roster.tier ?? "—"} · ${roster.accepted_count ?? 0}/${roster.member_count ?? 5} aceptados${roster.pending_count ? ` · ${roster.pending_count} pendientes` : ""} · ${roster.wins ?? 0}-${roster.losses ?? 0}
+          </p>
+        </div>
+        <span class="context-chip ${roster.is_registered ? "is-ok" : ""}">${registered}</span>
+      </header>
+      ${
+        members.length
+          ? `<div class="clash-team-list">${members.map(clashMemberRow).join("")}</div>`
+          : `<p class="muted clash-empty-note">El cliente no expuso los miembros del equipo.</p>`
+      }
+    </section>
+  `;
+}
+
+function clashMemberRow(member) {
+  const stateClass = member.is_pending
+    ? "is-pending"
+    : member.state === "READY"
+      ? "is-ready"
+      : "is-accepted";
+  const tag = member.tag_line
+    ? `<span class="clash-tag">#${escapeHtml(String(member.tag_line).replace(/^#/, ""))}</span>`
+    : "";
+  const captain = member.is_captain ? `<span class="clash-captain">Capitán</span>` : "";
+  const readyNote =
+    member.state === "NOT_READY" || member.state === "FORCED_NOT_READY"
+      ? " · No listo"
+      : "";
+  return `
+    <div class="clash-member-row">
+      <span class="role-badge">${escapeHtml(member.position_label ?? "Flex")}</span>
+      <div class="clash-member-copy">
+        <strong>${escapeHtml(member.display_name ?? "Jugador")} ${tag} ${captain}</strong>
+        <small>${member.tier ? `Tier ${member.tier}` : "Sin tier"}${readyNote}</small>
+      </div>
+      <span class="clash-member-state ${stateClass}">${escapeHtml(member.state_label ?? "Sin estado")}</span>
+    </div>
+  `;
+}
+
+function clashNoTeamPanel() {
+  return `
+    <section class="clash-panel clash-no-team">
+      <h2>Todavía no tenés un equipo de Clash</h2>
+      <p class="muted">Creá un equipo o unite a uno desde League of Legends. Cuando estés dentro, tocá <strong>Actualizar</strong>.</p>
+      <div class="inline-actions">
+        <button class="button button-primary" type="button" data-action="refresh-clash">Actualizar</button>
+      </div>
+    </section>
+  `;
+}
+
+function clashMatchPanel(data) {
+  const match = data.next_match;
+  const ourName = match.our_roster_name ?? data.roster?.name ?? "Nuestro equipo";
+  const opponentName = match.opponent_name ?? "Equipo rival";
+  const result = match.result === "win" ? "Victoria" : match.result === "loss" ? "Derrota" : null;
+  const title = match.is_completed
+    ? "Partido finalizado"
+    : match.status === "STARTED"
+      ? "Partido en curso"
+      : "Próximo partido";
+  return `
+    <section class="clash-panel clash-match-panel">
+      <header class="panel-head">
+        <div>
+          <h2>${title}</h2>
+          <p class="muted">
+            ${match.round ? `Ronda ${match.round} · ` : ""}${escapeHtml(match.status_label)}
+            ${match.game_start_time_ms ? ` · ${escapeHtml(formatClashTime(match.game_start_time_ms))}` : ""}
+          </p>
+        </div>
+        ${result ? `<span class="clash-result is-${match.result}">${result}</span>` : ""}
+      </header>
+      <div class="clash-match-teams">
+        <div class="clash-team">
+          <span class="field-label">Nosotros</span>
+          <strong>${escapeHtml(ourName)}</strong>
+        </div>
+        <span class="clash-vs">vs</span>
+        <div class="clash-team is-opponent">
+          <span class="field-label">Rival</span>
+          <strong>${escapeHtml(opponentName)}</strong>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function clashOpponentPanel(opponent) {
+  const players = opponent.players ?? [];
+  return `
+    <section class="clash-panel">
+      <header class="panel-head">
+        <div>
+          <h2>Rival: ${escapeHtml(opponent.name ?? "Equipo rival")}</h2>
+          <p class="muted">
+            ${opponent.short_name ? `${escapeHtml(opponent.short_name)} · ` : ""}${opponent.tier ? `Tier ${opponent.tier} · ` : ""}${opponent.wins ?? 0}-${opponent.losses ?? 0} · ${players.length} jugador${players.length === 1 ? "" : "es"} · datos del cliente
+          </p>
+        </div>
+        <span class="context-chip">${players.length}/5</span>
+      </header>
+      ${
+        players.length
+          ? `<div class="clash-player-grid">${players.map(clashPlayerCard).join("")}</div>`
+          : `<p class="muted clash-empty-note">El cliente todavía no expone los jugadores del rival. Reintentá cuando el bracket esté listo.</p>`
+      }
+    </section>
+  `;
+}
+
+function clashPlayerCard(player) {
+  const ranks = player.ranks ?? [];
+  const scouting = player.scouting;
+  const seasonChampions = (scouting?.season_champions ?? []).slice(0, 3);
+  const masteries = (scouting?.masteries ?? []).slice(0, 3);
+  const recentMatches = (player.recent_matches ?? []).slice(0, 5);
+  const primaryRank = ranks[0];
+  return `
+    <article class="clash-player-card">
+      <header class="clash-player-head">
+        <span class="role-badge">${escapeHtml(player.position_label ?? "Flex")}</span>
+        <div class="clash-player-identity">
+          <h3>
+            ${escapeHtml(player.display_name)}
+            ${player.tag_line ? `<span class="clash-tag">#${escapeHtml(String(player.tag_line).replace(/^#/, ""))}</span>` : ""}
+          </h3>
+          <p class="muted">
+            ${player.level ? `Nivel ${player.level}` : "Nivel —"}
+            ${player.member_state ? ` · ${escapeHtml(clashMemberStateLabel(player.member_state))}` : ""}
+          </p>
+        </div>
+        <span class="clash-rank-badge">${escapeHtml(primaryRank ? clashRankShort(primaryRank) : "Sin rank")}</span>
+      </header>
+      ${ranks.length ? `<div class="clash-rank-row">${ranks.map(clashRankChip).join("")}</div>` : ""}
+      ${
+        seasonChampions.length
+          ? `<div class="clash-section">
+              <span class="field-label">Campeones de la temporada</span>
+              <div class="clash-champion-list">${seasonChampions.map(clashSeasonChampion).join("")}</div>
+            </div>`
+          : ""
+      }
+      ${
+        masteries.length
+          ? `<div class="clash-section">
+              <span class="field-label">Maestría</span>
+              <div class="clash-mastery-list">${masteries.map(clashMastery).join("")}</div>
+            </div>`
+          : ""
+      }
+      ${
+        recentMatches.length
+          ? `<div class="clash-section">
+              <span class="field-label">Últimas partidas</span>
+              <div class="clash-match-list">${recentMatches.map(clashRecentMatch).join("")}</div>
+            </div>`
+          : ""
+      }
+      ${
+        !seasonChampions.length && !recentMatches.length
+          ? `<p class="muted clash-empty-note">Sin datos de campeones o partidas para este jugador.</p>`
+          : ""
+      }
+    </article>
+  `;
+}
+
+function clashRankShort(rank) {
+  const tierKey = String(rank?.tier ?? "").toUpperCase();
+  const tier = CLASH_TIERS[tierKey] ?? rank?.tier ?? "Sin rank";
+  return `${tier}${rank?.division ? ` ${rank.division}` : ""}`;
+}
+
+function clashRankChip(rank) {
+  const parts = [rank.queue_label, clashRankShort(rank)];
+  if (rank.league_points != null) parts.push(`${rank.league_points} LP`);
+  if (rank.winrate != null) parts.push(`${Math.round(rank.winrate)}%`);
+  if (rank.provisional) parts.push("Provisional");
+  return `<span class="clash-rank-chip ${rank.provisional ? "is-provisional" : ""}">${escapeHtml(parts.join(" · "))}</span>`;
+}
+
+function clashSeasonChampion(entry) {
+  const champion = championById(entry.champion_id);
+  const name = champion?.name ?? entry.champion_name ?? entry.champion_id;
+  const winrate = entry.winrate != null ? `${Math.round(entry.winrate)}%` : "—";
+  return `
+    <span class="clash-champion-chip">
+      ${clashChampionAvatar(entry.champion_id, name, "clash-champion-avatar")}
+      <span class="clash-chip-copy">
+        <strong>${escapeHtml(name)}</strong>
+        <small>${entry.games ?? 0} PJ · ${winrate}${entry.kda ? ` · ${escapeHtml(entry.kda)} KDA` : ""}</small>
+      </span>
+    </span>
+  `;
+}
+
+function clashMastery(entry) {
+  const champion = championById(entry.champion_id);
+  const name = champion?.name ?? entry.champion_name ?? entry.champion_id;
+  return `
+    <span class="clash-mastery-chip">
+      ${clashChampionAvatar(entry.champion_id, name, "clash-mastery-avatar")}
+      <span class="clash-chip-copy">
+        <strong>${escapeHtml(name)}</strong>
+        <small>M${entry.level ?? 0} · ${formatClashPoints(entry.points)}</small>
+      </span>
+    </span>
+  `;
+}
+
+function clashRecentMatch(match) {
+  const champion = championById(match.champion_id);
+  const name = champion?.name ?? match.champion_name ?? match.champion_id;
+  const result = match.win === true ? "V" : match.win === false ? "D" : "?";
+  const resultClass = match.win === true ? "win" : match.win === false ? "loss" : "unknown";
+  return `
+    <div class="clash-match-row">
+      <span class="clash-result is-${resultClass}" title="${resultClass === "win" ? "Victoria" : resultClass === "loss" ? "Derrota" : "Sin resultado"}">${result}</span>
+      ${clashChampionAvatar(match.champion_id, name, "clash-match-avatar")}
+      <span class="clash-match-champion">
+        <strong>${escapeHtml(name)}</strong>
+        <small>${escapeHtml(match.queue_name ?? "Partida")}${match.role ? ` · ${escapeHtml(match.role)}` : ""}</small>
+      </span>
+      <span class="clash-match-kda">${match.kills ?? 0}/${match.deaths ?? 0}/${match.assists ?? 0}</span>
+      <span class="clash-match-date">${escapeHtml(formatClashShortDate(match.played_at_ms))}</span>
+    </div>
+  `;
+}
+
+function clashChampionAvatar(championId, name, className) {
+  const champion = championById(championId);
+  if (!champion) {
+    return `<span class="champion-avatar ${className} clash-avatar-missing" title="${escapeHtml(name)}">?</span>`;
+  }
+  return championAvatar(champion, className);
+}
+
+function clashMemberStateLabel(state) {
+  return (
+    {
+      READY: "Listo",
+      NOT_READY: "No listo",
+      FORCED_NOT_READY: "No listo",
+      PENDING: "Pendiente",
+      DECLINED: "Rechazó",
+    }[state] ?? state
+  );
+}
+
+function formatClashPoints(points) {
+  const value = Number(points) || 0;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${Math.round(value / 1_000)}k`;
+  return String(value);
+}
+
+function formatClashTime(ms) {
+  if (!ms) return "Sin horario";
+  const date = new Date(Number(ms));
+  if (Number.isNaN(date.getTime())) return "Sin horario";
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+function formatClashShortDate(ms) {
+  if (!ms) return "";
+  const date = new Date(Number(ms));
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+  }).format(date);
+}
+
+function clashEmpty(message) {
+  return `
+    <div class="history-empty-panel clash-empty">
+      <div class="history-empty-mark">C</div>
+      <h2>Sin datos de Clash</h2>
+      <p class="muted">${escapeHtml(message ?? "No hay un torneo activo para tu cuenta.")}</p>
+      <div class="inline-actions">
+        <button class="button button-primary" type="button" data-action="refresh-clash">Actualizar</button>
+      </div>
+    </div>
+  `;
+}
+
+function clashError(message) {
+  return `
+    <div class="notice-list clash-error">
+      <p class="notice notice-error">${escapeHtml(message)}</p>
+      <button class="button button-ghost button-small" type="button" data-action="refresh-clash">Reintentar</button>
+    </div>
+  `;
+}
+
+function clashLoading() {
+  return `
+    <div class="clash-loading">
+      <div class="clash-summary-grid">
+        <div class="clash-summary-card skeleton"></div>
+        <div class="clash-summary-card skeleton"></div>
+        <div class="clash-summary-card skeleton"></div>
+        <div class="clash-summary-card skeleton"></div>
+      </div>
+      <div class="clash-panel skeleton clash-panel-skeleton"></div>
+    </div>
+  `;
+}
+
 function lcuSettingsSection(view) {
   const status = view.lcu?.status;
   const auto = Boolean(view.lcu?.auto);
@@ -1761,6 +2325,9 @@ function lcuSettingsSection(view) {
         </button>
         <button class="button button-ghost" type="button" data-action="refresh-lcu" ${disabled}>
           Actualizar estado
+        </button>
+        <button class="button button-ghost" type="button" data-action="view" data-view="clash">
+          Ver rival de Clash
         </button>
       </div>
     </section>
@@ -1927,7 +2494,7 @@ function settingsView(view) {
           </div>
         </header>
         <p>La app no automatiza picks ni bans; todas las acciones las confirma el usuario.</p>
-        <p class="muted">Los datos son locales y editables. No hay llamadas a la Riot API ni scraping; el seguimiento LCU solo habla con el cliente local de League of Legends. El historial de partidas, picks, bans y resultados se guarda solo en tu equipo.</p>
+        <p class="muted">Los datos son locales y editables. No hay llamadas a la Riot API ni scraping; el seguimiento LCU y la vista Rival solo hablan con el cliente local de League of Legends. El historial de partidas, picks, bans y resultados se guarda solo en tu equipo.</p>
         <p class="muted">Draft Assist isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</p>
         <p class="muted">Los datos e imágenes de campeones son propiedad de Riot Games y se usan bajo la política de Riot/Data Dragon. No están cubiertos por la licencia MIT ni pueden usarse comercialmente.</p>
       </section>

@@ -244,6 +244,28 @@ Si el cliente se reinicia, el tracker descarta el cliente HTTP y vuelve a resolv
 | `GET /lol-lobby/v2/lobby` | Lobby y miembros. |
 | `GET /lol-champ-select/v1/session` | Equipos, posiciones, acciones y bans. |
 
+### Rival de Clash
+
+`clash.rs` consulta el plugin de Clash bajo demanda desde la vista **Rival**:
+
+| Endpoint | Uso |
+|---|---|
+| `GET /lol-clash/v1/enabled` | Clash habilitado en la región. |
+| `GET /lol-clash/v1/currentTournamentIds` y `/all-tournaments` | Torneo actual o próximo. |
+| `GET /lol-clash/v1/tournament-summary` | Torneo, roster y bracket del jugador. |
+| `GET /lol-clash/v1/player/chat-rosters` | Equipo, estado y registro para el chequeo del header. |
+| `GET /lol-clash/v1/tournament/{id}` y `/stateInfo` | Nombre, fases, lock-in, scouting y próximo cambio. |
+| `GET /lol-clash/v1/bracket/{bracketId}` | Partidos, rosters y rival asignado. |
+| `GET /lol-clash/v1/roster/{rosterId}` | Miembros del roster rival. |
+| `GET /lol-summoner/v2/summoners?ids=...` | `summonerId` → PUUID, nombre y nivel. |
+| `GET /lol-clash/v1/scouting/champions?puuids=...` | Maestrías y campeones de la temporada. |
+| `GET /lol-ranked/v1/cached-ranked-stats/{puuid}` y `/ranked-stats/{puuid}` | Rango, LP, victorias y derrotas. |
+| `GET /lol-match-history/v1/products/lol/{puuid}/matches` | Últimas 5 partidas. |
+
+El bracket puede traer `rosterId` como UUID o como número; la app intenta el ID numérico y cae al nombre del roster cuando hace falta. El historial y el rango son best-effort: si el cliente no los tiene cacheados, la ficha sigue mostrando el resto.
+
+La vista es de solo lectura. Al abrir la app se hace una única consulta liviana (`clash_overview`) para el chip del header; no hay polling automático. La vista Rival consulta el detalle al abrirse y al pulsar **Actualizar**. No usa Riot API ni proxy externo. `clash_overview` devuelve torneo y equipo; `clash_status` devuelve el `ClashView` completo con nuestro roster y el rival.
+
 ### Formato y lado
 
 La cola se detecta con `gameData.queue.id`. En champ select, `hasSimultaneousBans` corrige la plantilla:
@@ -291,6 +313,8 @@ Los errores de red del LCU se clasifican a mensajes amigables (`Cliente no dispo
 - Diálogo de activación que aclara: solo lectura, sin acciones al cliente, sin cambios de pool/flex.
 - Banner de seguimiento y botón **Detener**.
 - Tablero de solo lectura mientras está activo.
+- Chip **Clash** en el header cuando hay torneo, con día/horario de la próxima fase; se calcula al abrir la app.
+- Vista **Rival**: bracket, próximo partido, roster propio, roster rival, rangos, maestrías y últimas partidas; se actualiza al abrirla o con **Actualizar**.
 - Sección **Cliente de League** en Ajustes con estado, cola, plantilla, lado, acción y última sincronización.
 
 ## 10. Historial y scouting

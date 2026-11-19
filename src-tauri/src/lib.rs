@@ -163,6 +163,8 @@ pub fn run() {
             commands::lcu_status,
             commands::lcu_start_tracking,
             commands::lcu_stop_tracking,
+            commands::clash_overview,
+            commands::clash_status,
             commands::history_load,
             commands::history_save,
             commands::history_import_legacy,

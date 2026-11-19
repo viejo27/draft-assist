@@ -23,6 +23,7 @@ import {
   recordBan,
   recordPick,
   refresh,
+  refreshClash,
   reloadData,
   removePoolEntry,
   renamePlayer,
@@ -178,6 +179,9 @@ function handleClick(event) {
       break;
     case "refresh-lcu":
       void refreshLcuStatus();
+      break;
+    case "refresh-clash":
+      void refreshClash();
       break;
     case "history-tab":
       setHistoryTab(trigger.dataset.tab);

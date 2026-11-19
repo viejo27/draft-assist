@@ -29,6 +29,18 @@ export const app = {
     starting: false,
     lastError: null,
   },
+  clash: {
+    data: null,
+    loading: false,
+    error: null,
+  },
+  clashOverview: {
+    data: null,
+    loading: false,
+    error: null,
+    attempted: false,
+    retried: false,
+  },
   history: {
     store: null,
     loading: false,
@@ -314,6 +326,7 @@ export async function init() {
     emit();
     await refresh();
     void loadHistory();
+    void loadClashOverview();
     if (api.isTauri) {
       void initLcu();
     }
@@ -352,6 +365,15 @@ function applyLcuStatus(status) {
   app.lcu.auto = Boolean(status.auto);
   app.lcu.connected = Boolean(status.connected);
   app.lcu.lastError = status.last_error ?? null;
+  if (
+    status.connected &&
+    !app.clashOverview.data &&
+    app.clashOverview.error &&
+    !app.clashOverview.retried
+  ) {
+    app.clashOverview.retried = true;
+    void loadClashOverview({ force: true });
+  }
 }
 
 export function applyLcuSnapshot(payload) {
@@ -440,6 +462,47 @@ function blockLcuEdit() {
   return true;
 }
 
+export async function loadClash({ silent = false } = {}) {
+  if (app.clash.loading) return;
+  app.clash.loading = true;
+  if (!silent) app.clash.error = null;
+  emit();
+  try {
+    app.clash.data = await api.clashStatus();
+    app.clash.error = null;
+  } catch (error) {
+    app.clash.error = error.message ?? String(error);
+  } finally {
+    app.clash.loading = false;
+    emit();
+  }
+}
+
+export async function loadClashOverview({ force = false } = {}) {
+  if (app.clashOverview.loading) return;
+  if (app.clashOverview.attempted && !force) return;
+  app.clashOverview.attempted = true;
+  app.clashOverview.loading = true;
+  if (force) app.clashOverview.error = null;
+  emit();
+  try {
+    app.clashOverview.data = await api.clashOverview();
+    app.clashOverview.error = null;
+  } catch (error) {
+    app.clashOverview.error = error.message ?? String(error);
+  } finally {
+    app.clashOverview.loading = false;
+    emit();
+  }
+}
+
+export function refreshClash() {
+  return Promise.allSettled([
+    loadClash(),
+    loadClashOverview({ force: true }),
+  ]);
+}
+
 export function setView(view) {
   app.view = view;
   if (
@@ -448,6 +511,12 @@ export function setView(view) {
     !app.history.loading
   ) {
     void loadHistory();
+  }
+  if (view === "clash") {
+    void loadClash({ silent: Boolean(app.clash.data) });
+    if (!app.clashOverview.data && !app.clashOverview.loading) {
+      void loadClashOverview({ force: true });
+    }
   }
   emit();
 }

@@ -7,10 +7,11 @@ export const isPreview = !isTauri;
 let previewBootstrapCache = null;
 let previewRecommendationCache = null;
 let previewHistoryCache = null;
+let previewClashCache = null;
 
 async function loadPreviewJson(name) {
   const url = new URL(`../data/${name}`, import.meta.url);
-  const response = await fetch(url);
+  const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) {
     throw new Error(
       `No se pudo cargar ${name}. Ejecuta la app con Tauri o genera los datos de vista previa.`,
@@ -104,6 +105,50 @@ const previewLcuStatus = {
 export async function lcuStatus() {
   if (isTauri) return invoke("lcu_status");
   return previewLcuStatus;
+}
+
+const previewClashStatus = {
+  enabled: false,
+  tournament: null,
+  roster: null,
+  bracket: null,
+  next_match: null,
+  opponent: null,
+  message: "La vista de rival de Clash solo está disponible en la app de escritorio.",
+  last_sync_ms: null,
+};
+
+async function previewClash() {
+  previewClashCache ??= await loadPreviewJson("preview-clash.json").catch(
+    () => previewClashStatus,
+  );
+  return previewClashCache;
+}
+
+export async function clashStatus() {
+  if (isTauri) return invoke("clash_status");
+  return previewClash();
+}
+
+export async function clashOverview() {
+  if (isTauri) return invoke("clash_overview");
+  const clash = await previewClash();
+  return {
+    enabled: clash.enabled,
+    tournament: clash.tournament,
+    team: clash.roster
+      ? {
+          id: clash.roster.id,
+          name: clash.roster.name,
+          short_name: clash.roster.short_name,
+          is_registered: clash.roster.is_registered,
+          state: clash.roster.state,
+          state_label: clash.roster.state_label,
+        }
+      : null,
+    message: clash.message,
+    last_sync_ms: clash.last_sync_ms,
+  };
 }
 
 export async function lcuStartTracking(appState) {
