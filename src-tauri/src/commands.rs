@@ -1,5 +1,6 @@
 use crate::RuntimeState;
 use crate::lcu::{ClashOverview, ClashView, LcuStatus, TrackingConfig, validate_roster};
+use crate::live::LiveSnapshot;
 use crate::{load_engine, persistence};
 use draft_engine::data::example_state;
 use draft_engine::history::{
@@ -203,13 +204,56 @@ pub fn lcu_start_tracking(
         priorities: app_state.draft.priorities.clone(),
         side: app_state.draft.side,
     };
+    state.live.start(app.clone(), data.clone());
     state.lcu.start(app, config, data);
     Ok(state.lcu.status())
 }
 
 #[tauri::command]
 pub fn lcu_stop_tracking(state: State<'_, RuntimeState>) -> Result<LcuStatus, String> {
+    state.live.stop();
     Ok(state.lcu.stop())
+}
+
+#[tauri::command]
+pub fn live_current(state: State<'_, RuntimeState>) -> Option<LiveSnapshot> {
+    state.live.current()
+}
+
+#[tauri::command]
+pub fn live_match_record(
+    state: State<'_, RuntimeState>,
+    app_state: PersistedState,
+    queue_id: Option<i64>,
+) -> Result<MatchRecord, String> {
+    let snapshot = state
+        .live
+        .current()
+        .ok_or_else(|| "No hay datos de una partida en vivo.".to_string())?;
+    let queue = queue_from_id(queue_id.or_else(|| state.lcu.status().queue_id));
+    let first_ban = {
+        let engine = state
+            .engine
+            .lock()
+            .map_err(|_| "El motor está bloqueado; reinicia la aplicación.".to_string())?;
+        engine
+            .data()
+            .template(&app_state.draft.template_id)
+            .and_then(|template| template.steps.first())
+            .and_then(|step| {
+                if step.kind != Phase::Ban {
+                    return None;
+                }
+                step.team.map(|team| {
+                    if team == app_state.draft.side {
+                        BanStarter::Us
+                    } else {
+                        BanStarter::Them
+                    }
+                })
+            })
+    };
+    crate::live::build_match_record(&snapshot, queue, &app_state, first_ban)
 }
 
 #[tauri::command]
@@ -385,6 +429,10 @@ pub fn history_match_from_draft(
         },
         rebalanced: false,
         legacy_index: None,
+        duration_seconds: None,
+        our_stats: None,
+        enemy_stats: None,
+        player_stats: Vec::new(),
     })
 }
 
@@ -413,4 +461,15 @@ fn now_millis() -> u128 {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|duration| duration.as_millis())
         .unwrap_or_default()
+}
+
+fn queue_from_id(queue_id: Option<i64>) -> MatchQueue {
+    match queue_id {
+        Some(700) => MatchQueue::Clash,
+        Some(420) => MatchQueue::RankedSolo,
+        Some(440 | 710 | 42) => MatchQueue::RankedFlex,
+        Some(400) => MatchQueue::NormalDraft,
+        Some(0) => MatchQueue::Custom,
+        _ => MatchQueue::Unknown,
+    }
 }

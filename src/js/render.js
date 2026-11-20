@@ -12,6 +12,7 @@ import {
   damageLabel,
   escapeHtml,
   formatScore,
+  initials,
   roleBadge,
   roleLabel,
   roleShort,
@@ -19,6 +20,13 @@ import {
   sideLabel,
   tierClass,
 } from "./format.js";
+import {
+  computeLivePositions,
+  formatGameTime,
+  layoutLivePositions,
+  liveClusterSizes,
+  liveResultLabel,
+} from "./live.js";
 import {
   banStarterLabel,
   buildRivalProfiles,
@@ -58,11 +66,28 @@ export function render(view) {
 
   const root = document.getElementById("view-root");
   if (!root) return;
+  if (view.view !== "live") {
+    root.dataset.liveSession = "";
+  }
 
   if (view.fatalError) {
     root.innerHTML = fatalState(view.fatalError);
   } else if (view.loading || !view.state) {
     root.innerHTML = loadingState();
+  } else if (view.view === "live") {
+    const snapshot = view.live?.snapshot;
+    if (!snapshot) {
+      root.innerHTML = liveEmpty();
+    } else if (
+      root.querySelector("#live-root") &&
+      root.dataset.liveSession === String(view.live.sessionId ?? snapshot.session_id ?? "")
+    ) {
+      updateLiveView(view);
+    } else {
+      root.innerHTML = liveView(view);
+      root.dataset.liveSession = String(view.live.sessionId ?? snapshot.session_id ?? "");
+      updateLiveView(view);
+    }
   } else if (view.view === "roster") {
     root.innerHTML = rosterView(view);
   } else if (view.view === "clash") {
@@ -75,6 +100,7 @@ export function render(view) {
     root.innerHTML = draftView(view);
   }
 
+  renderLiveDialogs(view);
   renderHistoryDialogs(view);
   renderToasts(view);
 }
@@ -86,6 +112,18 @@ function renderTopbar(view) {
 
   if (!view.state) {
     context.innerHTML = `<span class="context-muted">Cargando draft…</span>`;
+  } else if (view.view === "live") {
+    const snapshot = view.live?.snapshot;
+    const queue = view.lcu?.status?.queue_name ?? "Partida en vivo";
+    context.innerHTML = `
+      <span class="context-chip context-live"><span class="live-state-dot ${liveStateClass(view)}"></span>Juego en vivo</span>
+      <span class="context-separator"></span>
+      <span class="context-chip">${escapeHtml(queue)}</span>
+      <span class="context-turn">${formatGameTime(snapshot?.game_time ?? 0)}</span>
+      ${snapshot?.ended ? `<span class="live-result-pill ${liveResultTone(snapshot.result)}">${escapeHtml(liveResultLabel(snapshot.result))}</span>` : ""}
+      ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
+      ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
+    `;
   } else if (view.view === "clash") {
     context.innerHTML = `
       <span class="context-chip">Rival</span>
@@ -151,12 +189,32 @@ function renderViewbar(view) {
     tab.classList.toggle("is-active", tab.dataset.view === view.view);
   });
 
+  const liveTab = document.getElementById("live-tab");
+  if (liveTab) {
+    liveTab.hidden = !view.live?.tabVisible;
+    liveTab.classList.toggle("is-ended", Boolean(view.live?.tabVisible && view.live?.ended));
+    liveTab.classList.toggle(
+      "is-offline",
+      Boolean(view.live?.tabVisible && !view.live?.available),
+    );
+    liveTab.classList.toggle(
+      "is-blinking",
+      Boolean(view.live?.tabVisible && view.live?.available && !view.live?.ended),
+    );
+  }
+
   renderLcuControl(view);
 
   const note = document.getElementById("viewbar-note");
   if (!note) return;
   if (view.loading) {
     note.textContent = "";
+  } else if (view.view === "live") {
+    note.textContent = view.live?.ended
+      ? "Partida finalizada"
+      : view.live?.available
+        ? "Datos en vivo · solo lectura"
+        : "Datos detenidos";
   } else if (view.preview) {
     note.textContent = "Modo demostración sin backend Tauri";
   } else if (view.lastSaved) {
@@ -303,6 +361,541 @@ function lcuBanner(view) {
       }
       <button class="button button-small button-danger-ghost" type="button" data-action="stop-lcu">Detener</button>
     </div>
+  `;
+}
+
+function liveEmpty() {
+  return `
+    <section class="live-empty">
+      <h1>Juego en vivo</h1>
+      <p class="muted">Esperando los datos de la partida en el Live Client Data.</p>
+    </section>
+  `;
+}
+
+function liveStateClass(view) {
+  if (!view.live?.available) return "is-offline";
+  if (view.live?.ended) return "is-ended";
+  return "is-live";
+}
+
+function liveStateText(view) {
+  if (!view.live?.available) return "Datos detenidos";
+  if (view.live?.ended) return "Finalizada";
+  return "En vivo";
+}
+
+function liveResultTone(result) {
+  if (result === "Win" || result === "win") return "is-win";
+  if (result === "Lose" || result === "Loss" || result === "loss") return "is-loss";
+  return "is-unknown";
+}
+
+function liveTeamName(team) {
+  return team === "ORDER" ? "Azul" : "Rojo";
+}
+
+function liveTeamLabel(team) {
+  return team === "ORDER" ? "Equipo azul" : "Equipo rojo";
+}
+
+function liveLatestEvent(snapshot) {
+  return snapshot?.events?.at(-1) ?? null;
+}
+
+function livePingEvent(snapshot) {
+  const events = snapshot?.events ?? [];
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    if (events[index].location) return events[index];
+  }
+  return null;
+}
+
+function liveStatsFromPlayers(players, team) {
+  return {
+    kills: players
+      .filter((player) => player.team === team)
+      .reduce((total, player) => total + player.kills, 0),
+    towers: 0,
+    dragons: 0,
+    barons: 0,
+    heralds: 0,
+  };
+}
+
+function liveChampionAvatar(player, className) {
+  const champion = player.champion_id ? championById(player.champion_id) : null;
+  if (champion) return championAvatar(champion, className);
+  const label = initials(player.champion_name || player.player_name);
+  return `<span class="champion-avatar ${className}"><span class="champion-avatar-fallback">${escapeHtml(label)}</span></span>`;
+}
+
+function liveObjectives(stats) {
+  const value = stats ?? {};
+  return [
+    ["Torres", value.towers ?? 0],
+    ["Dragones", value.dragons ?? 0],
+    ["Barones", value.barons ?? 0],
+    ["Heraldos", value.heralds ?? 0],
+  ]
+    .map(
+      ([label, count]) =>
+        `<span class="live-objective"><span>${label}</span><b>${count}</b></span>`,
+    )
+    .join("");
+}
+
+function livePlayerRow(player) {
+  const role = player.role ? roleShort(player.role) : player.position || "—";
+  return `
+    <div class="live-player-row ${player.is_dead ? "is-dead" : ""} ${player.is_active ? "is-active" : ""}" data-live-player="${escapeHtml(player.key)}">
+      ${liveChampionAvatar(player, "live-player-avatar")}
+      <span class="live-player-identity">
+        <strong>${escapeHtml(player.player_name)}${player.is_active ? `<span class="live-you">TÚ</span>` : ""}</strong>
+        <span>${escapeHtml(player.champion_name)} · ${escapeHtml(role)}</span>
+      </span>
+      <span class="live-player-kda" data-live-kda>${player.kills} / ${player.deaths} / ${player.assists}</span>
+      <span class="live-player-cs" data-live-cs>${player.creep_score} CS</span>
+      <span class="live-player-level" data-live-level>Nv ${player.level}</span>
+    </div>
+  `;
+}
+
+function liveTeamPanel(snapshot, team, label, sideKey) {
+  const players = snapshot.players.filter((player) => player.team === team);
+  const stats =
+    (sideKey === "our" ? snapshot.our_stats : snapshot.enemy_stats) ??
+    liveStatsFromPlayers(snapshot.players, team);
+  return `
+    <section class="live-team-panel live-team-${sideKey}">
+      <header class="live-team-head">
+        <div class="live-team-id">
+          <span class="live-team-dot ${team === "ORDER" ? "is-blue" : "is-red"}"></span>
+          <div>
+            <strong>${escapeHtml(label)}</strong>
+            <span class="muted">${liveTeamName(team)}</span>
+          </div>
+        </div>
+        <span class="live-team-kills" data-live-team-total="${sideKey}">${stats.kills} kills</span>
+      </header>
+      <div class="live-objectives" data-live-team-objectives="${sideKey}">
+        ${liveObjectives(stats)}
+      </div>
+      <div class="live-player-list">
+        ${players.map((player) => livePlayerRow(player)).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function liveToken(player, position, clusterSize) {
+  const role = player.role ? roleShort(player.role) : player.position || "";
+  return `
+    <span class="live-token ${player.team === "ORDER" ? "is-blue" : "is-red"} ${player.is_dead ? "is-dead" : ""} ${player.is_active ? "is-active" : ""} ${clusterSize > 1 ? "is-clustered" : ""}"
+      data-live-token="${escapeHtml(player.key)}"
+      style="--x:${position.x};--y:${position.y}"
+      title="${escapeHtml(`${player.player_name} · ${player.champion_name} · ${player.kills}/${player.deaths}/${player.assists}`)}">
+      <span class="live-token-avatar">${liveChampionAvatar(player, "live-token-img")}</span>
+      <span class="live-token-role">${escapeHtml(role)}</span>
+      <span class="live-token-name">${escapeHtml(player.player_name)}</span>
+      <span class="live-token-dead">MUERTO</span>
+    </span>
+  `;
+}
+
+function liveEventStrip(snapshot) {
+  const latest = liveLatestEvent(snapshot);
+  if (!latest) return `<span class="muted">Esperando el primer evento…</span>`;
+  return `
+    <span class="live-event-time">${formatGameTime(latest.time)}</span>
+    <strong>${escapeHtml(latest.text)}</strong>
+  `;
+}
+
+function liveResultBanner(snapshot) {
+  return `
+    <div class="live-result-banner ${liveResultTone(snapshot.result)}">
+      <strong>${escapeHtml(liveResultLabel(snapshot.result))}</strong>
+      <span>Partida finalizada · ${formatGameTime(snapshot.duration_seconds)}</span>
+    </div>
+  `;
+}
+
+function liveSaveCallout(view) {
+  const snapshot = view.live?.snapshot;
+  if (!snapshot?.ended) return "";
+  if (view.live.sessionQueueId !== 700) {
+    return `<div class="live-end-note">Partida finalizada. El guardado en el historial solo está disponible para Clash.</div>`;
+  }
+  if (view.live.saved) {
+    return `
+      <div class="live-save-callout is-saved">
+        <strong>Partida guardada</strong>
+        <span>Ya está en el historial local.</span>
+      </div>
+    `;
+  }
+  return `
+    <div class="live-save-callout">
+      <div class="live-save-copy">
+        <strong>${view.live.pendingMatch ? "Partida pendiente de guardar" : "Partida Clash finalizada"}</strong>
+        <span>${escapeHtml(liveResultLabel(snapshot.result))} · ${formatGameTime(snapshot.duration_seconds)}</span>
+      </div>
+      <div class="live-save-actions">
+        <button class="button button-primary button-small" type="button" data-action="live-open-save">Guardar en historial</button>
+      </div>
+    </div>
+  `;
+}
+
+function liveEventFeed(snapshot) {
+  const events = (snapshot.events ?? []).slice(-8).reverse();
+  const rows = events
+    .map(
+      (event, index) => `
+        <li class="${index === 0 ? "is-current" : ""}">
+          <span class="live-event-row-time">${formatGameTime(event.time)}</span>
+          <span>${escapeHtml(event.text)}</span>
+        </li>
+      `,
+    )
+    .join("");
+  return `
+    <section class="live-events-panel">
+      <header class="panel-head">
+        <div>
+          <h2>Últimos eventos</h2>
+          <p class="muted" id="live-event-count">${events.length} eventos recientes</p>
+        </div>
+      </header>
+      <ol class="live-event-list" id="live-event-list" data-event-id="${events[0]?.id ?? ""}">
+        ${rows || `<li class="muted">Sin eventos todavía.</li>`}
+      </ol>
+    </section>
+  `;
+}
+
+function liveView(view) {
+  const snapshot = view.live.snapshot;
+  const ourTeam = snapshot.our_team ?? "ORDER";
+  const enemyTeam = ourTeam === "ORDER" ? "CHAOS" : "ORDER";
+  const ourLabel = snapshot.our_team ? "Nosotros" : "Equipo azul";
+  const enemyLabel = snapshot.our_team ? "Rival" : "Equipo rojo";
+  const ourStats =
+    snapshot.our_stats ?? liveStatsFromPlayers(snapshot.players, ourTeam);
+  const enemyStats =
+    snapshot.enemy_stats ?? liveStatsFromPlayers(snapshot.players, enemyTeam);
+  const rawPositions = computeLivePositions(snapshot.players, snapshot.events);
+  const clusterSizes = liveClusterSizes(rawPositions);
+  const positions = layoutLivePositions(rawPositions);
+  const tokens = snapshot.players
+    .map((player) =>
+      liveToken(
+        player,
+        positions.get(player.key) ?? { x: 50, y: 50 },
+        clusterSizes.get(player.key) ?? 1,
+      ),
+    )
+    .join("");
+  const ping = livePingEvent(snapshot);
+  const queue = view.lcu?.status?.queue_name ?? "Partida en vivo";
+
+  return `
+    <div class="live-root" id="live-root" data-session="${escapeHtml(snapshot.session_id ?? "")}">
+      <header class="live-head">
+        <div class="live-head-copy">
+          <h1>Juego en vivo</h1>
+          <p class="live-head-meta">
+            <span class="live-state-chip ${liveStateClass(view)}" id="live-state-chip">
+              <span class="live-state-dot"></span>
+              <span id="live-state-text">${liveStateText(view)}</span>
+            </span>
+            <span class="live-head-sep">·</span>
+            <span>${escapeHtml(queue)}</span>
+            <span class="live-head-sep">·</span>
+            <span>${escapeHtml(liveTeamLabel(ourTeam))} vs ${escapeHtml(liveTeamLabel(enemyTeam))}</span>
+          </p>
+        </div>
+        <div class="live-scoreline" aria-label="Marcador">
+          <span class="live-score-team is-our">${escapeHtml(ourLabel)}</span>
+          <span class="live-score-value" id="live-our-kills">${ourStats.kills}</span>
+          <span class="live-score-sep">—</span>
+          <span class="live-score-value" id="live-enemy-kills">${enemyStats.kills}</span>
+          <span class="live-score-team">${escapeHtml(enemyLabel)}</span>
+        </div>
+        <div class="live-head-clock">
+          <span class="field-label">Tiempo</span>
+          <strong id="live-clock">${formatGameTime(snapshot.game_time)}</strong>
+        </div>
+      </header>
+      <div id="live-result-slot" data-state="${snapshot.ended ? String(snapshot.result ?? "unknown") : ""}">
+        ${snapshot.ended ? liveResultBanner(snapshot) : ""}
+      </div>
+      <div class="live-layout">
+        <section class="live-map-panel">
+          <div class="live-map" id="live-map" role="img" aria-label="Mapa de la Grieta con la posición estimada de los campeones" style="background-image:url('assets/map/map11.png')">
+            <div class="live-map-ping" id="live-map-ping" ${ping ? `style="left:${ping.location.x}%;top:${ping.location.y}%" data-event-id="${ping.id}"` : "hidden"}>
+              ${ping ? `<span class="live-map-ping-label">${escapeHtml(ping.location.label)}</span>` : ""}
+            </div>
+            ${tokens}
+          </div>
+          <div class="live-event-strip" id="live-event-strip" aria-live="polite" data-event-id="${liveLatestEvent(snapshot)?.id ?? ""}">
+            ${liveEventStrip(snapshot)}
+          </div>
+          <p class="live-map-footnote">Posiciones estimadas por evento. El Live Client Data no expone coordenadas de los campeones.</p>
+        </section>
+        <aside class="live-side">
+          <div id="live-save-slot" data-state="${snapshot.ended}:${view.live.sessionQueueId}:${view.live.saved}:${Boolean(view.live.pendingMatch)}">
+            ${liveSaveCallout(view)}
+          </div>
+          ${liveTeamPanel(snapshot, ourTeam, ourLabel, "our")}
+          ${liveTeamPanel(snapshot, enemyTeam, enemyLabel, "enemy")}
+          ${liveEventFeed(snapshot)}
+        </aside>
+      </div>
+    </div>
+  `;
+}
+
+function updateLiveView(view) {
+  const snapshot = view.live?.snapshot;
+  const root = document.getElementById("live-root");
+  if (!snapshot || !root) return;
+
+  const ourTeam = snapshot.our_team ?? "ORDER";
+  const enemyTeam = ourTeam === "ORDER" ? "CHAOS" : "ORDER";
+  const ourStats =
+    snapshot.our_stats ?? liveStatsFromPlayers(snapshot.players, ourTeam);
+  const enemyStats =
+    snapshot.enemy_stats ?? liveStatsFromPlayers(snapshot.players, enemyTeam);
+
+  root.classList.toggle("is-offline", snapshot.available === false);
+  const stateChip = root.querySelector("#live-state-chip");
+  if (stateChip) {
+    stateChip.className = `live-state-chip ${liveStateClass(view)}`;
+    const stateText = stateChip.querySelector("#live-state-text");
+    if (stateText) stateText.textContent = liveStateText(view);
+  }
+
+  const clock = root.querySelector("#live-clock");
+  if (clock) clock.textContent = formatGameTime(snapshot.game_time);
+  const ourKills = root.querySelector("#live-our-kills");
+  if (ourKills) ourKills.textContent = String(ourStats.kills);
+  const enemyKills = root.querySelector("#live-enemy-kills");
+  if (enemyKills) enemyKills.textContent = String(enemyStats.kills);
+
+  const rawPositions = computeLivePositions(snapshot.players, snapshot.events);
+  const clusterSizes = liveClusterSizes(rawPositions);
+  const positions = layoutLivePositions(rawPositions);
+  const tokens = new Map(
+    [...root.querySelectorAll("[data-live-token]")].map((element) => [
+      element.dataset.liveToken,
+      element,
+    ]),
+  );
+  for (const player of snapshot.players) {
+    const token = tokens.get(player.key);
+    const position = positions.get(player.key);
+    if (!token || !position) continue;
+    token.style.setProperty("--x", position.x);
+    token.style.setProperty("--y", position.y);
+    token.classList.toggle("is-dead", Boolean(player.is_dead));
+    token.classList.toggle("is-active", Boolean(player.is_active));
+    token.classList.toggle("is-clustered", (clusterSizes.get(player.key) ?? 1) > 1);
+  }
+
+  const ping = livePingEvent(snapshot);
+  const pingElement = root.querySelector("#live-map-ping");
+  if (pingElement) {
+    if (!ping || snapshot.available === false) {
+      pingElement.hidden = true;
+    } else {
+      pingElement.hidden = false;
+      pingElement.style.left = `${ping.location.x}%`;
+      pingElement.style.top = `${ping.location.y}%`;
+      const label = pingElement.querySelector(".live-map-ping-label");
+      if (label) label.textContent = ping.location.label;
+      if (pingElement.dataset.eventId !== String(ping.id)) {
+        pingElement.dataset.eventId = String(ping.id);
+        pingElement.classList.remove("is-pulsing");
+        void pingElement.offsetWidth;
+        pingElement.classList.add("is-pulsing");
+      }
+    }
+  }
+
+  const latest = liveLatestEvent(snapshot);
+  const strip = root.querySelector("#live-event-strip");
+  if (strip && strip.dataset.eventId !== String(latest?.id ?? "")) {
+    strip.dataset.eventId = String(latest?.id ?? "");
+    strip.innerHTML = liveEventStrip(snapshot);
+  }
+
+  const rows = new Map(
+    [...root.querySelectorAll("[data-live-player]")].map((element) => [
+      element.dataset.livePlayer,
+      element,
+    ]),
+  );
+  updateLiveTeamPanel(root, snapshot, ourTeam, "our", rows);
+  updateLiveTeamPanel(root, snapshot, enemyTeam, "enemy", rows);
+
+  const resultSlot = root.querySelector("#live-result-slot");
+  if (resultSlot) {
+    const key = snapshot.ended ? String(snapshot.result ?? "unknown") : "";
+    if (resultSlot.dataset.state !== key) {
+      resultSlot.dataset.state = key;
+      resultSlot.innerHTML = snapshot.ended ? liveResultBanner(snapshot) : "";
+    }
+  }
+
+  const saveSlot = root.querySelector("#live-save-slot");
+  if (saveSlot) {
+    const key = `${snapshot.ended}:${view.live.sessionQueueId}:${view.live.saved}:${Boolean(view.live.pendingMatch)}`;
+    if (saveSlot.dataset.state !== key) {
+      saveSlot.dataset.state = key;
+      saveSlot.innerHTML = liveSaveCallout(view);
+    }
+  }
+
+  const feed = root.querySelector("#live-event-list");
+  if (feed) {
+    const key = String(latest?.id ?? "");
+    if (feed.dataset.eventId !== key) {
+      feed.dataset.eventId = key;
+      const events = (snapshot.events ?? []).slice(-8).reverse();
+      const count = root.querySelector("#live-event-count");
+      if (count) count.textContent = `${events.length} eventos recientes`;
+      feed.innerHTML = events.length
+        ? events
+            .map(
+              (event, index) => `
+                <li class="${index === 0 ? "is-current" : ""}">
+                  <span class="live-event-row-time">${formatGameTime(event.time)}</span>
+                  <span>${escapeHtml(event.text)}</span>
+                </li>
+              `,
+            )
+            .join("")
+        : `<li class="muted">Sin eventos todavía.</li>`;
+    }
+  }
+}
+
+function updateLiveTeamPanel(root, snapshot, team, sideKey, rows) {
+  const stats =
+    (sideKey === "our" ? snapshot.our_stats : snapshot.enemy_stats) ??
+    liveStatsFromPlayers(snapshot.players, team);
+  const total = root.querySelector(`[data-live-team-total="${sideKey}"]`);
+  if (total) total.textContent = `${stats.kills} kills`;
+  const objectives = root.querySelector(
+    `[data-live-team-objectives="${sideKey}"]`,
+  );
+  if (objectives) objectives.innerHTML = liveObjectives(stats);
+
+  for (const player of snapshot.players.filter((item) => item.team === team)) {
+    const row = rows.get(player.key);
+    if (!row) continue;
+    row.classList.toggle("is-dead", Boolean(player.is_dead));
+    row.classList.toggle("is-active", Boolean(player.is_active));
+    const kda = row.querySelector("[data-live-kda]");
+    if (kda) {
+      kda.textContent = `${player.kills} / ${player.deaths} / ${player.assists}`;
+    }
+    const cs = row.querySelector("[data-live-cs]");
+    if (cs) cs.textContent = `${player.creep_score} CS`;
+    const level = row.querySelector("[data-live-level]");
+    if (level) level.textContent = `Nv ${player.level}`;
+  }
+}
+
+function liveSaveStatRow(stat) {
+  const champion = championById(stat.champion_id);
+  const avatar = champion
+    ? championAvatar(champion, "live-save-avatar")
+    : `<span class="champion-avatar live-save-avatar"><span class="champion-avatar-fallback">${escapeHtml(initials(stat.player_name ?? stat.champion_id))}</span></span>`;
+  return `
+    <div class="live-save-stat-row">
+      ${avatar}
+      <span class="live-save-stat-identity">
+        <strong>${escapeHtml(stat.player_name ?? champion?.name ?? stat.champion_id)}</strong>
+        <span class="muted">${escapeHtml(champion?.name ?? stat.champion_id)} · ${escapeHtml(stat.role ? roleShort(stat.role) : "—")}</span>
+      </span>
+      <span class="live-save-kda">${stat.kills} / ${stat.deaths} / ${stat.assists}</span>
+      <span class="live-save-cs">${stat.creep_score} CS · ${Math.round(stat.ward_score ?? 0)} visión</span>
+      <span class="live-save-level">Nv ${stat.level}</span>
+    </div>
+  `;
+}
+
+export function renderLiveDialogs(view) {
+  const dialog = document.getElementById("live-save-dialog");
+  const body = document.getElementById("live-save-body");
+  if (!body) return;
+  if (dialog?.open) return;
+
+  const match = view.live?.pendingMatch;
+  if (!match) {
+    body.innerHTML = "";
+    return;
+  }
+
+  const ourStats = match.our_stats ?? {};
+  const enemyStats = match.enemy_stats ?? {};
+  const stats = match.player_stats ?? [];
+  const our = stats.filter((stat) => stat.team === "our");
+  const enemy = stats.filter((stat) => stat.team === "enemy");
+  const bans = [...(match.our_bans ?? []), ...(match.enemy_bans ?? [])];
+  const tone =
+    match.result === "win"
+      ? "is-win"
+      : match.result === "loss"
+        ? "is-loss"
+        : "is-unknown";
+
+  body.innerHTML = `
+    <div class="live-save-headline">
+      <span class="live-result-pill ${tone}">${escapeHtml(resultLabel(match.result))}</span>
+      <span class="muted">${escapeHtml(queueLabel(match.queue))} · ${escapeHtml(historySideLabel(match.side))} · ${formatGameTime(match.duration_seconds ?? 0)}</span>
+    </div>
+    <div class="live-save-score">
+      <div>
+        <span class="field-label">Nosotros</span>
+        <strong>${ourStats.kills ?? 0}</strong>
+        <span class="muted">kills · ${ourStats.towers ?? 0} torres · ${ourStats.dragons ?? 0} dragones</span>
+      </div>
+      <div>
+        <span class="field-label">Rival</span>
+        <strong>${enemyStats.kills ?? 0}</strong>
+        <span class="muted">kills · ${enemyStats.towers ?? 0} torres · ${enemyStats.dragons ?? 0} dragones</span>
+      </div>
+    </div>
+    <div class="history-detail-section">
+      <h3>Estadísticas</h3>
+      <div class="live-save-teams">
+        <div>
+          <p class="field-label">Nosotros</p>
+          <div class="live-save-stats">${our.map(liveSaveStatRow).join("") || `<p class="muted">Sin datos.</p>`}</div>
+        </div>
+        <div>
+          <p class="field-label">Rival</p>
+          <div class="live-save-stats">${enemy.map(liveSaveStatRow).join("") || `<p class="muted">Sin datos.</p>`}</div>
+        </div>
+      </div>
+    </div>
+    ${
+      bans.length
+        ? `<p class="muted">Bans: ${historyChampionInline(bans)}</p>`
+        : `<p class="notice">No se pudieron recuperar los bans del Live Client Data.</p>`
+    }
+    ${
+      match.warnings?.length
+        ? `<div class="notice-list">${match.warnings
+            .map((warning) => `<p class="notice">${escapeHtml(warning)}</p>`)
+            .join("")}</div>`
+        : ""
+    }
+    <p class="callout">Se guardarán resultado, picks y estadísticas en el historial local. Podrás corregir el resultado o las notas después.</p>
   `;
 }
 
@@ -1650,6 +2243,7 @@ function renderHistoryMatchBody(view) {
       <p class="muted">Bans: ${historyChampionInline(match.enemy_bans)}</p>
       <p class="muted">Picks: ${historyPickInline(match.enemy_picks)}</p>
     </div>
+    ${historyMatchStats(match)}
     ${
       rivals.length
         ? `<div class="history-detail-section">
@@ -1683,6 +2277,43 @@ function renderHistoryMatchBody(view) {
             .join("")}</div>`
         : ""
     }
+  `;
+}
+
+function historyMatchStats(match) {
+  const stats = match.player_stats ?? [];
+  if (!stats.length) return "";
+  const ourStats = match.our_stats ?? {};
+  const enemyStats = match.enemy_stats ?? {};
+  const our = stats.filter((stat) => stat.team === "our");
+  const enemy = stats.filter((stat) => stat.team === "enemy");
+  return `
+    <div class="history-detail-section">
+      <h3>Estadísticas de la partida</h3>
+      <p class="muted">Duración: ${formatGameTime(match.duration_seconds ?? 0)}</p>
+      <div class="live-save-score">
+        <div>
+          <span class="field-label">Nosotros</span>
+          <strong>${ourStats.kills ?? 0}</strong>
+          <span class="muted">kills · ${ourStats.towers ?? 0} torres · ${ourStats.dragons ?? 0} dragones · ${ourStats.barons ?? 0} barones</span>
+        </div>
+        <div>
+          <span class="field-label">Rival</span>
+          <strong>${enemyStats.kills ?? 0}</strong>
+          <span class="muted">kills · ${enemyStats.towers ?? 0} torres · ${enemyStats.dragons ?? 0} dragones · ${enemyStats.barons ?? 0} barones</span>
+        </div>
+      </div>
+      <div class="live-save-teams">
+        <div>
+          <p class="field-label">Nosotros</p>
+          <div class="live-save-stats">${our.map(liveSaveStatRow).join("")}</div>
+        </div>
+        <div>
+          <p class="field-label">Rival</p>
+          <div class="live-save-stats">${enemy.map(liveSaveStatRow).join("")}</div>
+        </div>
+      </div>
+    </div>
   `;
 }
 

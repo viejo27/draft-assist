@@ -8,6 +8,8 @@ The source code of Draft Assist is licensed under the MIT License. See [LICENSE]
 
 The champion data and champion images included in this repository are property of Riot Games, Inc. They are used under Riot Games' "Legal Jibber Jabber" policy and the Data Dragon terms. They are not covered by the MIT License and may not be used commercially.
 
+The Summoner's Rift map image (`src/assets/map/map11.png`) is a Data Dragon asset and follows the same terms.
+
 - Data Dragon: https://developer.riotgames.com/docs/lol#data-dragon
 - Legal Jibber Jabber: https://www.riotgames.com/en/legal
 

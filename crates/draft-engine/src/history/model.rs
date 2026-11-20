@@ -115,6 +115,50 @@ pub enum Confidence {
     Low,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MatchTeam {
+    #[default]
+    Our,
+    Enemy,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct MatchTeamStats {
+    #[serde(default)]
+    pub kills: u32,
+    #[serde(default)]
+    pub towers: u32,
+    #[serde(default)]
+    pub dragons: u32,
+    #[serde(default)]
+    pub barons: u32,
+    #[serde(default)]
+    pub heralds: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MatchPlayerStat {
+    pub team: MatchTeam,
+    pub champion_id: ChampionId,
+    #[serde(default)]
+    pub player_name: Option<String>,
+    #[serde(default)]
+    pub role: Option<Role>,
+    #[serde(default)]
+    pub kills: u32,
+    #[serde(default)]
+    pub deaths: u32,
+    #[serde(default)]
+    pub assists: u32,
+    #[serde(default)]
+    pub creep_score: u32,
+    #[serde(default)]
+    pub level: u32,
+    #[serde(default)]
+    pub ward_score: f32,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistoryPick {
     pub champion_id: ChampionId,
@@ -198,6 +242,14 @@ pub struct MatchRecord {
     pub rebalanced: bool,
     #[serde(default)]
     pub legacy_index: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duration_seconds: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub our_stats: Option<MatchTeamStats>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub enemy_stats: Option<MatchTeamStats>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub player_stats: Vec<MatchPlayerStat>,
 }
 
 impl MatchRecord {

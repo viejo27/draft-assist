@@ -858,6 +858,10 @@ pub fn parse_legacy(text: &str, data: &GameData) -> LegacyImport {
                 confidence: parsed.confidence,
                 rebalanced: parsed.rebalanced,
                 legacy_index: Some(block.index + 1),
+                duration_seconds: None,
+                our_stats: None,
+                enemy_stats: None,
+                player_stats: Vec::new(),
             });
         }
 

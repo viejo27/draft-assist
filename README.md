@@ -14,6 +14,7 @@ Asistente de draft para League of Legends, hecho con **Rust + Tauri v2** y front
 - Bans recomendados por amenaza y protección de bans propios.
 - Próximos picks tentativos.
 - **Seguimiento LCU de solo lectura**: sincroniza lobby, formato, lado, posiciones, bans y picks desde el cliente.
+- **Juego en vivo**: durante partidas de Ranked Solo/Duo, Flex, 5s, Torneo o Clash, muestra el mapa, los campeones, los eventos y el marcador desde el Live Client Data, y al terminar una Clash propone guardar resultado y estadísticas en el historial.
 - **Rival de Clash**: chip en el header al abrir la app, bracket, próximo partido, roster propio y rival, rangos, maestrías y últimas partidas desde el LCU.
 - **Historial local y scouting**: importa tu TXT de Clash, guarda picks, bans y resultados, y consulta estadísticas por campeón, bans, lado y rival.
 - **Pools rivales**: agrega por nombre los campeones que fuiste anotando y corrige nombres con alias.
@@ -142,6 +143,32 @@ El estado se guarda automáticamente en:
 ```
 
 Los JSON editables se copian a `%APPDATA%/viejo27.draft-assist/data/`.
+
+## Juego en vivo
+
+Con el seguimiento LCU activo, al empezar una partida de las colas soportadas aparece el tab **Juego en vivo**. El tab parpadea mientras llegan datos y se apaga al terminar la partida o al cortarse el Live Client Data.
+
+Colas soportadas:
+
+| Cola | IDs |
+|---|---|
+| Ranked Solo/Duo | 420 |
+| Ranked Flex | 440 |
+| Ranked 5s | 42, 710 |
+| Clash | 700 |
+| Torneo / custom draft | 0 con plantilla competitiva |
+
+Qué muestra:
+
+- el mapa de la Grieta (`map11.png`) con los 10 campeones;
+- un movimiento estimado de los participantes al lugar de cada evento;
+- el texto del evento actual y un feed de los últimos eventos;
+- marcador, KDA, CS, nivel, estado de muerte y objetivos por equipo;
+- al terminar una Clash: resultado, estadísticas y un mensaje para guardar la partida en el historial.
+
+El Live Client Data no expone coordenadas de los campeones. Las posiciones son estimadas: los objetivos y las estructuras usan coordenadas reales del mapa, y las kills se ubican en la línea o jungla de la víctima. La app lo indica en la propia vista.
+
+El guardado de Clash reutiliza los bans del draft seguido por LCU si los 10 picks coinciden con la partida real. Si no coinciden, guarda picks, resultado y estadísticas con un aviso.
 
 ## Rival de Clash
 
@@ -455,6 +482,7 @@ crates/draft-engine/      motor Rust puro + datos + tests + demo
 crates/draft-engine/src/history/  parser, modelos y texto del historial
 src-tauri/                comandos Tauri, persistencia y ventana
 src-tauri/src/lcu/        cliente, credenciales, mapeo y tracker LCU
+src-tauri/src/live/       poller del Live Client Data, eventos y MatchRecord
 src/                      UI vanilla, estilos e iconos
 src/js/history.js         estadísticas, filtros y perfiles de rivales
 scripts/                  generación de datos y preview
@@ -469,12 +497,12 @@ private/                  historial personal (gitignored)
 
 ```powershell
 cargo test --workspace
-node --test src/js/history.test.js
+node --test src/js/history.test.js src/js/live.test.js
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
-Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late. También hay tests de lockfile/credenciales LCU, mapeo de posiciones, detección de ranked/competitivo, mapeo de picks/bans y `lcu_turn`. El módulo de Clash agrega tests de selección de torneo/bracket, identificación del roster, próximo partido, resultados, rangos y parseo de match history. El historial añade tests de bloques completos, rebalanceo 6/4, alias de campeones, rangos, fill/comodín, notas, importación y estadísticas/filtros/scouting en JavaScript. El desempate por historial añade tests de muestra mínima, dirección del ajuste, protección de bans propios y prioridad de pool.
+Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late. También hay tests de lockfile/credenciales LCU, mapeo de posiciones, detección de ranked/competitivo, mapeo de picks/bans y `lcu_turn`. El módulo de Clash agrega tests de selección de torneo/bracket, identificación del roster, próximo partido, resultados, rangos y parseo de match history. El historial añade tests de bloques completos, rebalanceo 6/4, alias de campeones, rangos, fill/comodín, notas, importación y estadísticas/filtros/scouting en JavaScript. El desempate por historial añade tests de muestra mínima, dirección del ajuste, protección de bans propios y prioridad de pool. Juego en vivo agrega tests de parseo, champion mapping, coordenadas de estructuras, movimiento de FirstBlood/Multikill/Ace, colas soportadas y construcción del MatchRecord con o sin bans reutilizados.
 
 ## Problemas comunes
 
@@ -487,7 +515,7 @@ Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, pri
 
 ## Mejoras futuras
 
-- Captura automática de resultados con el Live Client Data API (`https://127.0.0.1:2999/liveclientdata/allgamedata`): al terminar la partida indica victoria/derrota y se integraría con los datos de la partida en vivo.
+- Guardado automático de partidas ranked y de otros modos (hoy el historial automático es solo Clash).
 - LCU por WebSocket para latencia menor que el polling actual.
 - Auto-hover/auto-lock opcional en el cliente (no implementado; solo con confirmación explícita, aviso de overrides de pool/flex y botón de emergencia).
 - Riot API para maestría y estadísticas propias (futuro, no implementado; requiere production key y aprobación de Riot).

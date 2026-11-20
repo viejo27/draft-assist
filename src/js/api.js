@@ -8,6 +8,7 @@ let previewBootstrapCache = null;
 let previewRecommendationCache = null;
 let previewHistoryCache = null;
 let previewClashCache = null;
+let previewLiveCache = null;
 
 async function loadPreviewJson(name) {
   const url = new URL(`../data/${name}`, import.meta.url);
@@ -166,6 +167,25 @@ export async function listenLcuSnapshot(handler) {
   return window.__TAURI__.event.listen("lcu-snapshot", (event) => {
     handler(event.payload);
   });
+}
+
+export async function listenLiveSnapshot(handler) {
+  if (!isTauri) return () => {};
+  return window.__TAURI__.event.listen("live-snapshot", (event) => {
+    handler(event.payload);
+  });
+}
+
+export async function liveCurrent() {
+  if (isTauri) return invoke("live_current");
+  if (!new URLSearchParams(window.location.search).has("live")) return null;
+  previewLiveCache ??= await loadPreviewJson("preview-live.json").catch(() => null);
+  return previewLiveCache;
+}
+
+export async function liveMatchRecord(appState, queueId) {
+  if (isTauri) return invoke("live_match_record", { appState, queueId });
+  throw new Error("Guardar partidas desde Juego en vivo solo está disponible en la app de escritorio.");
 }
 
 export async function historyLoad() {

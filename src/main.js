@@ -5,10 +5,12 @@ import {
   cancelPendingMatch,
   cancelRenameRival,
   commitHistoryImport,
+  confirmLiveMatch,
   confirmPendingMatch,
   confirmRenameRival,
   currentTurn,
   deleteHistoryMatch,
+  dismissLiveSave,
   emit,
   exportHistory,
   exportState,
@@ -19,6 +21,7 @@ import {
   loadHistory,
   openDataDir,
   openHistoryDir,
+  openLiveSaveDialog,
   prepareMatchFromDraft,
   recordBan,
   recordPick,
@@ -57,6 +60,7 @@ import {
   renderChampionRoleFilter,
   renderEnemyRoleExtra,
   renderHistoryDialogs,
+  renderLiveDialogs,
   renderNewDraftOptions,
   renderStepOptions,
 } from "./js/render.js";
@@ -72,6 +76,13 @@ const picker = {
 
 document.addEventListener("DOMContentLoaded", () => {
   subscribe(render);
+  subscribe((view) => {
+    if (!view.live?.openSaveDialog || !view.live?.pendingMatch) return;
+    renderLiveDialogs(view);
+    const dialog = document.getElementById("live-save-dialog");
+    if (dialog && !dialog.open) dialog.showModal();
+    app.live.openSaveDialog = false;
+  });
 
   document.getElementById("undo-button")?.addEventListener("click", undo);
   bindGlobalEvents();
@@ -138,6 +149,9 @@ function bindGlobalEvents() {
   });
   document.getElementById("history-save-dialog")?.addEventListener("close", () => {
     if (app.history.pendingMatch) cancelPendingMatch();
+  });
+  document.getElementById("live-save-dialog")?.addEventListener("close", () => {
+    if (app.live.openSaveDialog) app.live.openSaveDialog = false;
   });
   document.getElementById("history-rename-dialog")?.addEventListener("close", () => {
     if (app.history.renameRival) cancelRenameRival();
@@ -229,6 +243,19 @@ function handleClick(event) {
       break;
     case "history-rename-rival":
       openHistoryRenameDialog(trigger.dataset.name);
+      break;
+    case "live-open-save":
+      openLiveSaveDialog();
+      break;
+    case "live-dismiss-save":
+      dismissLiveSave();
+      document.getElementById("live-save-dialog")?.close();
+      break;
+    case "live-confirm-save":
+      void (async () => {
+        await confirmLiveMatch();
+        document.getElementById("live-save-dialog")?.close();
+      })();
       break;
     case "history-confirm-rename":
       void confirmHistoryRename();

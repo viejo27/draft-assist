@@ -2,7 +2,7 @@
 
 ## 1. Alcance
 
-Aplicación de escritorio Tauri v2 con motor de recomendación en Rust y UI en HTML/CSS/JS sin bundler. Todo el conocimiento de campeones, counters, sinergias y plantillas vive en JSON local. No hay llamadas de red en runtime.
+Aplicación de escritorio Tauri v2 con motor de recomendación en Rust y UI en HTML/CSS/JS sin bundler. Todo el conocimiento de campeones, counters, sinergias y plantillas vive en JSON local. No hay llamadas a servicios externos en runtime: solo se leen las APIs locales del cliente (LCU y Live Client Data).
 
 ## 2. Arquitectura
 
@@ -21,6 +21,7 @@ src-tauri/
   commands.rs     -> bootstrap, recommend, save/load, reload, validate, LCU, historial
   persistence.rs  -> state.json + history/history.json
   lcu/            -> credenciales, cliente HTTP, mapeo y tracker LCU
+  live/           -> Live Client Data, eventos, mapa y MatchRecord de partida
   lib.rs          -> RuntimeState + carga de datos
         |
         | path dependency
@@ -314,16 +315,50 @@ Los errores de red del LCU se clasifican a mensajes amigables (`Cliente no dispo
 - Banner de seguimiento y botón **Detener**.
 - Tablero de solo lectura mientras está activo.
 - Chip **Clash** en el header cuando hay torneo, con día/horario de la próxima fase; se calcula al abrir la app.
+- Vista **Juego en vivo**: tab efímero solo para colas elegibles; mapa `map11`, tokens por campeón, evento actual, feed, marcador y estadísticas. Al terminar una Clash, modal con resultado y guardado al historial.
 - Vista **Rival**: bracket, próximo partido, roster propio, roster rival, rangos, maestrías y últimas partidas; se actualiza al abrirla o con **Actualizar**.
 - Sección **Cliente de League** en Ajustes con estado, cola, plantilla, lado, acción y última sincronización.
 
-## 10. Historial y scouting
+## 10. Juego en vivo
+
+Módulo `src-tauri/src/live/`:
+
+- `model.rs`: DTOs de `https://127.0.0.1:2999/liveclientdata/allgamedata` y snapshot serializable para la UI.
+- `mapping.rs`: jugadores, champion ids, eventos, textos, ubicaciones y marcador. Es puro y testeable.
+- `runtime.rs`: poll cada segundo, evento Tauri `live-snapshot` y detección de partida nueva por reinicio de `gameTime`.
+- `match_record.rs`: convierte el último snapshot en `MatchRecord` de historial.
+
+El runtime arranca y se detiene junto con el seguimiento LCU. No usa credenciales del cliente: el Live Client Data es local y su certificado autofirmado se acepta solo para `127.0.0.1`. Comandos: `live_current` y `live_match_record`.
+
+### Colas
+
+La UI solo muestra el tab **Juego en vivo** para:
+
+- Ranked Solo/Duo (`420`), Ranked Flex (`440`), Ranked 5s (`42`, `710`), Clash (`700`) y custom/torneo (`0` con plantilla `tournament`).
+
+Quedan fuera Normal Draft (`400`), Blind (`430`), ARAM y el resto.
+
+### Eventos y posiciones
+
+- Estructuras: coordenadas reales del mapa para torretas e inhibidores. `L0` = bot, `L1` = mid, `L2` = top; `P3` = torre exterior, `P2` = interior, `P1` = torre de inhibidor, `P4`/`P5` = torres del nexo.
+- Objetivos: Dragón, Barón, Heraldo y larvas del Vacío en sus fosos.
+- Kills: killer, víctima y asistentes se mueven a la línea/jungla de la víctima.
+- FirstBlood, Multikill y Ace reutilizan la ubicación del `ChampionKill` con el que comparten tiempo, o el último combate.
+- GameStart lleva a todos a la fuente; MinionsSpawning los coloca en su posición inicial por rol.
+
+El Live Client Data no expone coordenadas de campeones. La vista lo declara y muestra una nota permanente.
+
+### Guardado de Clash
+
+Al `GameEnd` de una Clash, la UI pide el `MatchRecord` al backend y abre un modal con resultado, duración, marcador y estadísticas. Si el draft seguido por LCU tiene los mismos 10 picks, reutiliza bans y primer ban; si no, guarda picks, resultado y estadísticas con un aviso. El `MatchRecord` agrega campos opcionales compatibles con historiales viejos: `duration_seconds`, `our_stats`, `enemy_stats` y `player_stats`.
+
+## 11. Historial y scouting
 
 ### Modelo
 
 `crates/draft-engine/src/history/`:
 
-- `model.rs`: `HistoryStore`, `MatchRecord`, `HistoryPick`, `RivalPlayer`, enums de cola/resultado/primer ban/confianza.
+- `model.rs`: `HistoryStore`, `MatchRecord`, `MatchPlayerStat`, `MatchTeamStats`, `HistoryPick`, `RivalPlayer`, enums de cola/resultado/primer ban/confianza.
 - `normalize.rs`: resolución de campeones, alias, roles, secciones y nombres con rango.
 - `parse.rs`: parser del TXT viejo de Clash y clasificación de bloques.
 - `text.rs`: exportación a TXT limpio y reporte de revisión.
@@ -349,6 +384,7 @@ pub struct HistoryStore {
 - `our_bans`, `enemy_bans`, `our_picks`, `enemy_picks` en orden.
 - `rivals`: nombre, rol o etiqueta flex, grupos de pool (`main`, `last`), rango, notas.
 - `warnings`, `confidence`, `rebalanced`, `legacy_index`.
+- Opcionales en partidas de Juego en vivo: `duration_seconds`, `our_stats`/`enemy_stats` (kills, torres, dragones, barones, heraldos) y `player_stats` (KDA, CS, nivel, visión por jugador).
 
 ### Parser legacy
 
@@ -412,18 +448,19 @@ El CLI `cargo run -p draft-engine --example import_history -- <txt> <out>` gener
 - Guardar partida actual: crea un `MatchRecord` desde el draft, con resultado y notas.
 - El ejemplo público usa nombres falsos; `private/` y `ban-clash.txt` están en `.gitignore`.
 
-## 11. UI
+## 12. UI
 
-Vistas: Draft, Equipo, Historial, Ajustes.
+Vistas: Draft, Juego en vivo, Equipo, Rival, Historial, Ajustes.
 
 - **Draft:** tablero enemigo/aliado, bans, resumen de composición, recomendaciones Top N, próximos picks.
+- **Juego en vivo:** tab efímero para colas elegibles; mapa `map11`, tokens, evento actual, feed, marcador y estadísticas. Modal de guardado al terminar una Clash.
 - **Equipo:** 5 jugadores, orden de picks, pools con comfort y winrate.
-- **Historial:** resumen, partidas, rivales y bans; importación de Clash, guardado del draft actual, exportación y edición.
+- **Historial:** resumen, partidas, rivales y bans; importación de Clash, guardado del draft actual o de Juego en vivo, exportación y edición.
 - **Ajustes:** Top N, prioridad de pool, flex fuera de rol, desempate por historial, cliente de League, historial local, datos, export/import, explicación del scoring.
 
 La UI está descrita en `DESIGN.md` (sistema visual) y sigue modo Operate: densidad escaneable, acciones a un clic, estados vacío/error/loading.
 
-## 12. Tests
+## 13. Tests
 
 `crates/draft-engine/tests/engine_tests.rs`:
 
@@ -469,9 +506,24 @@ La UI está descrita en `DESIGN.md` (sistema visual) y sigue modo Operate: densi
 - detección de partidas completas;
 - señales compactas de historial (`buildHistorySignals`).
 
-Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` (si clippy está instalado), `node --test src/js/history.test.js` y los ejemplos CLI.
+`src-tauri/src/live/`:
 
-## 13. Limitaciones
+- parseo de `allgamedata`, champion mapping y equipo propio;
+- colas soportadas;
+- coordenadas de estructuras y movimiento de FirstBlood/Multikill/Ace;
+- estadísticas por equipo;
+- `MatchRecord` con y sin bans reutilizados.
+
+`src/js/live.test.js`:
+
+- colas aceptadas y rechazadas;
+- formato de tiempo y resultado;
+- posiciones de fuente, líneas iniciales y eventos;
+- separación de campeones que comparten zona.
+
+Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` (si clippy está instalado), `node --test src/js/history.test.js src/js/live.test.js` y los ejemplos CLI.
+
+## 14. Limitaciones
 
 - Prioridad meta estática del parche 16.21.1; no es un tier list vivo.
 - Counters/sinergias son un seed curado, no estadística agregada.
@@ -486,13 +538,17 @@ Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warn
 - No hay Riot API ni scraping de terceros.
 - El modo es solo lectura: no hay auto-hover ni auto-lock.
 - El historial viejo no tiene fechas ni nuestros nombres; la estadística por jugador solo está completa en partidas nuevas.
+- El Live Client Data no expone coordenadas de campeones: Juego en vivo usa posiciones estimadas por evento.
+- El endpoint de Live Client Data puede desaparecer al cerrar la partida; la app conserva el último snapshot para el guardado de Clash.
+- Juego en vivo solo guarda automáticamente propuestas de Clash; ranked y otros modos quedan para una versión futura.
 - El rebalanceo 6/4 → 5/5 es una reconstrucción: queda marcado y se puede corregir.
 - `ff` se interpreta como derrota; `se rompió` como desconocido.
 - La importación de TXT es heurística: los bloques de confianza baja deben revisarse.
 
-## 14. Mejoras futuras
+## 15. Mejoras futuras
 
-- Captura automática de resultados con el Live Client Data API (`https://127.0.0.1:2999/liveclientdata/allgamedata`), integrada con los datos de la partida en vivo.
+- Guardado automático de partidas ranked y de otros modos.
+- Captura de estadísticas EOG del LCU para enriquecer el cierre de partida.
 - LCU por WebSocket para menor latencia.
 - Auto-hover/auto-lock opcional con confirmación explícita, overrides temporales de pool/flex y botón de emergencia.
 - Riot API para maestría y estadísticas propias (futuro, no implementado; requiere production key y aprobación de Riot).

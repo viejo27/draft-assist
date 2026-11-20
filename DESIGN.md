@@ -10,7 +10,7 @@ Low-light team room, 1440×900 desktop window, champion select on a second monit
 
 ## Direction
 
-**Draft sheet, not esports overlay.** The interface reads like a working analyst board: a top context strip, two horizontal team rows, a central ban ledger, then a recommendation column. No neon glow, no gradient text, no decorative glass. The memorable moment is the live board: a pick locks into the current slot and the recommendation column answers with ranked, explained cards.
+**Draft sheet, not esports overlay.** The interface reads like a working analyst board: a top context strip, two horizontal team rows, a central ban ledger, then a recommendation column. No neon glow, no gradient text, no decorative glass. The memorable moment is the draft board: a pick locks into the current slot and the recommendation column answers with ranked, explained cards.
 
 **App icon.** A gold D with a blue/red diagonal slash on a graphite rounded square. The source lives in `src-tauri/app-icon.svg`; regenerate the platform icons with `npx tauri icon src-tauri/app-icon.svg`.
 
@@ -60,7 +60,7 @@ Blue and red are semantic, not decoration: they identify sides. Gold is reserved
 ## Composition
 
 1. **Topbar** (62px): wordmark, draft context (format, side, turn, example/preview state), then undo, change turn, new draft, load example.
-2. **Viewbar** (46px): Draft / Equipo / Ajustes. The active tab is a 2px gold rule.
+2. **Viewbar** (46px): Draft / Juego en vivo / Equipo / Rival / Historial / Ajustes. The active tab is a 2px gold rule. The live tab only appears while the LCU is tracking an eligible live game.
 3. **Draft view** (two columns at ≥1050px): board 1fr, recommendation 390–420px. The recommendation column is sticky and scrolls independently.
 4. **Board**: enemy team row, ban ledger, center turn rule, our team row, then composition summary.
 5. **Recommendation column**: turn header, current player, warnings, top-five cards, then tentative next picks.
@@ -104,6 +104,16 @@ At ≤1050px the recommendation column moves below the board. Champion slots col
 - Settings → Cliente de League: 2×2 status grid (estado, cola, plantilla, lado), current action, last sync, and the read-only disclaimer.
 - Activation dialog: “Solo lectura”, “No se envían picks ni bans”, “No se modifica prioridad estricta del pool / flex fuera de rol”.
 
+### Live game
+
+- Viewbar tab: green dot plus **Juego en vivo**. It only exists while tracking is on and the queue is eligible. The dot blinks while data keeps arriving; it stops at GameEnd or when the endpoint goes quiet.
+- Map: local `assets/map/map11.png` at 512–560px, one token per champion with a blue/red ring, role badge, dead state and short player name when the token is isolated.
+- Movement: participants of the latest event move to its zone over 650ms; everyone else stays where their last event left them. Objective and structure zones use real map coordinates; champion positions are estimated.
+- Event strip: gold timestamp plus the current event text, directly under the map. A small gold ping marks the located event; it pulses once per new event, never loops.
+- Side column: our team and rival panels with KDA, CS, level, death state, objective chips, then the recent-event feed. The column is sticky like the recommendation column.
+- Clash end: result banner, a modal with score, duration, player stats and bans, and a persistent save callout if the modal is dismissed. The saved state is green and replaces the callout.
+- Footnote always visible: “Posiciones estimadas por evento. El Live Client Data no expone coordenadas de los campeones.”
+
 ### History and scouting
 
 - History tabs: 32px segmented control on a quiet surface; active tab is raised with an inset border, not a glow.
@@ -126,6 +136,7 @@ At ≤1050px the recommendation column moves below the board. Champion slots col
 - 150–250ms, exponential ease-out. Recommendations enter with a 240ms stagger (28ms per card). Slots and buttons transition border/background only.
 - No page-load choreography. No looping decoration. Respect `prefers-reduced-motion`.
 - The only authored moment is the recommendation list answering a board action; everything else is state feedback.
+- Exception: the live tab dot blinks while a game is streaming, because the data itself is the signal. The event ping pulses once per event, not in a loop. `prefers-reduced-motion` disables both.
 
 ## States
 

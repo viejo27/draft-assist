@@ -36,6 +36,9 @@
 
       <nav class="viewbar" aria-label="Vistas">
         <button class="view-tab is-active" type="button" data-action="view" data-view="draft">Draft</button>
+        <button class="view-tab view-tab-live" id="live-tab" type="button" data-action="view" data-view="live" hidden>
+          <span class="live-tab-dot" aria-hidden="true"></span>Juego en vivo
+        </button>
         <button class="view-tab" type="button" data-action="view" data-view="roster">Equipo</button>
         <button class="view-tab" type="button" data-action="view" data-view="clash">Rival</button>
         <button class="view-tab" type="button" data-action="view" data-view="history">Historial</button>
@@ -151,6 +154,23 @@
       <div class="dialog-actions">
         <button class="button button-ghost" type="button" data-action="close-dialog">Cancelar</button>
         <button class="button button-primary" type="button" id="lcu-confirm">Activar seguimiento</button>
+      </div>
+    </dialog>
+
+    <dialog class="dialog dialog-wide" id="live-save-dialog">
+      <form method="dialog" class="dialog-head">
+        <div>
+          <h2>Partida Clash finalizada</h2>
+          <p class="muted">Revisa el resultado y las estadísticas antes de guardar en el historial.</p>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="Cerrar" type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </form>
+      <div class="dialog-body" id="live-save-body"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-action="live-dismiss-save">Ahora no</button>
+        <button class="button button-primary" type="button" data-action="live-confirm-save">Guardar en historial</button>
       </div>
     </dialog>
 

@@ -5,8 +5,8 @@ pub mod text;
 
 pub use model::{
     BanStarter, BlockKind, BlockReport, Confidence, HistoryPick, HistoryStore, ImportStats,
-    LegacyImport, MatchQueue, MatchRecord, MatchResult, MatchSource, NameAlias, RivalPlayer,
-    UnknownToken,
+    LegacyImport, MatchPlayerStat, MatchQueue, MatchRecord, MatchResult, MatchSource, MatchTeam,
+    MatchTeamStats, NameAlias, RivalPlayer, UnknownToken,
 };
 pub use normalize::{ChampionResolver, parse_name};
 pub use parse::parse_legacy;

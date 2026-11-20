@@ -4,6 +4,7 @@ import {
   emptyHistoryFilters,
   isCompleteMatch,
 } from "./history.js";
+import { isLiveQueue } from "./live.js";
 
 export const app = {
   bootstrap: null,
@@ -27,6 +28,21 @@ export const app = {
     auto: false,
     connected: false,
     starting: false,
+    lastError: null,
+  },
+  live: {
+    snapshot: null,
+    sessionId: null,
+    sessionQueueId: null,
+    queueId: null,
+    eligible: false,
+    tabVisible: false,
+    available: false,
+    ended: false,
+    pendingMatch: null,
+    savePromptShown: false,
+    saved: false,
+    openSaveDialog: false,
     lastError: null,
   },
   clash: {
@@ -329,6 +345,8 @@ export async function init() {
     void loadClashOverview();
     if (api.isTauri) {
       void initLcu();
+    } else {
+      void initLivePreview();
     }
     if (app.isExample) {
       toast("Draft de ejemplo cargado. Puedes editar todo o empezar uno nuevo.", "info");
@@ -349,12 +367,25 @@ async function initLcu() {
   } catch (error) {
     app.lcu.lastError = error.message ?? String(error);
   }
+  try {
+    await api.listenLiveSnapshot(applyLiveSnapshot);
+  } catch (error) {
+    app.live.lastError = error.message ?? String(error);
+  }
 
   try {
     const status = await api.lcuStatus();
     applyLcuStatus(status);
   } catch (error) {
     app.lcu.lastError = error.message ?? String(error);
+    emit();
+  }
+
+  try {
+    const snapshot = await api.liveCurrent();
+    if (snapshot) applyLiveSnapshot(snapshot);
+  } catch (error) {
+    app.live.lastError = error.message ?? String(error);
     emit();
   }
 }
@@ -365,6 +396,38 @@ function applyLcuStatus(status) {
   app.lcu.auto = Boolean(status.auto);
   app.lcu.connected = Boolean(status.connected);
   app.lcu.lastError = status.last_error ?? null;
+
+  if (status.connected && status.queue_id !== null && status.queue_id !== undefined) {
+    const wasEligible = app.live.eligible;
+    const eligible = isLiveQueue(status.queue_id, status.template_id);
+    app.live.eligible = eligible;
+    app.live.queueId = eligible ? Number(status.queue_id) : null;
+
+    if (!wasEligible && eligible && app.live.snapshot) {
+      if (app.live.snapshot.ended || app.live.snapshot.available === false) {
+        app.live.snapshot = null;
+        app.live.sessionId = null;
+        app.live.sessionQueueId = null;
+      }
+    }
+    if (eligible && app.live.snapshot && app.live.sessionQueueId === null) {
+      app.live.sessionQueueId = app.live.queueId;
+    }
+  }
+  if (app.live.snapshot) {
+    app.live.tabVisible =
+      app.live.eligible &&
+      app.live.sessionQueueId !== null &&
+      app.live.sessionQueueId === app.live.queueId;
+  } else {
+    app.live.tabVisible = false;
+  }
+  if (!app.live.tabVisible && app.view === "live") {
+    app.view = "draft";
+  }
+
+  maybePromptLiveSave();
+
   if (
     status.connected &&
     !app.clashOverview.data &&
@@ -408,6 +471,165 @@ export async function refreshLcuStatus() {
   }
 }
 
+export function applyLiveSnapshot(payload) {
+  if (!payload) return;
+  const sessionChanged = Boolean(payload.session_id) && payload.session_id !== app.live.sessionId;
+  if (sessionChanged) {
+    app.live.sessionId = payload.session_id;
+    app.live.sessionQueueId = null;
+    app.live.pendingMatch = null;
+    app.live.savePromptShown = false;
+    app.live.saved = false;
+    app.live.openSaveDialog = false;
+  }
+
+  app.live.snapshot = payload;
+  app.live.available = payload.available !== false;
+  app.live.ended = Boolean(payload.ended);
+  if (app.live.eligible && app.live.sessionQueueId === null) {
+    app.live.sessionQueueId = app.live.queueId;
+  }
+  app.live.tabVisible =
+    app.live.eligible &&
+    app.live.sessionQueueId !== null &&
+    app.live.sessionQueueId === app.live.queueId;
+  app.live.lastError = null;
+
+  if (!app.live.tabVisible && app.view === "live") {
+    app.view = "draft";
+  }
+
+  maybePromptLiveSave();
+  emit();
+}
+
+function maybePromptLiveSave() {
+  if (!api.isTauri) return;
+  if (!app.live.snapshot?.ended) return;
+  if (app.live.sessionQueueId !== 700) return;
+  if (app.live.savePromptShown) return;
+  app.live.savePromptShown = true;
+  void prepareLiveMatch({ open: true });
+}
+
+async function initLivePreview() {
+  try {
+    const snapshot = await api.liveCurrent();
+    if (!snapshot) return;
+    app.live.eligible = true;
+    app.live.queueId = 700;
+    app.live.tabVisible = true;
+    app.view = "live";
+    applyLiveSnapshot(snapshot);
+  } catch (error) {
+    app.live.lastError = error.message ?? String(error);
+  }
+}
+
+function resetLiveState() {
+  app.live.snapshot = null;
+  app.live.sessionId = null;
+  app.live.sessionQueueId = null;
+  app.live.queueId = null;
+  app.live.eligible = false;
+  app.live.tabVisible = false;
+  app.live.available = false;
+  app.live.ended = false;
+  app.live.pendingMatch = null;
+  app.live.savePromptShown = false;
+  app.live.saved = false;
+  app.live.openSaveDialog = false;
+  app.live.lastError = null;
+  if (app.view === "live") app.view = "draft";
+}
+
+export async function prepareLiveMatch({ open = false } = {}) {
+  if (!app.state) return null;
+  if (!api.isTauri) {
+    toast(
+      "Guardar partidas desde Juego en vivo solo está disponible en la app de escritorio.",
+      "warning",
+    );
+    return null;
+  }
+  if (app.live.saved) {
+    toast("La partida ya está guardada en el historial.", "info");
+    return null;
+  }
+  if (app.live.pendingMatch) {
+    if (open) {
+      app.live.openSaveDialog = true;
+      emit();
+    }
+    return app.live.pendingMatch;
+  }
+
+  try {
+    const match = await api.liveMatchRecord(app.state, app.live.sessionQueueId);
+    app.live.pendingMatch = match;
+    app.live.lastError = null;
+    if (open) app.live.openSaveDialog = true;
+    emit();
+    return match;
+  } catch (error) {
+    app.live.lastError = error.message ?? String(error);
+    toast(app.live.lastError, "error");
+    emit();
+    return null;
+  }
+}
+
+export function openLiveSaveDialog() {
+  if (app.live.saved) {
+    toast("La partida ya está guardada en el historial.", "info");
+    return;
+  }
+  if (app.live.pendingMatch) {
+    app.live.openSaveDialog = true;
+    emit();
+    return;
+  }
+  void prepareLiveMatch({ open: true });
+}
+
+export function dismissLiveSave() {
+  app.live.openSaveDialog = false;
+  emit();
+}
+
+export async function confirmLiveMatch() {
+  if (!app.live.pendingMatch) {
+    await prepareLiveMatch({ open: true });
+  }
+  const match = app.live.pendingMatch;
+  if (!match) return;
+  if (!app.history.store) {
+    await loadHistory();
+  }
+  if (!app.history.store) {
+    app.history.store = normalizeHistoryStore(null);
+  }
+  if (!match.played_at) {
+    match.played_at = new Date().toISOString();
+  }
+  const previousMatches = app.history.store.matches ?? [];
+  app.history.store.matches = [
+    match,
+    ...previousMatches.filter((item) => item.id !== match.id),
+  ];
+  await saveHistoryStore();
+  if (app.history.error) {
+    app.history.store.matches = previousMatches;
+    emit();
+    return;
+  }
+  app.live.saved = true;
+  app.live.pendingMatch = null;
+  app.live.openSaveDialog = false;
+  emit();
+  toast("Partida guardada en el historial.", "success");
+}
+
 export async function startLcuTracking() {
   if (!api.isTauri) {
     toast("El seguimiento LCU solo está disponible en la app de escritorio.", "warning");
@@ -415,12 +637,12 @@ export async function startLcuTracking() {
   }
   if (!app.state) return;
   app.lcu.starting = true;
+  resetLiveState();
   emit();
   try {
     const status = await api.lcuStartTracking(app.state);
     app.lcu.auto = true;
-    app.lcu.status = status;
-    app.lcu.connected = Boolean(status.connected);
+    applyLcuStatus(status);
     app.undo = [];
     toast("Seguimiento LCU activado. El tablero es de solo lectura.", "success");
     emit();
@@ -437,6 +659,7 @@ export async function stopLcuTracking() {
   if (!api.isTauri) return;
   try {
     const status = await api.lcuStopTracking();
+    resetLiveState();
     app.lcu.auto = false;
     app.lcu.status = status;
     app.lcu.connected = Boolean(status.connected);
@@ -504,6 +727,7 @@ export function refreshClash() {
 }
 
 export function setView(view) {
+  if (view === "live" && !app.live.tabVisible) return;
   app.view = view;
   if (
     (view === "history" || view === "settings") &&

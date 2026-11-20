@@ -1,10 +1,12 @@
 mod commands;
 mod lcu;
+mod live;
 mod persistence;
 
 use draft_engine::Engine;
 use draft_engine::data::GameData;
 use lcu::LcuRuntime;
+use live::LiveRuntime;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
@@ -14,6 +16,7 @@ pub struct RuntimeState {
     pub data_dir: std::path::PathBuf,
     pub warnings: Vec<String>,
     pub lcu: Arc<LcuRuntime>,
+    pub live: Arc<LiveRuntime>,
 }
 
 /// Copies the state and editable data from the old identifier folder once.
@@ -147,6 +150,7 @@ pub fn run() {
                 data_dir,
                 warnings,
                 lcu: Arc::new(LcuRuntime::new()),
+                live: Arc::new(LiveRuntime::new()),
             });
             Ok(())
         })
@@ -163,6 +167,8 @@ pub fn run() {
             commands::lcu_status,
             commands::lcu_start_tracking,
             commands::lcu_stop_tracking,
+            commands::live_current,
+            commands::live_match_record,
             commands::clash_overview,
             commands::clash_status,
             commands::history_load,

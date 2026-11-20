@@ -132,6 +132,10 @@ mod tests {
             confidence: Confidence::High,
             rebalanced: false,
             legacy_index: None,
+            duration_seconds: None,
+            our_stats: None,
+            enemy_stats: None,
+            player_stats: Vec::new(),
         }
     }
 
