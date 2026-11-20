@@ -79,6 +79,10 @@ document.addEventListener("DOMContentLoaded", () => {
   render(app);
   void init();
 
+  window.addEventListener("focus", () => {
+    if (!app.lcu.auto) void refreshLcuStatus();
+  });
+
   document.getElementById("new-draft-confirm")?.addEventListener("click", confirmNewDraft);
   document.getElementById("step-confirm")?.addEventListener("click", confirmStep);
   document.getElementById("lcu-confirm")?.addEventListener("click", async () => {

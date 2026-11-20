@@ -183,8 +183,13 @@ function renderLcuControl(view) {
   const label = lcuShortLabel(status, auto);
   const disabled = view.lcu?.starting ? "disabled" : "";
 
+  const dotTitle = auto
+    ? "Seguimiento LCU activo"
+    : status?.connected
+      ? "Cliente detectado; el seguimiento está apagado"
+      : "Cliente no detectado";
   root.innerHTML = `
-    <span class="lcu-dot ${dot}"></span>
+    <span class="lcu-dot ${dot}" title="${dotTitle}"></span>
     <span class="lcu-label">${escapeHtml(label)}</span>
     <button class="button button-small ${auto ? "button-danger-ghost" : "button-ghost"}" type="button"
       data-action="${auto ? "stop-lcu" : "start-lcu"}" ${disabled}>
@@ -194,17 +199,26 @@ function renderLcuControl(view) {
 }
 
 function lcuDotClass(status, auto) {
-  if (auto && !status?.connected) return "is-waiting";
   if (status?.state === "error") return "is-error";
-  if (status?.connected) return "is-on";
+  if (auto) return status?.connected ? "is-on" : "is-waiting";
+  if (status?.connected) return "is-idle";
   return "is-off";
 }
 
 function lcuShortLabel(status, auto) {
-  if (!status) return auto ? "Buscando LCU…" : "LCU";
+  if (!auto) {
+    if (!status) return "LCU";
+    if (status.state === "not_found") return "Sin cliente";
+    if (status.state === "reconnecting" || status.state === "error") {
+      return "Reconectando…";
+    }
+    return status.connected ? "LCU detectado" : "LCU";
+  }
+
+  if (!status) return "Buscando LCU…";
   if (status.state === "not_found") return "Sin cliente";
   if (status.state === "reconnecting" || status.state === "error") return "Reconectando…";
-  if (!status.connected) return auto ? "Buscando LCU…" : "LCU";
+  if (!status.connected) return "Buscando LCU…";
   if (status.phase === "ChampSelect" && status.current_action) {
     return status.current_action.label;
   }
@@ -213,7 +227,7 @@ function lcuShortLabel(status, auto) {
   }
   if (status.phase === "InProgress") return "Partida en curso";
   if (status.phase === "EndOfGame") return "Fin de partida";
-  return status.queue_name ? `LCU · ${status.queue_name}` : "LCU conectado";
+  return status.queue_name ? `LCU · ${status.queue_name}` : "Seguimiento activo";
 }
 
 function loadingState() {
@@ -2283,7 +2297,7 @@ function lcuSettingsSection(view) {
     (item) => item.id === status?.template_id,
   );
   const disabled = view.preview ? "disabled" : "";
-  const statusText = lcuStatusText(status);
+  const statusText = lcuStatusText(status, auto);
   const side = status?.side ? sideLabel(status.side) : "—";
   const action = status?.current_action;
   return `
@@ -2365,13 +2379,15 @@ function historySettingsSection(view) {
   `;
 }
 
-function lcuStatusText(status) {
+function lcuStatusText(status, auto = false) {
   if (!status) return "Sin comprobar";
   if (status.state === "preview") return "No disponible en la vista previa";
   if (status.state === "not_found") return "Cliente no encontrado";
   if (status.state === "connecting") return "Conectando";
   if (status.state === "reconnecting" || status.state === "error") return "Reconectando";
-  if (status.connected) return "Conectado";
+  if (status.connected) {
+    return auto ? "Seguimiento activo" : "Cliente detectado · seguimiento apagado";
+  }
   return "Desconectado";
 }
 

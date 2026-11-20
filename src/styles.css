@@ -3669,3 +3669,7 @@ code {
     grid-template-columns: 1fr;
   }
 }
+
+.lcu-dot.is-idle {
+  background: #6b7d90;
+}
