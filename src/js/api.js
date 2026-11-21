@@ -9,6 +9,8 @@ let previewRecommendationCache = null;
 let previewHistoryCache = null;
 let previewClashCache = null;
 let previewLiveCache = null;
+let previewLobbyCache = null;
+let previewRivalCache = null;
 
 async function loadPreviewJson(name) {
   const url = new URL(`../data/${name}`, import.meta.url);
@@ -129,6 +131,18 @@ async function previewClash() {
 export async function clashStatus() {
   if (isTauri) return invoke("clash_status");
   return previewClash();
+}
+
+export async function lobbyScouting() {
+  if (isTauri) return invoke("lobby_scouting");
+  previewLobbyCache ??= await loadPreviewJson("preview-lobby.json");
+  return previewLobbyCache;
+}
+
+export async function rivalScouting() {
+  if (isTauri) return invoke("rival_scouting");
+  previewRivalCache ??= await loadPreviewJson("preview-rival.json");
+  return previewRivalCache;
 }
 
 export async function clashOverview() {

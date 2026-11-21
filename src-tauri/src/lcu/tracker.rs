@@ -180,6 +180,7 @@ async fn run_tracker(
                 LcuSnapshot {
                     status,
                     draft: None,
+                    lobby_signature: None,
                 }
             }
         };

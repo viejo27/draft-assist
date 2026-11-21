@@ -15,7 +15,8 @@
     "test:engine": "cargo test -p draft-engine",
     "test:history": "node --test src/js/history.test.js",
     "test:live": "node --test src/js/live.test.js",
-    "test": "cargo test --workspace && node --test src/js/history.test.js src/js/live.test.js"
+    "test:lobby": "node --test src/js/lobby.test.js",
+    "test": "cargo test --workspace && node --test src/js/history.test.js src/js/live.test.js src/js/lobby.test.js"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.12.4"

@@ -57,6 +57,7 @@ pub fn queue_name(queue_id: Option<i64>) -> Option<String> {
     queue_id.map(|id| match id {
         420 => "Ranked Solo/Duo".to_string(),
         440 => "Ranked Flex".to_string(),
+        42 | 710 => "Ranked 5s".to_string(),
         400 => "Normal Draft".to_string(),
         700 => "Clash".to_string(),
         0 => "Custom".to_string(),
@@ -138,7 +139,67 @@ pub fn build_snapshot(
         None
     };
 
-    LcuSnapshot { status, draft }
+    let lobby_signature = lobby_signature(phase, queue_id, lobby, session);
+
+    LcuSnapshot {
+        status,
+        draft,
+        lobby_signature,
+    }
+}
+
+pub(crate) fn lobby_signature(
+    phase: &str,
+    queue_id: Option<i64>,
+    lobby: Option<&Lobby>,
+    session: Option<&ChampSelectSession>,
+) -> Option<String> {
+    let mut parts = Vec::new();
+    match phase {
+        "Lobby" => {
+            let lobby = lobby?;
+            for member in &lobby.members {
+                let identity = member
+                    .summoner_id
+                    .map(|id| id.to_string())
+                    .or_else(|| member.puuid.clone())
+                    .unwrap_or_default();
+                parts.push(format!(
+                    "{}:{}:{}",
+                    identity,
+                    member.first_position_preference.as_deref().unwrap_or(""),
+                    member.second_position_preference.as_deref().unwrap_or("")
+                ));
+            }
+        }
+        "ChampSelect" => {
+            let session = session?;
+            for players in [&session.my_team, &session.their_team] {
+                for player in players {
+                    let identity = player
+                        .summoner_id
+                        .filter(|id| *id > 0)
+                        .map(|id| id.to_string())
+                        .or_else(|| player.puuid.clone())
+                        .unwrap_or_else(|| player.cell_id.to_string());
+                    parts.push(format!(
+                        "{}:{}:{}",
+                        identity,
+                        player.assigned_position,
+                        player.team.unwrap_or_default()
+                    ));
+                }
+            }
+        }
+        _ => return None,
+    }
+    parts.sort();
+    Some(format!(
+        "{}|{}|{}",
+        phase,
+        queue_id.unwrap_or(-1),
+        parts.join("|")
+    ))
 }
 
 fn prepared_lobby_draft(template_id: &str, config: &TrackingConfig) -> DraftState {
@@ -516,7 +577,8 @@ fn role_rank(role: Role) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::{
-        TrackingConfig, build_snapshot, detect_template, role_from_position, validate_roster,
+        TrackingConfig, build_snapshot, detect_template, lobby_signature, role_from_position,
+        validate_roster,
     };
     use crate::lcu::model::{
         ChampSelectAction, ChampSelectBans, ChampSelectPlayer, ChampSelectSession,
@@ -553,6 +615,7 @@ mod tests {
             champion_id,
             team: Some(team),
             summoner_id: Some(cell + 100),
+            ..ChampSelectPlayer::default()
         }
     }
 
@@ -622,7 +685,9 @@ mod tests {
             members: vec![LobbyMember {
                 summoner_id: Some(103),
                 summoner_name: Some("Pablo".into()),
+                ..LobbyMember::default()
             }],
+            local_member: None,
         };
 
         let snapshot = build_snapshot(
@@ -699,6 +764,51 @@ mod tests {
     }
 
     #[test]
+    fn detects_position_changes_in_the_lobby_signature() {
+        let mut lobby = Lobby {
+            game_config: Some(LobbyGameConfig {
+                queue_id: Some(420),
+            }),
+            members: vec![LobbyMember {
+                summoner_id: Some(10),
+                first_position_preference: Some("TOP".into()),
+                second_position_preference: Some("JUNGLE".into()),
+                ..LobbyMember::default()
+            }],
+            local_member: None,
+        };
+        let first = lobby_signature("Lobby", Some(420), Some(&lobby), None).unwrap();
+        assert_eq!(
+            first,
+            lobby_signature("Lobby", Some(420), Some(&lobby), None).unwrap()
+        );
+
+        lobby.members[0].first_position_preference = Some("MIDDLE".into());
+        let second = lobby_signature("Lobby", Some(420), Some(&lobby), None).unwrap();
+        assert_ne!(first, second);
+        assert!(second.contains("MIDDLE"));
+    }
+
+    #[test]
+    fn champ_select_signature_tracks_enemy_positions_too() {
+        let mut session = ChampSelectSession {
+            my_team: vec![player(0, 1, "top", 0)],
+            their_team: vec![player(5, 2, "bottom", 0)],
+            ..ChampSelectSession::default()
+        };
+        let first = lobby_signature("ChampSelect", Some(420), None, Some(&session)).unwrap();
+        assert_eq!(
+            first,
+            lobby_signature("ChampSelect", Some(420), None, Some(&session)).unwrap()
+        );
+
+        session.their_team[0].assigned_position = "utility".into();
+        let second = lobby_signature("ChampSelect", Some(420), None, Some(&session)).unwrap();
+        assert_ne!(first, second);
+        assert!(second.contains("utility"));
+    }
+
+    #[test]
     fn preloads_the_template_when_the_client_is_in_a_lobby() {
         let data = data();
         let config = config();
@@ -707,6 +817,7 @@ mod tests {
                 queue_id: Some(420),
             }),
             members: vec![],
+            local_member: None,
         };
 
         let snapshot = build_snapshot("Lobby", None, Some(&lobby), None, &config, &data, true);

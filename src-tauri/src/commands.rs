@@ -1,5 +1,7 @@
 use crate::RuntimeState;
-use crate::lcu::{ClashOverview, ClashView, LcuStatus, TrackingConfig, validate_roster};
+use crate::lcu::{
+    ClashOverview, ClashView, LcuStatus, LobbyScoutingView, TrackingConfig, validate_roster,
+};
 use crate::live::LiveSnapshot;
 use crate::{load_engine, persistence};
 use draft_engine::data::example_state;
@@ -271,6 +273,30 @@ pub async fn clash_status(state: State<'_, RuntimeState>) -> Result<ClashView, S
         engine.data().clone()
     };
     crate::lcu::clash_view(&data).await
+}
+
+#[tauri::command]
+pub async fn lobby_scouting(state: State<'_, RuntimeState>) -> Result<LobbyScoutingView, String> {
+    let data = {
+        let engine = state
+            .engine
+            .lock()
+            .map_err(|_| "El motor está bloqueado; reinicia la aplicación.".to_string())?;
+        engine.data().clone()
+    };
+    crate::lcu::lobby_scouting(&data).await
+}
+
+#[tauri::command]
+pub async fn rival_scouting(state: State<'_, RuntimeState>) -> Result<LobbyScoutingView, String> {
+    let data = {
+        let engine = state
+            .engine
+            .lock()
+            .map_err(|_| "El motor está bloqueado; reinicia la aplicación.".to_string())?;
+        engine.data().clone()
+    };
+    crate::lcu::rival_scouting(&data).await
 }
 
 #[tauri::command]

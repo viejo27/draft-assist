@@ -21,6 +21,8 @@ src-tauri/
   commands.rs     -> bootstrap, recommend, save/load, reload, validate, LCU, historial
   persistence.rs  -> state.json + history/history.json
   lcu/            -> credenciales, cliente HTTP, mapeo y tracker LCU
+  lcu/scouting.rs -> maestrías, rango, historial y champion mapping compartidos
+  lcu/lobby.rs    -> scouting de lobby, champ select y Rival Live
   live/           -> Live Client Data, eventos, mapa y MatchRecord de partida
   lib.rs          -> RuntimeState + carga de datos
         |
@@ -319,6 +321,29 @@ Los errores de red del LCU se clasifican a mensajes amigables (`Cliente no dispo
 - Vista **Rival**: bracket, próximo partido, roster propio, roster rival, rangos, maestrías y últimas partidas; se actualiza al abrirla o con **Actualizar**.
 - Sección **Cliente de League** en Ajustes con estado, cola, plantilla, lado, acción y última sincronización.
 
+### Scouting de lobby
+
+El comando `lobby_scouting` alimenta la columna derecha de **Equipo** sin depender del seguimiento LCU:
+
+| Endpoint | Uso |
+|---|---|
+| `GET /lol-lobby/v2/lobby` | Miembros, PUUID, nivel, icono y preferencias de posición. |
+| `GET /lol-champ-select/v1/session` | `myTeam`/`theirTeam`, `assignedPosition`, PUUID y jugador local. |
+| `GET /lol-summoner/v2/summoners?ids=...` y `/lol-summoner/v1/summoners/{id}` | Nombres, tag y PUUID cuando el lobby no los expone. |
+| `GET /lol-summoner/v1/summoners-by-puuid-cached/{puuid}` | Fallback de nombre cuando el rival solo expone PUUID. |
+| `GET /lol-clash/v1/scouting/champions?puuids=[...]` | Top maestrías y campeones de temporada. |
+| `GET /lol-champion-mastery/v1/{puuid}/champion-mastery` | Fallback de maestrías si el scouting de Clash no devuelve datos. |
+| `GET /lol-match-history/v1/products/lol/{puuid}/matches?begIndex=0&endIndex=20` | Partidas recientes filtradas por cola y posición. |
+| `GET /lol-ranked/v1/cached-ranked-stats/{puuid}` y `/ranked-stats/{puuid}` | Rango de Solo/Duo y Flex. |
+
+Posiciones de lobby: `TOP`, `JUNGLE`, `MIDDLE`, `BOTTOM` (ADC) y `UTILITY` (Support); `FILL`/`UNSELECTED` no cuentan. La primera preferencia es la principal y la segunda solo se muestra como alternativa. En champ select se usa `assignedPosition`.
+
+El match history se filtra a Ranked Solo/Duo (`420`), Ranked Flex (`440`), Ranked 5s (`42`, `710`) y Clash (`700`), y el rol se resuelve con `timeline.lane` + `timeline.role` para distinguir ADC de Support. Se muestran hasta 5 campeones distintos por jugador. Para las maestrías se consulta la lista completa de `/lol-champion-mastery/v1/{puuid}/champion-mastery` y se filtran los campeones cuyo rol local incluye la posición principal; se muestran las 3 mejores y se ofrecen con comfort 5 para pasarlas al pool.
+
+El tracker LCU incluye una firma de lobby/champ select (PUUID/summonerId + posiciones). Cuando cambia, el frontend recarga `lobby_scouting` automáticamente; no hace falta pulsar **Actualizar LCU**. Todo es best-effort: si el cliente no tiene cacheadas las maestrías o partidas, la tarjeta muestra el vacío correspondiente.
+
+El comando `rival_scouting` reutiliza la misma hidratación sobre `theirTeam` y alimenta el tab efímero **Rival Live**, visible solo en `ChampSelect`. Las tarjetas son de solo lectura y no ofrecen pasar campeones al pool. La firma de champ select incluye `myTeam` y `theirTeam`, así que un cambio de identidad o posición rival refresca la vista con seguimiento activo. Si el cliente oculta las identidades, se muestran tarjetas con la posición y un aviso, sin inventar nombres ni estadísticas. Si expone los nombres pero no `assignedPosition`, la tarjeta muestra maestrías y recientes globales, sin filtro de rol.
+
 ## 10. Juego en vivo
 
 Módulo `src-tauri/src/live/`:
@@ -450,11 +475,12 @@ El CLI `cargo run -p draft-engine --example import_history -- <txt> <out>` gener
 
 ## 12. UI
 
-Vistas: Draft, Juego en vivo, Equipo, Rival, Historial, Ajustes.
+Vistas: Draft, Rival Live, Juego en vivo, Equipo, Rival, Historial, Ajustes.
 
 - **Draft:** tablero enemigo/aliado, bans, resumen de composición, recomendaciones Top N, próximos picks.
+- **Rival Live:** tab efímero durante `ChampSelect`. Grid de tarjetas de solo lectura para el equipo rival con posición, rango, top 3 maestrías de la posición y recientes en Ranked Solo/Duo, Flex, 5s y Clash. Las identidades ocultas se muestran como tales, sin inventar datos.
 - **Juego en vivo:** tab efímero para colas elegibles; mapa `map11`, tokens, evento actual, feed, marcador y estadísticas. Modal de guardado al terminar una Clash.
-- **Equipo:** 5 jugadores, orden de picks, pools con comfort y winrate.
+- **Equipo:** cinco filas emparejadas. Izquierda: roster y pool guardado, orden de picks, comfort y winrate. Derecha: tarjeta LCU del jugador del lobby con posiciones principal/secundaria, rango, top 3 maestrías con comfort 5 y recientes en la posición. La tarjeta LCU incluye una nota de datos locales / best-effort.
 - **Historial:** resumen, partidas, rivales y bans; importación de Clash, guardado del draft actual o de Juego en vivo, exportación y edición.
 - **Ajustes:** Top N, prioridad de pool, flex fuera de rol, desempate por historial, cliente de League, historial local, datos, export/import, explicación del scoring.
 
@@ -521,7 +547,14 @@ La UI está descrita en `DESIGN.md` (sistema visual) y sigue modo Operate: densi
 - posiciones de fuente, líneas iniciales y eventos;
 - separación de campeones que comparten zona.
 
-Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` (si clippy está instalado), `node --test src/js/history.test.js src/js/live.test.js` y los ejemplos CLI.
+`src-tauri/src/lcu/lobby.rs` y `scouting.rs`:
+
+- posiciones de lobby a roles;
+- rol exacto desde `timeline.lane`/`role`;
+- colas soportadas para recientes;
+- emparejamiento por nombre y posición en JavaScript (`lobby.test.js`).
+
+Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings` (si clippy está instalado), `node --test src/js/history.test.js src/js/live.test.js src/js/lobby.test.js` y los ejemplos CLI.
 
 ## 14. Limitaciones
 
@@ -541,6 +574,9 @@ Además: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warn
 - El Live Client Data no expone coordenadas de campeones: Juego en vivo usa posiciones estimadas por evento.
 - El endpoint de Live Client Data puede desaparecer al cerrar la partida; la app conserva el último snapshot para el guardado de Clash.
 - Juego en vivo solo guarda automáticamente propuestas de Clash; ranked y otros modos quedan para una versión futura.
+- El scouting de lobby y Rival Live es best-effort: el LCU puede no tener maestrías, rango o partidas cacheadas para todos los jugadores.
+- En Ranked Solo/Duo y Flex el cliente puede ocultar las identidades del rival; Rival Live muestra la posición y el aviso, pero no puede obtener maestrías ni historial.
+- El emparejamiento del lobby usa nombre y, como fallback, la posición principal. Si los nombres del roster no coinciden y las posiciones están repetidas, una fila puede quedar sin tarjeta LCU.
 - El rebalanceo 6/4 → 5/5 es una reconstrucción: queda marcado y se puede corregir.
 - `ff` se interpreta como derrota; `se rompió` como desconocido.
 - La importación de TXT es heurística: los bloques de confianza baja deben revisarse.

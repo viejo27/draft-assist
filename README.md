@@ -15,6 +15,8 @@ Asistente de draft para League of Legends, hecho con **Rust + Tauri v2** y front
 - Próximos picks tentativos.
 - **Seguimiento LCU de solo lectura**: sincroniza lobby, formato, lado, posiciones, bans y picks desde el cliente.
 - **Juego en vivo**: durante partidas de Ranked Solo/Duo, Flex, 5s, Torneo o Clash, muestra el mapa, los campeones, los eventos y el marcador desde el Live Client Data, y al terminar una Clash propone guardar resultado y estadísticas en el historial.
+- **Scouting de lobby**: en Equipo, cruza tu pool guardado con maestrías, últimos campeones y rango que el LCU ve de cada jugador del lobby.
+- **Rival Live**: en champ select, un tab efímero junto a Draft con el scouting de solo lectura del equipo rival cuando el cliente expone sus identidades.
 - **Rival de Clash**: chip en el header al abrir la app, bracket, próximo partido, roster propio y rival, rangos, maestrías y últimas partidas desde el LCU.
 - **Historial local y scouting**: importa tu TXT de Clash, guarda picks, bans y resultados, y consulta estadísticas por campeón, bans, lado y rival.
 - **Pools rivales**: agrega por nombre los campeones que fuiste anotando y corrige nombres con alias.
@@ -169,6 +171,37 @@ Qué muestra:
 El Live Client Data no expone coordenadas de los campeones. Las posiciones son estimadas: los objetivos y las estructuras usan coordenadas reales del mapa, y las kills se ubican en la línea o jungla de la víctima. La app lo indica en la propia vista.
 
 El guardado de Clash reutiliza los bans del draft seguido por LCU si los 10 picks coinciden con la partida real. Si no coinciden, guarda picks, resultado y estadísticas con un aviso.
+
+## Scouting de lobby
+
+La pestaña **Equipo** combina dos fuentes:
+
+- **Izquierda**: tu roster y pools guardados en el JSON local, con comfort y winrate editables.
+- **Derecha**: lo que el LCU ve para cada jugador del lobby o champ select.
+
+El emparejamiento se hace primero por nombre y después por la posición principal seleccionada en el lobby. Si un jugador eligió dos posiciones, se muestran como **Principal** y **Secundaria**, y el scouting usa la principal.
+
+La tarjeta LCU muestra:
+
+- nombre, tag, nivel y posición;
+- rango de Solo/Duo y Flex;
+- top 3 maestrías **de la posición principal**, con comfort 5 y botón para pasarlas al pool;
+- últimos campeones jugados en la posición principal, filtrados a Ranked Solo/Duo, Ranked Flex, Ranked 5s y Clash;
+- nota de **datos locales / best-effort**.
+
+Con el seguimiento LCU activo, el tracker detecta cambios de posición en el lobby y recarga la tarjeta automáticamente sin pulsar **Actualizar LCU**. Para filtrar las maestrías se consulta la lista completa de maestrías del jugador y se cruza con los roles locales del campeón; no se usan solo las 5 maestrías globales del scouting de Clash.
+
+El comando `lobby_scouting` reutiliza los helpers compartidos de `src-tauri/src/lcu/scouting.rs`: maestrías, rango, historial y mapeo de campeones. Solo lee el cliente local; no usa Riot API y no envía acciones. No requiere activar el seguimiento LCU, pero sí tener League abierto.
+
+## Rival Live
+
+Con League en champ select aparece el tab **Rival Live** junto a **Draft**. Muestra una tarjeta por rival con posición, rango, top 3 maestrías de su posición y últimos campeones en las mismas colas que **Equipo**. Es de solo lectura: no tiene botones para pasar campeones al pool.
+
+El comando `rival_scouting` lee `theirTeam` de `/lol-champ-select/v1/session`. Resuelve nombres con `summonerId` y, si el cliente no lo expone, intenta `/lol-summoner/v1/summoners-by-puuid-cached/{puuid}`. Reutiliza los mismos endpoints de rango, maestrías e historial que el scouting de lobby.
+
+El tab aparece cuando el LCU reporta la fase `ChampSelect`. Con el seguimiento activo, la firma de lobby/champ select incluye a ambos equipos y refresca la vista cuando cambian identidades o posiciones. Sin seguimiento, el estado se consulta al abrir la app o al enfocar la ventana, y **Actualizar rivales** refresca manualmente.
+
+En Ranked Solo/Duo y Flex el cliente puede ocultar las identidades enemigas; en ese caso la tarjeta muestra la posición y un aviso, sin inventar datos. En Ranked 5s, torneo o custom donde el cliente expone los nombres, el scouting funciona igual que en **Equipo**. Si el cliente expone los nombres pero no la posición del rival, se muestran igualmente las 3 mejores maestrías globales y los campeones recientes sin filtrar por rol.
 
 ## Rival de Clash
 
@@ -482,6 +515,8 @@ crates/draft-engine/      motor Rust puro + datos + tests + demo
 crates/draft-engine/src/history/  parser, modelos y texto del historial
 src-tauri/                comandos Tauri, persistencia y ventana
 src-tauri/src/lcu/        cliente, credenciales, mapeo y tracker LCU
+src-tauri/src/lcu/scouting.rs  maestrías, rango e historial compartidos
+src-tauri/src/lcu/lobby.rs     scouting de lobby, champ select y rival
 src-tauri/src/live/       poller del Live Client Data, eventos y MatchRecord
 src/                      UI vanilla, estilos e iconos
 src/js/history.js         estadísticas, filtros y perfiles de rivales
@@ -497,12 +532,12 @@ private/                  historial personal (gitignored)
 
 ```powershell
 cargo test --workspace
-node --test src/js/history.test.js src/js/live.test.js
+node --test src/js/history.test.js src/js/live.test.js src/js/lobby.test.js
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
-Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late. También hay tests de lockfile/credenciales LCU, mapeo de posiciones, detección de ranked/competitivo, mapeo de picks/bans y `lcu_turn`. El módulo de Clash agrega tests de selección de torneo/bracket, identificación del roster, próximo partido, resultados, rangos y parseo de match history. El historial añade tests de bloques completos, rebalanceo 6/4, alias de campeones, rangos, fill/comodín, notas, importación y estadísticas/filtros/scouting en JavaScript. El desempate por historial añade tests de muestra mínima, dirección del ajuste, protección de bans propios y prioridad de pool. Juego en vivo agrega tests de parseo, champion mapping, coordenadas de estructuras, movimiento de FirstBlood/Multikill/Ace, colas soportadas y construcción del MatchRecord con o sin bans reutilizados.
+Tests cubiertos: dataset completo, exclusión de bans/picks, rol, carencias, prioridad de pool, off-pool, bans, matchups, serialización, flex fuera de rol y diferencia early/late. También hay tests de lockfile/credenciales LCU, mapeo de posiciones, detección de ranked/competitivo, mapeo de picks/bans y `lcu_turn`. El módulo de Clash agrega tests de selección de torneo/bracket, identificación del roster, próximo partido, resultados, rangos y parseo de match history. El historial añade tests de bloques completos, rebalanceo 6/4, alias de campeones, rangos, fill/comodín, notas, importación y estadísticas/filtros/scouting en JavaScript. El desempate por historial añade tests de muestra mínima, dirección del ajuste, protección de bans propios y prioridad de pool. Juego en vivo agrega tests de parseo, champion mapping, coordenadas de estructuras, movimiento de FirstBlood/Multikill/Ace, colas soportadas y construcción del MatchRecord con o sin bans reutilizados. Scouting de lobby agrega tests de posiciones, rol exacto en match history, colas soportadas y emparejamiento por nombre/posición. Rival Live agrega tests de firma de ambos equipos y orden de tarjetas por posición.
 
 ## Problemas comunes
 

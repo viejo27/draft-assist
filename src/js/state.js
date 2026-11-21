@@ -29,6 +29,7 @@ export const app = {
     connected: false,
     starting: false,
     lastError: null,
+    signature: null,
   },
   live: {
     snapshot: null,
@@ -56,6 +57,22 @@ export const app = {
     error: null,
     attempted: false,
     retried: false,
+  },
+  lobbyScouting: {
+    data: null,
+    loading: false,
+    error: null,
+    phase: null,
+    signature: null,
+    lastLoaded: null,
+  },
+  rivalLive: {
+    data: null,
+    loading: false,
+    error: null,
+    signature: null,
+    lastLoaded: null,
+    tabVisible: false,
   },
   history: {
     store: null,
@@ -376,6 +393,7 @@ async function initLcu() {
   try {
     const status = await api.lcuStatus();
     applyLcuStatus(status);
+    emit();
   } catch (error) {
     app.lcu.lastError = error.message ?? String(error);
     emit();
@@ -426,6 +444,15 @@ function applyLcuStatus(status) {
     app.view = "draft";
   }
 
+  const rivalVisible = Boolean(status.connected && status.phase === "ChampSelect");
+  app.rivalLive.tabVisible = rivalVisible;
+  if (!rivalVisible) {
+    app.rivalLive.data = null;
+    app.rivalLive.error = null;
+    app.rivalLive.signature = null;
+    if (app.view === "rival-live") app.view = "draft";
+  }
+
   maybePromptLiveSave();
 
   if (
@@ -442,6 +469,11 @@ function applyLcuStatus(status) {
 export function applyLcuSnapshot(payload) {
   if (!payload?.status) return;
   applyLcuStatus(payload.status);
+
+  app.lcu.signature = payload.lobby_signature ?? null;
+  if (payload.status.auto && payload.status.connected) {
+    syncScoutingSignature(payload);
+  }
 
   if (payload.status.auto && payload.draft) {
     const current = JSON.stringify(app.state?.draft ?? null);
@@ -726,8 +758,115 @@ export function refreshClash() {
   ]);
 }
 
+export async function loadLobbyScouting({ silent = false } = {}) {
+  if (app.lobbyScouting.loading) return;
+  app.lobbyScouting.loading = true;
+  app.lobbyScouting.error = null;
+  emit();
+  try {
+    const data = await api.lobbyScouting();
+    app.lobbyScouting.data = data;
+    app.lobbyScouting.phase = data?.phase ?? app.lcu.status?.phase ?? app.lobbyScouting.phase;
+    app.lobbyScouting.signature = data?.signature ?? null;
+    app.lobbyScouting.lastLoaded = Date.now();
+  } catch (error) {
+    app.lobbyScouting.error = error.message ?? String(error);
+    if (!silent) toast(app.lobbyScouting.error, "error");
+  } finally {
+    app.lobbyScouting.loading = false;
+    emit();
+  }
+}
+
+export function refreshLobbyScouting() {
+  return loadLobbyScouting();
+}
+
+export async function loadRivalScouting({ silent = false } = {}) {
+  if (app.rivalLive.loading || !app.rivalLive.tabVisible) return;
+  app.rivalLive.loading = true;
+  app.rivalLive.error = null;
+  emit();
+  try {
+    const data = await api.rivalScouting();
+    if (!app.rivalLive.tabVisible) return;
+    app.rivalLive.data = data;
+    app.rivalLive.signature = data?.signature ?? null;
+    app.rivalLive.lastLoaded = Date.now();
+  } catch (error) {
+    if (!app.rivalLive.tabVisible) return;
+    app.rivalLive.error = error.message ?? String(error);
+    if (!silent) toast(app.rivalLive.error, "error");
+  } finally {
+    app.rivalLive.loading = false;
+    emit();
+  }
+}
+
+export function refreshRivalScouting() {
+  return loadRivalScouting();
+}
+
+function syncScoutingSignature(payload) {
+  const signature = payload.lobby_signature ?? null;
+  if (app.view === "roster" && !app.lobbyScouting.loading) {
+    const state = app.lobbyScouting;
+    if (signature && signature !== state.signature) {
+      void loadLobbyScouting({ silent: true });
+    } else if (!signature && state.data?.available && payload.status?.connected) {
+      void loadLobbyScouting({ silent: true });
+    }
+    return;
+  }
+  if (app.view === "rival-live" && !app.rivalLive.loading) {
+    const state = app.rivalLive;
+    if (signature && signature !== state.signature) {
+      void loadRivalScouting({ silent: true });
+    } else if (!signature && state.data?.available && payload.status?.connected) {
+      void loadRivalScouting({ silent: true });
+    }
+  }
+}
+
+export function addLcuChampions(playerId, championIds, comfort = 5) {
+  const player = app.state?.roster.players.find((item) => item.id === playerId);
+  if (!player) return;
+  const unique = [...new Set((championIds ?? []).filter(Boolean))];
+  let changed = 0;
+
+  for (const championId of unique) {
+    if (!championById(championId)) continue;
+    const entry = player.pool.find((item) => item.champion_id === championId);
+    if (entry) {
+      if (entry.comfort !== comfort) {
+        entry.comfort = comfort;
+        changed += 1;
+      }
+      continue;
+    }
+    player.pool.push({ champion_id: championId, comfort, winrate: null });
+    changed += 1;
+  }
+
+  if (!changed) {
+    toast("Esos campeones ya están en el pool con el mismo comfort.", "info");
+    return;
+  }
+
+  scheduleSave();
+  emit();
+  void refresh();
+  const noun = changed === 1 ? "campeón" : "campeones";
+  const adjective = changed === 1 ? "agregado" : "agregados";
+  toast(
+    `${changed} ${noun} ${adjective} al pool con comfort ${comfort}.`,
+    "success",
+  );
+}
+
 export function setView(view) {
   if (view === "live" && !app.live.tabVisible) return;
+  if (view === "rival-live" && !app.rivalLive.tabVisible) return;
   app.view = view;
   if (
     (view === "history" || view === "settings") &&
@@ -740,6 +879,19 @@ export function setView(view) {
     void loadClash({ silent: Boolean(app.clash.data) });
     if (!app.clashOverview.data && !app.clashOverview.loading) {
       void loadClashOverview({ force: true });
+    }
+  }
+  if (view === "roster") {
+    void loadLobbyScouting({ silent: true });
+  }
+  if (view === "rival-live") {
+    const signature = app.lcu.signature;
+    const stale =
+      !app.rivalLive.data ||
+      !signature ||
+      signature !== app.rivalLive.signature;
+    if (stale) {
+      void loadRivalScouting({ silent: Boolean(app.rivalLive.data) });
     }
   }
   emit();

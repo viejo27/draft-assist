@@ -1,5 +1,6 @@
 import {
   app,
+  addLcuChampions,
   addPoolEntry,
   cancelHistoryImport,
   cancelPendingMatch,
@@ -27,6 +28,8 @@ import {
   recordPick,
   refresh,
   refreshClash,
+  refreshLobbyScouting,
+  refreshRivalScouting,
   reloadData,
   removePoolEntry,
   renamePlayer,
@@ -200,6 +203,26 @@ function handleClick(event) {
       break;
     case "refresh-clash":
       void refreshClash();
+      break;
+    case "refresh-lobby-scouting":
+      void refreshLobbyScouting();
+      break;
+    case "refresh-rival-scouting":
+      void refreshRivalScouting();
+      break;
+    case "lcu-add-champion":
+      addLcuChampions(
+        trigger.dataset.player,
+        [trigger.dataset.champion].filter(Boolean),
+        Number(trigger.dataset.comfort) || 5,
+      );
+      break;
+    case "lcu-add-masteries":
+      addLcuChampions(
+        trigger.dataset.player,
+        (trigger.dataset.champions ?? "").split(",").filter(Boolean),
+        5,
+      );
       break;
     case "history-tab":
       setHistoryTab(trigger.dataset.tab);

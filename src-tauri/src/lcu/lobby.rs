@@ -1,0 +1,474 @@
+//! Lobby and champ-select scouting from the local LCU.
+
+use draft_engine::data::GameData;
+use draft_engine::model::Role;
+use serde::Serialize;
+
+use super::client::{LcuClient, LcuError};
+use super::mapping;
+use super::model::{ChampSelectPlayer, ChampSelectSession, GameflowSession, Lobby, LobbyMember};
+use super::scouting::{
+    ClashRankView, ClashScoutingView, RecentChampionView, build_scouting, champion_index,
+    champion_roles, fetch_position_masteries, fetch_ranks, fetch_recent_position_champions,
+    fetch_scouting, fetch_summoner_by_puuid, fetch_summoners,
+};
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct LobbyScoutingView {
+    pub available: bool,
+    pub phase: Option<String>,
+    pub queue_id: Option<i64>,
+    pub queue_name: Option<String>,
+    pub local_player: Option<String>,
+    pub members: Vec<LobbyMemberScoutingView>,
+    pub message: Option<String>,
+    pub last_sync_ms: u64,
+    pub signature: String,
+}
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct LobbyMemberScoutingView {
+    pub summoner_id: Option<i64>,
+    pub puuid: Option<String>,
+    pub display_name: String,
+    pub tag_line: Option<String>,
+    pub level: Option<i32>,
+    pub profile_icon_id: Option<i32>,
+    pub is_bot: bool,
+    pub is_local: bool,
+    pub is_leader: bool,
+    pub ready: bool,
+    pub team_id: Option<i64>,
+    pub primary_position: Option<Role>,
+    pub secondary_position: Option<Role>,
+    pub ranks: Vec<ClashRankView>,
+    pub scouting: Option<ClashScoutingView>,
+    pub recent_champions: Vec<RecentChampionView>,
+    pub message: Option<String>,
+}
+
+pub async fn fetch(client: &LcuClient, data: &GameData) -> Result<LobbyScoutingView, LcuError> {
+    let phase = client.get_phase().await?;
+    let gameflow = client
+        .get_optional_json::<GameflowSession>("/lol-gameflow/v1/session")
+        .await
+        .ok()
+        .flatten();
+    let queue_id = gameflow
+        .as_ref()
+        .and_then(|session| session.game_data.as_ref())
+        .and_then(|game| game.queue.as_ref())
+        .and_then(|queue| queue.id);
+
+    let mut view = LobbyScoutingView {
+        available: false,
+        phase: Some(phase.clone()),
+        queue_id,
+        queue_name: queue_id.and_then(|id| mapping::queue_name(Some(id))),
+        local_player: None,
+        members: Vec::new(),
+        message: None,
+        last_sync_ms: now_ms(),
+        signature: String::new(),
+    };
+
+    if phase == "ChampSelect" {
+        let session = client
+            .get_optional_json::<ChampSelectSession>("/lol-champ-select/v1/session")
+            .await
+            .ok()
+            .flatten();
+        let Some(session) = session else {
+            view.message = Some("No se pudo leer el champ select.".into());
+            return Ok(view);
+        };
+        view.signature =
+            mapping::lobby_signature(&phase, queue_id, None, Some(&session)).unwrap_or_default();
+        view.members = champ_select_members(client, data, &session, false).await;
+        view.local_player = view
+            .members
+            .iter()
+            .find(|member| member.is_local)
+            .map(|member| member.display_name.clone());
+        view.available = !view.members.is_empty();
+        view.message = Some(
+            "Datos locales del LCU. Maestrías e historial son best-effort y pueden faltar si el cliente no los tiene cacheados."
+                .into(),
+        );
+        return Ok(view);
+    }
+
+    if phase == "Lobby" {
+        let lobby = client
+            .get_optional_json::<Lobby>("/lol-lobby/v2/lobby")
+            .await
+            .ok()
+            .flatten();
+        let Some(lobby) = lobby else {
+            view.message = Some("No se pudo leer el lobby.".into());
+            return Ok(view);
+        };
+        view.signature =
+            mapping::lobby_signature(&phase, queue_id, Some(&lobby), None).unwrap_or_default();
+        view.members = lobby_members(client, data, &lobby).await;
+        view.local_player = view
+            .members
+            .iter()
+            .find(|member| member.is_local)
+            .map(|member| member.display_name.clone());
+        view.available = !view.members.is_empty();
+        view.message = Some(
+            "Datos locales del LCU. Maestrías e historial son best-effort y pueden faltar si el cliente no los tiene cacheados."
+                .into(),
+        );
+        return Ok(view);
+    }
+
+    view.message = Some("Entrá a un lobby o champ select para cargar los datos del LCU.".into());
+    Ok(view)
+}
+
+pub async fn fetch_rival(
+    client: &LcuClient,
+    data: &GameData,
+) -> Result<LobbyScoutingView, LcuError> {
+    let phase = client.get_phase().await?;
+    let gameflow = client
+        .get_optional_json::<GameflowSession>("/lol-gameflow/v1/session")
+        .await
+        .ok()
+        .flatten();
+    let queue_id = gameflow
+        .as_ref()
+        .and_then(|session| session.game_data.as_ref())
+        .and_then(|game| game.queue.as_ref())
+        .and_then(|queue| queue.id);
+
+    let mut view = LobbyScoutingView {
+        available: false,
+        phase: Some(phase.clone()),
+        queue_id,
+        queue_name: queue_id.and_then(|id| mapping::queue_name(Some(id))),
+        local_player: None,
+        members: Vec::new(),
+        message: None,
+        last_sync_ms: now_ms(),
+        signature: String::new(),
+    };
+
+    if phase != "ChampSelect" {
+        view.message = Some("Rival Live solo está disponible durante el champ select.".into());
+        return Ok(view);
+    }
+
+    let session = client
+        .get_optional_json::<ChampSelectSession>("/lol-champ-select/v1/session")
+        .await
+        .ok()
+        .flatten();
+    let Some(session) = session else {
+        view.message = Some("No se pudo leer el champ select.".into());
+        return Ok(view);
+    };
+
+    view.signature =
+        mapping::lobby_signature(&phase, queue_id, None, Some(&session)).unwrap_or_default();
+    view.members = champ_select_members(client, data, &session, true).await;
+    view.available = !view.members.is_empty();
+    view.message = Some(if view.available {
+        "Datos locales del LCU. La identidad o la posición del rival pueden no estar disponibles; en ese caso el scouting es global o best-effort."
+            .into()
+    } else {
+        "El cliente no expone al equipo rival en este modo.".into()
+    });
+    Ok(view)
+}
+
+async fn lobby_members(
+    client: &LcuClient,
+    data: &GameData,
+    lobby: &Lobby,
+) -> Vec<LobbyMemberScoutingView> {
+    let local_summoner_id = lobby
+        .local_member
+        .as_ref()
+        .and_then(|member| member.summoner_id);
+    let local_puuid = lobby
+        .local_member
+        .as_ref()
+        .and_then(|member| member.puuid.as_deref());
+    let local_team = lobby
+        .local_member
+        .as_ref()
+        .and_then(|member| member.team_id);
+    let members: Vec<&LobbyMember> = if let Some(team) = local_team {
+        let same_team: Vec<&LobbyMember> = lobby
+            .members
+            .iter()
+            .filter(|member| member.team_id == Some(team))
+            .collect();
+        if same_team.is_empty() {
+            lobby.members.iter().collect()
+        } else {
+            same_team
+        }
+    } else {
+        lobby.members.iter().collect()
+    };
+    let summoner_ids: Vec<i64> = members
+        .iter()
+        .filter_map(|member| member.summoner_id)
+        .collect();
+    let summoners = fetch_summoners(client, &summoner_ids).await;
+
+    let mut views = Vec::with_capacity(members.len());
+    for (index, member) in members.iter().enumerate() {
+        let summoner = member.summoner_id.and_then(|id| summoners.get(&id));
+        let display_name = summoner
+            .and_then(|summoner| summoner.game_name.clone())
+            .filter(|name| !name.is_empty())
+            .or_else(|| {
+                summoner
+                    .and_then(|summoner| summoner.display_name.clone())
+                    .filter(|name| !name.is_empty())
+            })
+            .or_else(|| member.summoner_name.clone())
+            .unwrap_or_else(|| format!("Jugador {}", index + 1));
+        let puuid = summoner
+            .and_then(|summoner| summoner.puuid.clone())
+            .or_else(|| member.puuid.clone());
+        let first = role_from_position(member.first_position_preference.as_deref());
+        let second = role_from_position(member.second_position_preference.as_deref());
+        let (primary_position, secondary_position) = match (first, second) {
+            (Some(first), Some(second)) if first == second => (Some(first), None),
+            (Some(first), second) => (Some(first), second),
+            (None, second) => (second, None),
+        };
+        let is_local = (member.summoner_id.is_some() && member.summoner_id == local_summoner_id)
+            || (puuid.is_some() && puuid.as_deref() == local_puuid);
+        let mut view = LobbyMemberScoutingView {
+            summoner_id: member.summoner_id,
+            puuid: puuid.clone(),
+            display_name: display_name.clone(),
+            tag_line: summoner.and_then(|summoner| summoner.tag_line.clone()),
+            level: summoner
+                .and_then(|summoner| summoner.summoner_level)
+                .or(member.summoner_level),
+            profile_icon_id: summoner
+                .and_then(|summoner| summoner.profile_icon_id)
+                .or(member.summoner_icon_id),
+            is_bot: member.is_bot,
+            is_local,
+            is_leader: member.is_leader,
+            ready: member.ready,
+            team_id: member.team_id,
+            primary_position,
+            secondary_position,
+            ranks: Vec::new(),
+            scouting: None,
+            recent_champions: Vec::new(),
+            message: None,
+        };
+        if member.is_bot {
+            view.message = Some("Bot: sin maestrías ni historial.".into());
+        }
+        views.push(view);
+    }
+
+    hydrate_members(client, data, &mut views).await;
+    views
+}
+
+async fn champ_select_members(
+    client: &LcuClient,
+    data: &GameData,
+    session: &ChampSelectSession,
+    enemy: bool,
+) -> Vec<LobbyMemberScoutingView> {
+    let players: Vec<&ChampSelectPlayer> = if enemy {
+        session.their_team.iter().collect()
+    } else {
+        session.my_team.iter().collect()
+    };
+    let summoner_ids: Vec<i64> = players
+        .iter()
+        .filter_map(|player| player.summoner_id.filter(|id| *id > 0))
+        .collect();
+    let summoners = fetch_summoners(client, &summoner_ids).await;
+
+    let mut views = Vec::with_capacity(players.len());
+    for (index, member) in players.iter().enumerate() {
+        let summoner_id = member.summoner_id.filter(|id| *id > 0);
+        let summoner = summoner_id.and_then(|id| summoners.get(&id));
+        let puuid = summoner
+            .and_then(|summoner| summoner.puuid.clone())
+            .or_else(|| member.puuid.clone());
+        let fallback_summoner = if summoner.is_none() {
+            match puuid.as_deref() {
+                Some(puuid) => fetch_summoner_by_puuid(client, puuid).await,
+                None => None,
+            }
+        } else {
+            None
+        };
+        let identity = summoner.or(fallback_summoner.as_ref());
+        let puuid = identity
+            .and_then(|summoner| summoner.puuid.clone())
+            .or(puuid);
+        let role = role_from_position(Some(member.assigned_position.as_str()));
+        let fallback_name = if enemy {
+            role.map(|role| format!("Rival {}", role.label_es()))
+                .unwrap_or_else(|| format!("Rival {}", index + 1))
+        } else {
+            format!("Jugador {}", index + 1)
+        };
+        let display_name = identity
+            .and_then(|summoner| summoner.game_name.clone())
+            .filter(|name| !name.is_empty())
+            .or_else(|| {
+                identity
+                    .and_then(|summoner| summoner.display_name.clone())
+                    .filter(|name| !name.is_empty())
+            })
+            .or_else(|| member.game_name.clone().filter(|name| !name.is_empty()))
+            .unwrap_or(fallback_name);
+        let tag_line = identity
+            .and_then(|summoner| summoner.tag_line.clone())
+            .filter(|tag| !tag.is_empty())
+            .or_else(|| member.tag_line.clone().filter(|tag| !tag.is_empty()));
+        let hidden_identity = puuid.is_none() && summoner_id.is_none();
+        let is_bot = !enemy && hidden_identity;
+        let message = if is_bot {
+            Some("Bot: sin maestrías ni historial.".into())
+        } else if hidden_identity {
+            Some(
+                "El cliente no expone la identidad de este rival. Sin maestrías ni historial."
+                    .into(),
+            )
+        } else {
+            None
+        };
+        views.push(LobbyMemberScoutingView {
+            summoner_id,
+            puuid,
+            display_name,
+            tag_line,
+            level: identity.and_then(|summoner| summoner.summoner_level),
+            profile_icon_id: identity.and_then(|summoner| summoner.profile_icon_id),
+            is_bot,
+            is_local: !enemy && member.cell_id == session.local_player_cell_id,
+            is_leader: false,
+            ready: true,
+            team_id: member.team,
+            primary_position: role,
+            secondary_position: None,
+            ranks: Vec::new(),
+            scouting: None,
+            recent_champions: Vec::new(),
+            message,
+        });
+    }
+
+    hydrate_members(client, data, &mut views).await;
+    views
+}
+
+async fn hydrate_members(
+    client: &LcuClient,
+    data: &GameData,
+    members: &mut [LobbyMemberScoutingView],
+) {
+    let champions = champion_index(data);
+    let roles = champion_roles(data);
+    let puuids: Vec<String> = members
+        .iter()
+        .filter(|member| !member.is_bot)
+        .filter_map(|member| member.puuid.clone())
+        .collect();
+    let scouting = fetch_scouting(client, &puuids).await;
+
+    for member in members.iter_mut() {
+        if member.is_bot {
+            continue;
+        }
+        let Some(puuid) = member.puuid.as_deref() else {
+            if member.message.is_none() {
+                member.message = Some("El cliente no expuso el PUUID de este jugador.".into());
+            }
+            continue;
+        };
+
+        let raw_scouting = scouting
+            .iter()
+            .find(|entry| member.summoner_id.is_some() && entry.player_id == member.summoner_id)
+            .or_else(|| {
+                let puuid_index = puuids.iter().position(|candidate| candidate == puuid)?;
+                scouting.get(puuid_index)
+            });
+        let batch_view = raw_scouting.map(|entry| build_scouting(entry, &champions));
+        let masteries = fetch_position_masteries(
+            client,
+            &champions,
+            &roles,
+            puuid,
+            member.primary_position,
+            3,
+        )
+        .await;
+        let (total_mastery_score, season_champions) = batch_view
+            .map(|view| (view.total_mastery_score, view.season_champions))
+            .unwrap_or((None, Vec::new()));
+
+        member.ranks = fetch_ranks(client, puuid).await;
+        member.scouting = Some(ClashScoutingView {
+            total_mastery_score,
+            masteries,
+            season_champions,
+        });
+        member.recent_champions = fetch_recent_position_champions(
+            client,
+            &champions,
+            puuid,
+            member.summoner_id,
+            member.primary_position,
+            5,
+        )
+        .await;
+    }
+}
+
+fn role_from_position(position: Option<&str>) -> Option<Role> {
+    let position = position?.trim().to_ascii_uppercase();
+    match position.as_str() {
+        "TOP" => Some(Role::Top),
+        "JUNGLE" => Some(Role::Jungle),
+        "MIDDLE" | "MID" => Some(Role::Mid),
+        "BOTTOM" | "ADC" => Some(Role::Adc),
+        "UTILITY" | "SUPPORT" => Some(Role::Support),
+        _ => None,
+    }
+}
+
+fn now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_millis() as u64)
+        .unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::role_from_position;
+    use draft_engine::model::Role;
+
+    #[test]
+    fn maps_lobby_positions_to_roles() {
+        assert_eq!(role_from_position(Some("TOP")), Some(Role::Top));
+        assert_eq!(role_from_position(Some("JUNGLE")), Some(Role::Jungle));
+        assert_eq!(role_from_position(Some("MIDDLE")), Some(Role::Mid));
+        assert_eq!(role_from_position(Some("BOTTOM")), Some(Role::Adc));
+        assert_eq!(role_from_position(Some("UTILITY")), Some(Role::Support));
+        assert_eq!(role_from_position(Some("FILL")), None);
+        assert_eq!(role_from_position(Some("UNSELECTED")), None);
+    }
+}

@@ -52,6 +52,8 @@ pub struct LcuActionView {
 pub struct LcuSnapshot {
     pub status: LcuStatus,
     pub draft: Option<DraftState>,
+    #[serde(default)]
+    pub lobby_signature: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -78,6 +80,8 @@ pub struct Lobby {
     pub game_config: Option<LobbyGameConfig>,
     #[serde(default)]
     pub members: Vec<LobbyMember>,
+    #[serde(rename = "localMember", default)]
+    pub local_member: Option<LobbyMember>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -92,6 +96,24 @@ pub struct LobbyMember {
     pub summoner_name: Option<String>,
     #[serde(rename = "summonerId", default)]
     pub summoner_id: Option<i64>,
+    #[serde(default)]
+    pub puuid: Option<String>,
+    #[serde(rename = "summonerLevel", default)]
+    pub summoner_level: Option<i32>,
+    #[serde(rename = "summonerIconId", default)]
+    pub summoner_icon_id: Option<i32>,
+    #[serde(rename = "firstPositionPreference", default)]
+    pub first_position_preference: Option<String>,
+    #[serde(rename = "secondPositionPreference", default)]
+    pub second_position_preference: Option<String>,
+    #[serde(rename = "isBot", default)]
+    pub is_bot: bool,
+    #[serde(default)]
+    pub ready: bool,
+    #[serde(rename = "isLeader", default)]
+    pub is_leader: bool,
+    #[serde(rename = "teamId", default)]
+    pub team_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -138,8 +160,14 @@ pub struct ChampSelectPlayer {
     pub cell_id: i64,
     #[serde(rename = "championId", default)]
     pub champion_id: i64,
+    #[serde(rename = "gameName", default)]
+    pub game_name: Option<String>,
     #[serde(rename = "summonerId", default)]
     pub summoner_id: Option<i64>,
+    #[serde(default)]
+    pub puuid: Option<String>,
+    #[serde(rename = "tagLine", default)]
+    pub tag_line: Option<String>,
     #[serde(default)]
     pub team: Option<i64>,
 }

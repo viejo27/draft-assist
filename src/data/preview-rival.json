@@ -1,0 +1,370 @@
+{
+  "available": true,
+  "phase": "ChampSelect",
+  "queue_id": 42,
+  "queue_name": "Ranked 5s",
+  "local_player": null,
+  "message": "Datos locales del LCU. En colas con identidades ocultas no hay maestrías ni historial del rival; el resto es best-effort.",
+  "last_sync_ms": 0,
+  "signature": "preview-rival-signature",
+  "members": [
+    {
+      "summoner_id": 1001,
+      "puuid": "preview-dani",
+      "display_name": "RivalTop",
+      "tag_line": "LAS",
+      "level": 187,
+      "profile_icon_id": 0,
+      "is_bot": false,
+      "is_local": false,
+      "is_leader": false,
+      "ready": true,
+      "team_id": 200,
+      "primary_position": "TOP",
+      "secondary_position": null,
+      "ranks": [
+        {
+          "queue_type": "RANKED_SOLO_5x5",
+          "queue_label": "Solo/Duo",
+          "tier": "GOLD",
+          "division": "II",
+          "league_points": 42,
+          "wins": 57,
+          "losses": 43,
+          "winrate": 57,
+          "provisional": false
+        },
+        {
+          "queue_type": "RANKED_FLEX_SR",
+          "queue_label": "Flex",
+          "tier": "SILVER",
+          "division": "I",
+          "league_points": 20,
+          "wins": 20,
+          "losses": 20,
+          "winrate": 50,
+          "provisional": false
+        }
+      ],
+      "scouting": {
+        "total_mastery_score": 412,
+        "masteries": [
+          {
+            "champion_id": "Ornn",
+            "champion_name": "Ornn",
+            "level": 12,
+            "points": 150000
+          },
+          {
+            "champion_id": "KSante",
+            "champion_name": "K'Sante",
+            "level": 10,
+            "points": 90000
+          },
+          {
+            "champion_id": "Renekton",
+            "champion_name": "Renekton",
+            "level": 8,
+            "points": 60000
+          }
+        ],
+        "season_champions": []
+      },
+      "recent_champions": [
+        {
+          "champion_id": "Ornn",
+          "champion_name": "Ornn",
+          "role": "TOP",
+          "games": 4,
+          "wins": 3,
+          "last_played_ms": 0,
+          "last_kda": "5/2/8"
+        },
+        {
+          "champion_id": "KSante",
+          "champion_name": "K'Sante",
+          "role": "TOP",
+          "games": 3,
+          "wins": 1,
+          "last_played_ms": 0,
+          "last_kda": "2/4/6"
+        },
+        {
+          "champion_id": "Renekton",
+          "champion_name": "Renekton",
+          "role": "TOP",
+          "games": 2,
+          "wins": 1,
+          "last_played_ms": 0,
+          "last_kda": "4/3/2"
+        }
+      ],
+      "message": null
+    },
+    {
+      "summoner_id": 1002,
+      "puuid": "preview-mario",
+      "display_name": "RivalJungle",
+      "tag_line": "LAS",
+      "level": 204,
+      "profile_icon_id": 0,
+      "is_bot": false,
+      "is_local": false,
+      "is_leader": false,
+      "ready": true,
+      "team_id": 200,
+      "primary_position": "JUNGLE",
+      "secondary_position": null,
+      "ranks": [
+        {
+          "queue_type": "RANKED_SOLO_5x5",
+          "queue_label": "Solo/Duo",
+          "tier": "PLATINUM",
+          "division": "IV",
+          "league_points": 10,
+          "wins": 52,
+          "losses": 48,
+          "winrate": 52,
+          "provisional": false
+        }
+      ],
+      "scouting": {
+        "total_mastery_score": 356,
+        "masteries": [
+          {
+            "champion_id": "Sejuani",
+            "champion_name": "Sejuani",
+            "level": 11,
+            "points": 120000
+          },
+          {
+            "champion_id": "LeeSin",
+            "champion_name": "Lee Sin",
+            "level": 9,
+            "points": 80000
+          },
+          {
+            "champion_id": "Vi",
+            "champion_name": "Vi",
+            "level": 7,
+            "points": 45000
+          }
+        ],
+        "season_champions": []
+      },
+      "recent_champions": [
+        {
+          "champion_id": "Sejuani",
+          "champion_name": "Sejuani",
+          "role": "JUNGLE",
+          "games": 5,
+          "wins": 3,
+          "last_played_ms": 0,
+          "last_kda": "3/2/14"
+        },
+        {
+          "champion_id": "LeeSin",
+          "champion_name": "Lee Sin",
+          "role": "JUNGLE",
+          "games": 3,
+          "wins": 1,
+          "last_played_ms": 0,
+          "last_kda": "6/4/7"
+        },
+        {
+          "champion_id": "Vi",
+          "champion_name": "Vi",
+          "role": "JUNGLE",
+          "games": 2,
+          "wins": 1,
+          "last_played_ms": 0,
+          "last_kda": "4/5/9"
+        }
+      ],
+      "message": null
+    },
+    {
+      "summoner_id": 1003,
+      "puuid": "preview-lucia",
+      "display_name": "RivalMid",
+      "tag_line": "LAS",
+      "level": 231,
+      "profile_icon_id": 0,
+      "is_bot": false,
+      "is_local": false,
+      "is_leader": false,
+      "ready": true,
+      "team_id": 200,
+      "primary_position": "MID",
+      "secondary_position": null,
+      "ranks": [
+        {
+          "queue_type": "RANKED_SOLO_5x5",
+          "queue_label": "Solo/Duo",
+          "tier": "EMERALD",
+          "division": "II",
+          "league_points": 75,
+          "wins": 63,
+          "losses": 47,
+          "winrate": 57,
+          "provisional": false
+        }
+      ],
+      "scouting": {
+        "total_mastery_score": 521,
+        "masteries": [
+          {
+            "champion_id": "Orianna",
+            "champion_name": "Orianna",
+            "level": 13,
+            "points": 185000
+          },
+          {
+            "champion_id": "Ahri",
+            "champion_name": "Ahri",
+            "level": 11,
+            "points": 110000
+          },
+          {
+            "champion_id": "Azir",
+            "champion_name": "Azir",
+            "level": 8,
+            "points": 65000
+          }
+        ],
+        "season_champions": []
+      },
+      "recent_champions": [
+        {
+          "champion_id": "Orianna",
+          "champion_name": "Orianna",
+          "role": "MID",
+          "games": 5,
+          "wins": 4,
+          "last_played_ms": 0,
+          "last_kda": "7/1/9"
+        },
+        {
+          "champion_id": "Ahri",
+          "champion_name": "Ahri",
+          "role": "MID",
+          "games": 4,
+          "wins": 2,
+          "last_played_ms": 0,
+          "last_kda": "5/3/8"
+        },
+        {
+          "champion_id": "Azir",
+          "champion_name": "Azir",
+          "role": "MID",
+          "games": 2,
+          "wins": 1,
+          "last_played_ms": 0,
+          "last_kda": "4/4/5"
+        }
+      ],
+      "message": null
+    },
+    {
+      "summoner_id": 1004,
+      "puuid": "preview-pablo",
+      "display_name": "RivalAdc",
+      "tag_line": "LAS",
+      "level": 198,
+      "profile_icon_id": 0,
+      "is_bot": false,
+      "is_local": false,
+      "is_leader": false,
+      "ready": true,
+      "team_id": 200,
+      "primary_position": "ADC",
+      "secondary_position": null,
+      "ranks": [
+        {
+          "queue_type": "RANKED_SOLO_5x5",
+          "queue_label": "Solo/Duo",
+          "tier": "DIAMOND",
+          "division": "IV",
+          "league_points": 20,
+          "wins": 54,
+          "losses": 46,
+          "winrate": 54,
+          "provisional": false
+        }
+      ],
+      "scouting": {
+        "total_mastery_score": 488,
+        "masteries": [
+          {
+            "champion_id": "Jinx",
+            "champion_name": "Jinx",
+            "level": 12,
+            "points": 170000
+          },
+          {
+            "champion_id": "Caitlyn",
+            "champion_name": "Caitlyn",
+            "level": 10,
+            "points": 95000
+          },
+          {
+            "champion_id": "Kaisa",
+            "champion_name": "Kai'Sa",
+            "level": 9,
+            "points": 70000
+          }
+        ],
+        "season_champions": []
+      },
+      "recent_champions": [
+        {
+          "champion_id": "Jinx",
+          "champion_name": "Jinx",
+          "role": "ADC",
+          "games": 5,
+          "wins": 3,
+          "last_played_ms": 0,
+          "last_kda": "9/2/6"
+        },
+        {
+          "champion_id": "Caitlyn",
+          "champion_name": "Caitlyn",
+          "role": "ADC",
+          "games": 3,
+          "wins": 2,
+          "last_played_ms": 0,
+          "last_kda": "7/3/4"
+        },
+        {
+          "champion_id": "Kaisa",
+          "champion_name": "Kai'Sa",
+          "role": "ADC",
+          "games": 2,
+          "wins": 1,
+          "last_played_ms": 0,
+          "last_kda": "6/4/5"
+        }
+      ],
+      "message": null
+    },
+    {
+      "summoner_id": null,
+      "puuid": null,
+      "display_name": "RivalSupport",
+      "tag_line": null,
+      "level": null,
+      "profile_icon_id": null,
+      "is_bot": false,
+      "is_local": false,
+      "is_leader": false,
+      "ready": true,
+      "team_id": 200,
+      "primary_position": "SUPPORT",
+      "secondary_position": null,
+      "ranks": [],
+      "scouting": null,
+      "recent_champions": [],
+      "message": "El cliente no expone la identidad de este rival. Sin maestrías ni historial."
+    }
+  ]
+}

@@ -171,6 +171,8 @@ pub fn run() {
             commands::live_match_record,
             commands::clash_overview,
             commands::clash_status,
+            commands::lobby_scouting,
+            commands::rival_scouting,
             commands::history_load,
             commands::history_save,
             commands::history_import_legacy,

@@ -23,6 +23,8 @@
 - La **vista Rival de Clash** lee el torneo, nuestro roster, el bracket, el próximo partido, el roster rival, rangos, maestrías e historial reciente desde el LCU local. Si no hay equipo, muestra la leyenda para crear uno o unirse.
 - La **vista Juego en vivo** lee el Live Client Data local durante partidas de Ranked Solo/Duo, Flex, 5s, Torneo o Clash: muestra mapa, eventos, marcador y estadísticas. Al terminar una Clash propone guardar resultado y estadísticas en el historial.
 - El **historial** guarda partidas, picks, bans, resultados y pools rivales. Se importa desde el TXT viejo de Clash o se guarda desde el draft actual o desde Juego en vivo.
+- El panel **Equipo** combina el pool local con scouting LCU del lobby: posiciones, top maestrías, últimos campeones en la posición principal y rango. Es de solo lectura y best-effort.
+- **Rival Live** aparece como tab junto a Draft durante el champ select y muestra el mismo scouting del equipo rival cuando el cliente expone sus identidades. Es de solo lectura y no modifica el pool.
 - El **scouting** agrega rivales por nombre, muestra sus pools y permite corregir nombres con alias.
 - Las estadísticas son locales y descriptivas: winrate, picks, bans, lados y amenazas, con tamaño de muestra.
 - El historial se puede usar como **desempate opcional** de las recomendaciones: apagado por defecto, ±2 puntos y muestra mínima de 3 partidas.

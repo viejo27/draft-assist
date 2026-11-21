@@ -27,6 +27,7 @@ import {
   liveClusterSizes,
   liveResultLabel,
 } from "./live.js";
+import { matchLobbyMembers, orderEnemyMembers } from "./lobby.js";
 import {
   banStarterLabel,
   buildRivalProfiles,
@@ -88,6 +89,8 @@ export function render(view) {
       root.dataset.liveSession = String(view.live.sessionId ?? snapshot.session_id ?? "");
       updateLiveView(view);
     }
+  } else if (view.view === "rival-live") {
+    root.innerHTML = rivalLiveView(view);
   } else if (view.view === "roster") {
     root.innerHTML = rosterView(view);
   } else if (view.view === "clash") {
@@ -121,6 +124,23 @@ function renderTopbar(view) {
       <span class="context-chip">${escapeHtml(queue)}</span>
       <span class="context-turn">${formatGameTime(snapshot?.game_time ?? 0)}</span>
       ${snapshot?.ended ? `<span class="live-result-pill ${liveResultTone(snapshot.result)}">${escapeHtml(liveResultLabel(snapshot.result))}</span>` : ""}
+      ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
+      ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
+    `;
+  } else if (view.view === "rival-live") {
+    const data = view.rivalLive?.data;
+    const members = data?.members ?? [];
+    const hidden = members.filter((member) => !member.puuid && !member.summoner_id).length;
+    const summary = members.length
+      ? hidden
+        ? `${members.length} rivales · ${hidden} con identidad oculta`
+        : `${members.length} rivales visibles`
+      : "Solo lectura";
+    context.innerHTML = `
+      <span class="context-chip context-rival"><span class="rival-dot"></span>Rival Live</span>
+      <span class="context-separator"></span>
+      <span class="context-chip">${escapeHtml(data?.queue_name ?? view.lcu?.status?.queue_name ?? "Champ select")}</span>
+      <span class="context-turn">${escapeHtml(summary)}</span>
       ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
       ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
     `;
@@ -189,6 +209,11 @@ function renderViewbar(view) {
     tab.classList.toggle("is-active", tab.dataset.view === view.view);
   });
 
+  const rivalTab = document.getElementById("rival-live-tab");
+  if (rivalTab) {
+    rivalTab.hidden = !view.rivalLive?.tabVisible;
+  }
+
   const liveTab = document.getElementById("live-tab");
   if (liveTab) {
     liveTab.hidden = !view.live?.tabVisible;
@@ -215,6 +240,10 @@ function renderViewbar(view) {
       : view.live?.available
         ? "Datos en vivo · solo lectura"
         : "Datos detenidos";
+  } else if (view.view === "rival-live") {
+    note.textContent = view.rivalLive?.loading
+      ? "Leyendo el equipo rival…"
+      : "Rival Live · solo lectura";
   } else if (view.preview) {
     note.textContent = "Modo demostración sin backend Tauri";
   } else if (view.lastSaved) {
@@ -1499,22 +1528,443 @@ function nextPicksPanel(view) {
   `;
 }
 
+function rivalLiveView(view) {
+  const state = view.rivalLive ?? {};
+  const data = state.data;
+  const members = orderEnemyMembers(data?.members ?? []);
+  const hidden = members.filter(rivalIdentityHidden).length;
+  const visible = members.length - hidden;
+
+  return `
+    <div class="rival-live-root">
+      <div class="page-head">
+        <div>
+          <h1>Rival Live</h1>
+          <p class="muted">Scouting del equipo rival durante el champ select. Solo lectura; los datos salen del cliente local.</p>
+        </div>
+        <div class="inline-actions">
+          <button class="button button-ghost" type="button" data-action="refresh-rival-scouting" ${state.loading ? "disabled" : ""}>
+            ${state.loading ? "Leyendo LCU…" : "Actualizar rivales"}
+          </button>
+        </div>
+      </div>
+      ${rivalLiveStatus(state, data, visible, hidden)}
+      ${
+        members.length
+          ? `<div class="rival-live-grid">${members.map((member, index) => rivalLiveCard(member, index)).join("")}</div>`
+          : ""
+      }
+      <p class="lcu-note rival-live-footnote">Datos locales / best-effort. En Ranked Solo/Duo y Flex el cliente puede ocultar las identidades enemigas; si no expone la posición, se muestran maestrías y recientes globales.</p>
+    </div>
+  `;
+}
+
+function rivalLiveStatus(state, data, visible, hidden) {
+  if (state.loading && !data) {
+    return `
+      <div class="lobby-status is-loading">
+        <span class="lobby-status-dot"></span>
+        <span>Leyendo el equipo rival desde el LCU…</span>
+      </div>
+    `;
+  }
+  if (state.error) {
+    return `
+      <div class="lobby-status is-error">
+        <span class="lobby-status-dot"></span>
+        <div>
+          <strong>No se pudo leer al rival</strong>
+          <span class="muted">${escapeHtml(state.error)} Abrí League y volvé a intentar.</span>
+        </div>
+      </div>
+    `;
+  }
+  if (!data) {
+    return `
+      <div class="lobby-status">
+        <span class="lobby-status-dot"></span>
+        <span>Entrá a champ select y pulsá <b>Actualizar rivales</b>.</span>
+      </div>
+    `;
+  }
+  if (!data.available) {
+    return `
+      <div class="lobby-status">
+        <span class="lobby-status-dot"></span>
+        <div>
+          <strong>Sin rival visible</strong>
+          <span class="muted">${escapeHtml(data.message ?? "El cliente no expone al equipo rival en este modo.")}</span>
+        </div>
+      </div>
+    `;
+  }
+  const withoutPosition = (data.members ?? []).filter(
+    (member) => !member.primary_position,
+  ).length;
+  const summary = hidden
+    ? `${visible} visibles · ${hidden} con identidad oculta`
+    : `${visible} rivales visibles`;
+  const positionNote = withoutPosition ? ` · ${withoutPosition} sin posición` : "";
+  return `
+    <div class="lobby-status is-live">
+      <span class="lobby-status-dot"></span>
+      <div>
+        <strong>LCU · ${escapeHtml(data.queue_name ?? "Champ select")} · ${escapeHtml(data.phase ?? "ChampSelect")}</strong>
+        <span class="muted">${escapeHtml(`${summary}${positionNote}`)} · datos locales / best-effort.</span>
+      </div>
+    </div>
+  `;
+}
+
+function rivalIdentityHidden(member) {
+  return !member?.puuid && !member?.summoner_id;
+}
+
+function rivalLiveCard(member, index) {
+  const primary = member.primary_position;
+  const name =
+    member.display_name ||
+    (primary ? `Rival ${roleLabel(primary)}` : `Rival ${index + 1}`);
+  const hidden = rivalIdentityHidden(member);
+  const masteries = (member.scouting?.masteries ?? []).slice(0, 3);
+  const recent = (member.recent_champions ?? []).slice(0, 5);
+  const message =
+    member.message ??
+    (hidden
+      ? "El cliente no expone la identidad de este rival. Sin maestrías ni historial."
+      : null);
+
+  return `
+    <section class="roster-scouting rival-live-card ${hidden ? "is-hidden-identity" : ""}">
+      <header class="roster-lcu-head">
+        <div class="roster-lcu-id">
+          <span class="lcu-chip">RIVAL</span>
+          <div>
+            <strong>${escapeHtml(name)}${member.tag_line ? `<span class="lcu-tag">#${escapeHtml(member.tag_line)}</span>` : ""}</strong>
+            <span class="muted">
+              ${member.level != null ? `Nv ${member.level}` : "Nivel —"}
+              ${hidden ? " · Identidad oculta" : ""}
+            </span>
+          </div>
+        </div>
+        <div class="lcu-positions">
+          ${
+            primary
+              ? `<span class="lcu-position"><span class="field-label">Posición</span>${roleBadge(primary)}</span>`
+              : `<span class="muted">Sin posición</span>`
+          }
+        </div>
+      </header>
+
+      <div class="lcu-rank-row">
+        ${
+          hidden
+            ? `<span class="muted">Identidad oculta por el cliente.</span>`
+            : member.ranks?.length
+              ? member.ranks.map(clashRankChip).join("")
+              : `<span class="muted">Sin rango cacheado.</span>`
+        }
+      </div>
+
+      ${
+        hidden
+          ? `
+            <p class="notice">${escapeHtml(message)}</p>
+            <p class="lcu-note">Solo lectura · datos locales / best-effort.</p>
+          `
+          : `
+            <div class="lcu-section">
+              <div class="lcu-section-head">
+                <div>
+                  <h3>Top 3 maestrías${primary ? ` · ${roleLabel(primary)}` : ""}</h3>
+                </div>
+              </div>
+              ${
+                masteries.length
+                  ? `<div class="lcu-mastery-list">${masteries.map(rivalMasteryRow).join("")}</div>`
+                  : `<p class="muted">Sin maestrías cacheadas${primary ? ` en ${roleLabel(primary)}` : ""}.</p>`
+              }
+            </div>
+
+            <div class="lcu-section">
+              <div class="lcu-section-head">
+                <div>
+                  <h3>${primary ? `Recientes en ${roleLabel(primary)}` : "Recientes (sin posición)"}</h3>
+                  <span class="muted">Solo Ranked Solo/Duo, Flex, 5s y Clash.</span>
+                </div>
+              </div>
+              ${
+                recent.length
+                  ? `<div class="lcu-recent-list">${recent.map(lobbyRecentRow).join("")}</div>`
+                  : `<p class="muted">Sin partidas recientes en las colas soportadas.</p>`
+              }
+            </div>
+
+            ${message ? `<p class="notice">${escapeHtml(message)}</p>` : ""}
+            <p class="lcu-note">Solo lectura · datos locales / best-effort.</p>
+          `
+      }
+    </section>
+  `;
+}
+
+function rivalMasteryRow(entry) {
+  const champion = championById(entry.champion_id);
+  if (!champion) return "";
+  return `
+    <div class="lcu-mastery-row is-readonly">
+      ${championAvatar(champion, "lcu-champion-avatar")}
+      <div class="lcu-champion-copy">
+        <strong>${escapeHtml(champion.name)}</strong>
+        <span class="muted">Nv ${entry.level} · ${formatClashPoints(entry.points)} pts</span>
+      </div>
+      <span class="rival-mastery-badge">M${entry.level}</span>
+    </div>
+  `;
+}
+
 function rosterView(view) {
   const players = orderedPlayers();
+  const scouting = view.lobbyScouting?.data;
+  const members = scouting?.members ?? [];
+  const matched = matchLobbyMembers(players, members);
+  const loading = view.lobbyScouting?.loading;
+
   return `
     <div class="page-head">
       <div>
-        <h1>Roster y pools</h1>
-        <p class="muted">El orden de la lista define el orden de picks. El comfort va de 1 a 5; el winrate es opcional.</p>
+        <h1>Equipo</h1>
+        <p class="muted">Izquierda: tu pool guardado. Derecha: lo que el LCU ve de cada jugador del lobby, según su posición principal.</p>
       </div>
       <div class="inline-actions">
+        <button class="button button-ghost" type="button" data-action="refresh-lobby-scouting" ${loading ? "disabled" : ""}>
+          ${loading ? "Leyendo LCU…" : "Actualizar LCU"}
+        </button>
         <button class="button button-ghost" type="button" data-action="import">Importar JSON</button>
         <button class="button button-ghost" type="button" data-action="export">Exportar JSON</button>
       </div>
     </div>
 
-    <div class="roster-list">
-      ${players.map((player, index) => rosterPlayer(player, index)).join("")}
+    ${lobbyScoutingStatus(view)}
+
+    <div class="roster-pairs">
+      ${players
+        .map(
+          (player, index) => `
+            <div class="roster-pair">
+              ${rosterPlayer(player, index)}
+              ${lobbyScoutingCard(view, player, matched.get(player.id) ?? null)}
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function lobbyScoutingStatus(view) {
+  const state = view.lobbyScouting ?? {};
+  const data = state.data;
+  if (state.loading && !data) {
+    return `
+      <div class="lobby-status is-loading">
+        <span class="lobby-status-dot"></span>
+        <span>Leyendo el lobby desde el LCU…</span>
+      </div>
+    `;
+  }
+  if (state.error) {
+    return `
+      <div class="lobby-status is-error">
+        <span class="lobby-status-dot"></span>
+        <div>
+          <strong>No se pudo leer el lobby</strong>
+          <span class="muted">${escapeHtml(state.error)} Abrí League y volvé a intentar.</span>
+        </div>
+      </div>
+    `;
+  }
+  if (!data) {
+    return `
+      <div class="lobby-status">
+        <span class="lobby-status-dot"></span>
+        <span>Entrá a un lobby o champ select y pulsá <b>Actualizar LCU</b>.</span>
+      </div>
+    `;
+  }
+  if (!data.available) {
+    return `
+      <div class="lobby-status">
+        <span class="lobby-status-dot"></span>
+        <div>
+          <strong>Sin lobby activo</strong>
+          <span class="muted">${escapeHtml(data.message ?? "El LCU no tiene un lobby o champ select abierto.")}</span>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="lobby-status is-live">
+      <span class="lobby-status-dot"></span>
+      <div>
+        <strong>LCU · ${escapeHtml(data.queue_name ?? "Lobby")} · ${escapeHtml(data.phase ?? "")}</strong>
+        <span class="muted">${data.local_player ? `Vos: ${escapeHtml(data.local_player)} · ` : ""}Datos locales / best-effort.</span>
+      </div>
+    </div>
+  `;
+}
+
+function lobbyScoutingCard(view, player, member) {
+  if (!member) {
+    return `
+      <section class="roster-scouting is-empty">
+        <header class="roster-lcu-head">
+          <div class="roster-lcu-id">
+            <span class="lcu-chip">LCU</span>
+            <strong>Sin jugador emparejado</strong>
+          </div>
+        </header>
+        <p class="muted">
+          No encontré un jugador del lobby para ${escapeHtml(player.name)} (${roleLabel(player.role)}).
+          Se empareja por nombre o posición principal.
+        </p>
+      </section>
+    `;
+  }
+
+  const primary = member.primary_position;
+  const secondary = member.secondary_position;
+  const masteries = (member.scouting?.masteries ?? []).slice(0, 3);
+  const recent = (member.recent_champions ?? []).slice(0, 5);
+  const name = member.display_name || "Jugador LCU";
+  const positions = `
+    ${
+      primary
+        ? `<span class="lcu-position"><span class="field-label">Principal</span>${roleBadge(primary)}</span>`
+        : `<span class="muted">Sin posición seleccionada</span>`
+    }
+    ${
+      secondary
+        ? `<span class="lcu-position"><span class="field-label">Secundaria</span>${roleBadge(secondary)}</span>`
+        : ""
+    }
+  `;
+
+  return `
+    <section class="roster-scouting ${member.is_bot ? "is-bot" : ""}">
+      <header class="roster-lcu-head">
+        <div class="roster-lcu-id">
+          <span class="lcu-chip">LCU</span>
+          <div>
+            <strong>${escapeHtml(name)}${member.tag_line ? `<span class="lcu-tag">#${escapeHtml(member.tag_line)}</span>` : ""}</strong>
+            <span class="muted">
+              ${member.level != null ? `Nv ${member.level}` : "Nivel —"}
+              ${member.is_local ? " · TÚ" : ""}
+              ${member.is_leader ? " · Líder" : ""}
+            </span>
+          </div>
+        </div>
+        <div class="lcu-positions">${positions}</div>
+      </header>
+
+      <div class="lcu-rank-row">
+        ${
+          member.ranks?.length
+            ? member.ranks.map(clashRankChip).join("")
+            : `<span class="muted">Sin rango cacheado.</span>`
+        }
+      </div>
+
+      ${
+        member.is_bot
+          ? `<p class="lcu-note">Bot: sin maestrías ni historial.</p>`
+          : `
+            <div class="lcu-section">
+              <div class="lcu-section-head">
+                <div>
+                  <h3>Top 3 maestrías${primary ? ` · ${roleLabel(primary)}` : ""}</h3>
+                  <span class="muted">Al pasar al pool se guardan con comfort 5.</span>
+                </div>
+                ${
+                  masteries.length
+                    ? `<button class="button button-ghost button-small" type="button"
+                        data-action="lcu-add-masteries"
+                        data-player="${escapeHtml(player.id)}"
+                        data-champions="${escapeHtml(masteries.map((entry) => entry.champion_id).join(","))}">
+                        Pasar top 3
+                      </button>`
+                    : ""
+                }
+              </div>
+              ${
+                masteries.length
+                  ? `<div class="lcu-mastery-list">${masteries.map((entry) => lobbyMasteryRow(player, entry)).join("")}</div>`
+                  : `<p class="muted">Sin maestrías cacheadas${primary ? ` en ${roleLabel(primary)}` : ""}.</p>`
+              }
+            </div>
+
+            <div class="lcu-section">
+              <div class="lcu-section-head">
+                <div>
+                  <h3>${primary ? `Recientes en ${roleLabel(primary)}` : "Recientes (sin posición)"}</h3>
+                  <span class="muted">Solo Ranked Solo/Duo, Flex, 5s y Clash.</span>
+                </div>
+              </div>
+              ${
+                recent.length
+                  ? `<div class="lcu-recent-list">${recent.map(lobbyRecentRow).join("")}</div>`
+                  : `<p class="muted">Sin partidas recientes en las colas soportadas.</p>`
+              }
+            </div>
+
+            ${
+              member.message
+                ? `<p class="notice">${escapeHtml(member.message)}</p>`
+                : ""
+            }
+            <p class="lcu-note">Datos locales / best-effort. El LCU puede no tener maestrías o partidas cacheadas.</p>
+          `
+      }
+    </section>
+  `;
+}
+
+function lobbyMasteryRow(player, entry) {
+  const champion = championById(entry.champion_id);
+  if (!champion) return "";
+  return `
+    <div class="lcu-mastery-row">
+      ${championAvatar(champion, "lcu-champion-avatar")}
+      <div class="lcu-champion-copy">
+        <strong>${escapeHtml(champion.name)}</strong>
+        <span class="muted">Nv ${entry.level} · ${formatClashPoints(entry.points)} pts</span>
+      </div>
+      ${comfortMeter(5)}
+      <button class="button button-ghost button-small" type="button"
+        data-action="lcu-add-champion"
+        data-player="${escapeHtml(player.id)}"
+        data-champion="${escapeHtml(champion.id)}"
+        data-comfort="5">
+        Añadir
+      </button>
+    </div>
+  `;
+}
+
+function lobbyRecentRow(entry) {
+  const champion = championById(entry.champion_id);
+  const winrate = entry.games ? Math.round((entry.wins / entry.games) * 100) : 0;
+  return `
+    <div class="lcu-recent-row">
+      ${
+        champion
+          ? championAvatar(champion, "lcu-champion-avatar")
+          : `<span class="champion-avatar lcu-champion-avatar"><span class="champion-avatar-fallback">${escapeHtml(String(entry.champion_name ?? "?").slice(0, 2).toUpperCase())}</span></span>`
+      }
+      <div class="lcu-champion-copy">
+        <strong>${escapeHtml(champion?.name ?? entry.champion_name ?? entry.champion_id)}</strong>
+        <span class="muted">${entry.games} PJ · ${entry.wins} V · ${winrate}%${entry.last_kda ? ` · ${escapeHtml(entry.last_kda)}` : ""}</span>
+      </div>
     </div>
   `;
 }

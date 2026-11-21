@@ -1,5 +1,8 @@
 use super::client::{LcuClient, LcuError};
-use super::mapping;
+use super::scouting::{
+    ClashRankView, ClashRecentMatchView, ClashScoutingView, build_scouting, champion_index,
+    fetch_ranks, fetch_recent_matches, fetch_scouting, fetch_summoners,
+};
 use draft_engine::data::GameData;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -140,60 +143,6 @@ pub struct ClashPlayerView {
     pub ranks: Vec<ClashRankView>,
     pub scouting: Option<ClashScoutingView>,
     pub recent_matches: Vec<ClashRecentMatchView>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ClashRankView {
-    pub queue_type: String,
-    pub queue_label: String,
-    pub tier: String,
-    pub division: Option<String>,
-    pub league_points: Option<i32>,
-    pub wins: i32,
-    pub losses: i32,
-    pub winrate: Option<f64>,
-    pub provisional: bool,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ClashScoutingView {
-    pub total_mastery_score: Option<i64>,
-    pub masteries: Vec<ClashMasteryView>,
-    pub season_champions: Vec<ClashSeasonChampionView>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ClashMasteryView {
-    pub champion_id: String,
-    pub champion_name: String,
-    pub level: i32,
-    pub points: i32,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ClashSeasonChampionView {
-    pub champion_id: String,
-    pub champion_name: String,
-    pub games: i32,
-    pub wins: i32,
-    pub winrate: Option<f64>,
-    pub kda: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ClashRecentMatchView {
-    pub game_id: Option<i64>,
-    pub champion_id: String,
-    pub champion_name: String,
-    pub win: Option<bool>,
-    pub kills: i64,
-    pub deaths: i64,
-    pub assists: i64,
-    pub queue_id: Option<i32>,
-    pub queue_name: String,
-    pub role: Option<String>,
-    pub played_at_ms: Option<i64>,
-    pub duration_secs: Option<i32>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -384,174 +333,6 @@ struct RosterMember {
     state: Option<String>,
     #[serde(default)]
     tier: Option<i32>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct Summoner {
-    #[serde(default)]
-    display_name: Option<String>,
-    #[serde(default)]
-    game_name: Option<String>,
-    #[serde(default)]
-    profile_icon_id: Option<i32>,
-    #[serde(default)]
-    puuid: Option<String>,
-    #[serde(default)]
-    summoner_id: Option<i64>,
-    #[serde(default)]
-    summoner_level: Option<i32>,
-    #[serde(default)]
-    tag_line: Option<String>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct ScoutingChampions {
-    #[serde(default)]
-    player_id: Option<i64>,
-    #[serde(default)]
-    top_masteries: Vec<ScoutingMastery>,
-    #[serde(default)]
-    top_season_champions: Vec<ScoutingSeasonChampion>,
-    #[serde(default)]
-    total_mastery_score: Option<i64>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct ScoutingMastery {
-    #[serde(default)]
-    champion_id: i32,
-    #[serde(default)]
-    champion_level: i32,
-    #[serde(default)]
-    champion_points: i32,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct ScoutingSeasonChampion {
-    #[serde(default)]
-    champion_id: i32,
-    #[serde(default)]
-    game_count: i32,
-    #[serde(default)]
-    kda: Option<String>,
-    #[serde(default)]
-    win_count: i32,
-    #[serde(default)]
-    win_rate: i32,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct RankedStats {
-    #[serde(default)]
-    queues: Vec<RankedQueueStats>,
-    #[serde(default)]
-    queue_map: HashMap<String, RankedQueueStats>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct RankedQueueStats {
-    #[serde(default)]
-    queue_type: Option<String>,
-    #[serde(default)]
-    tier: Option<String>,
-    #[serde(default)]
-    division: Option<String>,
-    #[serde(default)]
-    league_points: Option<i32>,
-    #[serde(default)]
-    wins: Option<i32>,
-    #[serde(default)]
-    losses: Option<i32>,
-    #[serde(default)]
-    is_provisional: Option<bool>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct MatchHistoryPage {
-    #[serde(default)]
-    games: Option<MatchHistoryGames>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct MatchHistoryGames {
-    #[serde(default)]
-    games: Vec<MatchHistoryGame>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct MatchHistoryGame {
-    #[serde(default)]
-    game_creation: Option<i64>,
-    #[serde(default)]
-    game_duration: Option<i32>,
-    #[serde(default)]
-    game_id: Option<i64>,
-    #[serde(default)]
-    participant_identities: Vec<ParticipantIdentity>,
-    #[serde(default)]
-    participants: Vec<Participant>,
-    #[serde(default)]
-    queue_id: Option<i32>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct ParticipantIdentity {
-    #[serde(default)]
-    participant_id: i32,
-    #[serde(default)]
-    player: Option<ParticipantPlayer>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct ParticipantPlayer {
-    #[serde(default)]
-    puuid: Option<String>,
-    #[serde(default)]
-    summoner_id: Option<i64>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct Participant {
-    #[serde(default)]
-    champion_id: i32,
-    #[serde(default)]
-    participant_id: i32,
-    #[serde(default)]
-    stats: Option<ParticipantStats>,
-    #[serde(default)]
-    timeline: Option<ParticipantTimeline>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct ParticipantStats {
-    #[serde(default)]
-    assists: Option<i64>,
-    #[serde(default)]
-    deaths: Option<i64>,
-    #[serde(default)]
-    kills: Option<i64>,
-    #[serde(default)]
-    win: Option<bool>,
-}
-
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-struct ParticipantTimeline {
-    #[serde(default)]
-    lane: Option<String>,
 }
 
 /// Lightweight Clash check used once when the app opens. It reads the current
@@ -1324,316 +1105,6 @@ async fn build_players(
     players
 }
 
-async fn fetch_summoners(client: &LcuClient, summoner_ids: &[i64]) -> HashMap<i64, Summoner> {
-    if summoner_ids.is_empty() {
-        return HashMap::new();
-    }
-
-    let query = json_id_array(summoner_ids);
-    let mut mapped: HashMap<i64, Summoner> = client
-        .get_optional_json_query::<Vec<Summoner>>("/lol-summoner/v2/summoners", &[("ids", query)])
-        .await
-        .ok()
-        .flatten()
-        .unwrap_or_default()
-        .into_iter()
-        .filter_map(|summoner| summoner.summoner_id.map(|id| (id, summoner)))
-        .collect();
-
-    for summoner_id in summoner_ids {
-        if mapped.contains_key(summoner_id) {
-            continue;
-        }
-        if let Ok(Some(summoner)) = client
-            .get_optional_json::<Summoner>(&format!("/lol-summoner/v1/summoners/{summoner_id}"))
-            .await
-        {
-            mapped.insert(*summoner_id, summoner);
-        }
-    }
-    mapped
-}
-
-async fn fetch_scouting(client: &LcuClient, puuids: &[String]) -> Vec<ScoutingChampions> {
-    if puuids.is_empty() {
-        return Vec::new();
-    }
-    client
-        .get_optional_json_query::<Vec<ScoutingChampions>>(
-            "/lol-clash/v1/scouting/champions",
-            &[("puuids", json_puuid_array(puuids))],
-        )
-        .await
-        .ok()
-        .flatten()
-        .unwrap_or_default()
-}
-
-fn json_id_array(ids: &[i64]) -> String {
-    format!(
-        "[{}]",
-        ids.iter()
-            .map(|id| id.to_string())
-            .collect::<Vec<_>>()
-            .join(",")
-    )
-}
-
-fn json_puuid_array(puuids: &[String]) -> String {
-    format!(
-        "[{}]",
-        puuids
-            .iter()
-            .map(|puuid| format!("\"{puuid}\""))
-            .collect::<Vec<_>>()
-            .join(",")
-    )
-}
-
-async fn fetch_ranks(client: &LcuClient, puuid: &str) -> Vec<ClashRankView> {
-    let cached = client
-        .get_optional_json::<RankedStats>(&format!("/lol-ranked/v1/cached-ranked-stats/{puuid}"))
-        .await
-        .ok()
-        .flatten();
-    let stats = match cached {
-        Some(stats) if has_ranked_entries(&stats) => Some(stats),
-        _ => client
-            .get_optional_json::<RankedStats>(&format!("/lol-ranked/v1/ranked-stats/{puuid}"))
-            .await
-            .ok()
-            .flatten(),
-    };
-    stats.as_ref().map(build_ranks).unwrap_or_default()
-}
-
-fn has_ranked_entries(stats: &RankedStats) -> bool {
-    stats
-        .queues
-        .iter()
-        .any(|entry| is_ranked_queue(entry.queue_type.as_deref()))
-        || stats
-            .queue_map
-            .keys()
-            .any(|queue| is_ranked_queue(Some(queue.as_str())))
-}
-
-fn is_ranked_queue(queue: Option<&str>) -> bool {
-    matches!(
-        queue,
-        Some("RANKED_SOLO_5x5" | "JADE_RANKED_SOLO_5x5" | "RANKED_FLEX_SR")
-    )
-}
-
-fn build_ranks(stats: &RankedStats) -> Vec<ClashRankView> {
-    let mut entries: Vec<RankedQueueStats> = stats.queues.clone();
-    for (queue, entry) in &stats.queue_map {
-        if entries
-            .iter()
-            .any(|existing| existing.queue_type.as_deref() == Some(queue.as_str()))
-        {
-            continue;
-        }
-        let mut entry = entry.clone();
-        if entry.queue_type.is_none() {
-            entry.queue_type = Some(queue.clone());
-        }
-        entries.push(entry);
-    }
-    let mut ranks: Vec<ClashRankView> = entries
-        .iter()
-        .filter_map(build_rank)
-        .filter(|rank| {
-            matches!(
-                rank.queue_type.as_str(),
-                "RANKED_SOLO_5x5" | "JADE_RANKED_SOLO_5x5" | "RANKED_FLEX_SR"
-            )
-        })
-        .collect();
-    ranks.sort_by_key(|rank| match rank.queue_type.as_str() {
-        "RANKED_SOLO_5x5" | "JADE_RANKED_SOLO_5x5" => 0,
-        "RANKED_FLEX_SR" => 1,
-        _ => 2,
-    });
-    ranks
-}
-
-fn build_rank(entry: &RankedQueueStats) -> Option<ClashRankView> {
-    let tier = entry
-        .tier
-        .clone()
-        .filter(|tier| !tier.is_empty() && tier != "NONE")?;
-    let wins = entry.wins.unwrap_or(0).max(0);
-    let losses = entry.losses.unwrap_or(0).max(0);
-    let total = wins + losses;
-    let queue_type = entry.queue_type.clone().unwrap_or_default();
-    Some(ClashRankView {
-        queue_label: queue_type_label(&queue_type),
-        queue_type,
-        tier,
-        division: entry
-            .division
-            .clone()
-            .filter(|division| !division.is_empty() && division != "NA"),
-        league_points: entry.league_points,
-        wins,
-        losses,
-        winrate: (total > 0).then(|| wins as f64 / total as f64 * 100.0),
-        provisional: entry.is_provisional.unwrap_or(false),
-    })
-}
-
-fn queue_type_label(queue_type: &str) -> String {
-    match queue_type {
-        "RANKED_SOLO_5x5" | "JADE_RANKED_SOLO_5x5" => "Solo/Duo",
-        "RANKED_FLEX_SR" => "Flex",
-        "RANKED_FLEX_TT" => "Flex 3v3",
-        "RANKED_TFT" => "TFT",
-        other => other,
-    }
-    .into()
-}
-
-async fn fetch_recent_matches(
-    client: &LcuClient,
-    champions: &HashMap<i32, (String, String)>,
-    puuid: &str,
-    summoner_id: Option<i64>,
-) -> Vec<ClashRecentMatchView> {
-    let page = client
-        .get_optional_json_query::<MatchHistoryPage>(
-            &format!("/lol-match-history/v1/products/lol/{puuid}/matches"),
-            &[("begIndex", "0".to_string()), ("endIndex", "5".to_string())],
-        )
-        .await
-        .ok()
-        .flatten();
-    let Some(page) = page else {
-        return Vec::new();
-    };
-    page.games
-        .map(|games| games.games)
-        .unwrap_or_default()
-        .into_iter()
-        .filter_map(|game| recent_match(game, champions, puuid, summoner_id))
-        .collect()
-}
-
-fn recent_match(
-    game: MatchHistoryGame,
-    champions: &HashMap<i32, (String, String)>,
-    puuid: &str,
-    summoner_id: Option<i64>,
-) -> Option<ClashRecentMatchView> {
-    let identity = game.participant_identities.iter().find(|identity| {
-        identity
-            .player
-            .as_ref()
-            .and_then(|player| player.puuid.as_deref())
-            == Some(puuid)
-            || (summoner_id.is_some()
-                && identity
-                    .player
-                    .as_ref()
-                    .and_then(|player| player.summoner_id)
-                    == summoner_id)
-    })?;
-    let participant = game
-        .participants
-        .iter()
-        .find(|participant| participant.participant_id == identity.participant_id)?;
-    let stats = participant.stats.as_ref()?;
-    let (champion_id, champion_name) = champion_name(champions, participant.champion_id);
-    let queue_id = game.queue_id;
-    Some(ClashRecentMatchView {
-        game_id: game.game_id,
-        champion_id,
-        champion_name,
-        win: stats.win,
-        kills: stats.kills.unwrap_or(0),
-        deaths: stats.deaths.unwrap_or(0),
-        assists: stats.assists.unwrap_or(0),
-        queue_id,
-        queue_name: queue_id
-            .and_then(|id| mapping::queue_name(Some(id as i64)))
-            .unwrap_or_else(|| "Partida".into()),
-        role: participant
-            .timeline
-            .as_ref()
-            .and_then(|timeline| timeline.lane.as_deref())
-            .and_then(lane_label),
-        played_at_ms: game.game_creation,
-        duration_secs: game.game_duration,
-    })
-}
-
-fn build_scouting(
-    scouting: &ScoutingChampions,
-    champions: &HashMap<i32, (String, String)>,
-) -> ClashScoutingView {
-    let masteries = scouting
-        .top_masteries
-        .iter()
-        .map(|mastery| {
-            let (champion_id, champion_name) = champion_name(champions, mastery.champion_id);
-            ClashMasteryView {
-                champion_id,
-                champion_name,
-                level: mastery.champion_level,
-                points: mastery.champion_points,
-            }
-        })
-        .collect();
-    let season_champions = scouting
-        .top_season_champions
-        .iter()
-        .map(|champion| {
-            let (champion_id, champion_name) = champion_name(champions, champion.champion_id);
-            let winrate = if champion.win_rate > 0 {
-                let value = champion.win_rate as f64;
-                Some(if value <= 1.0 { value * 100.0 } else { value })
-            } else if champion.game_count > 0 {
-                Some(champion.win_count as f64 / champion.game_count as f64 * 100.0)
-            } else {
-                None
-            };
-            ClashSeasonChampionView {
-                champion_id,
-                champion_name,
-                games: champion.game_count,
-                wins: champion.win_count,
-                winrate,
-                kda: champion.kda.clone(),
-            }
-        })
-        .collect();
-    ClashScoutingView {
-        total_mastery_score: scouting.total_mastery_score,
-        masteries,
-        season_champions,
-    }
-}
-
-fn champion_index(data: &GameData) -> HashMap<i32, (String, String)> {
-    data.champions
-        .iter()
-        .filter_map(|champion| {
-            champion
-                .key
-                .parse::<i32>()
-                .ok()
-                .map(|key| (key, (champion.id.clone(), champion.name.clone())))
-        })
-        .collect()
-}
-
-fn champion_name(champions: &HashMap<i32, (String, String)>, champion_id: i32) -> (String, String) {
-    champions
-        .get(&champion_id)
-        .cloned()
-        .unwrap_or_else(|| (champion_id.to_string(), format!("Campeón {champion_id}")))
-}
-
 fn position_rank(position: Option<&str>) -> u8 {
     match position {
         Some("TOP") => 0,
@@ -1657,16 +1128,6 @@ fn position_label(position: Option<&str>) -> String {
         _ => "Sin rol",
     }
     .into()
-}
-
-fn lane_label(lane: &str) -> Option<String> {
-    match lane {
-        "TOP" => Some("Top".into()),
-        "JUNGLE" => Some("Jungla".into()),
-        "MIDDLE" => Some("Mid".into()),
-        "BOTTOM" => Some("ADC".into()),
-        _ => None,
-    }
 }
 
 fn clean_key(key: &str) -> String {
@@ -1703,11 +1164,14 @@ fn now_ms() -> u64 {
 mod tests {
     use super::{
         BracketMatch, BracketRoster, ClashBracket, ClashRoster, ClashRosterMemberView,
-        ClashTournament, MatchHistoryPage, PlayerChatRoster, RankedStats, TournamentListItem,
-        TournamentPhase, TournamentStateInfo, TournamentSummary, build_ranks, build_roster_base,
-        build_team_view, build_tournament, choose_summary, choose_tournament_id, json_id_array,
-        json_puuid_array, match_result, no_bracket_message, recent_match, resolve_our_roster_id,
-        select_next_match,
+        ClashTournament, PlayerChatRoster, TournamentListItem, TournamentPhase,
+        TournamentStateInfo, TournamentSummary, build_roster_base, build_team_view,
+        build_tournament, choose_summary, choose_tournament_id, match_result, no_bracket_message,
+        resolve_our_roster_id, select_next_match,
+    };
+    use crate::lcu::scouting::{
+        MatchHistoryPage, RankedQueueStats, RankedStats, build_ranks, json_id_array,
+        json_puuid_array, recent_match,
     };
     use std::collections::HashMap;
 
@@ -2085,7 +1549,7 @@ mod tests {
     fn computes_rank_winrate_and_orders_solo_before_flex() {
         let stats = RankedStats {
             queues: vec![
-                super::RankedQueueStats {
+                RankedQueueStats {
                     queue_type: Some("RANKED_FLEX_SR".into()),
                     tier: Some("SILVER".into()),
                     division: Some("I".into()),
@@ -2094,7 +1558,7 @@ mod tests {
                     losses: Some(5),
                     is_provisional: None,
                 },
-                super::RankedQueueStats {
+                RankedQueueStats {
                     queue_type: Some("RANKED_SOLO_5x5".into()),
                     tier: Some("GOLD".into()),
                     division: Some("II".into()),

@@ -60,7 +60,7 @@ Blue and red are semantic, not decoration: they identify sides. Gold is reserved
 ## Composition
 
 1. **Topbar** (62px): wordmark, draft context (format, side, turn, example/preview state), then undo, change turn, new draft, load example.
-2. **Viewbar** (46px): Draft / Juego en vivo / Equipo / Rival / Historial / Ajustes. The active tab is a 2px gold rule. The live tab only appears while the LCU is tracking an eligible live game.
+2. **Viewbar** (46px): Draft / Rival Live / Juego en vivo / Equipo / Rival / Historial / Ajustes. The active tab is a 2px gold rule. **Rival Live** only appears during champ select; **Juego en vivo** only appears while the LCU is tracking an eligible live game.
 3. **Draft view** (two columns at ≥1050px): board 1fr, recommendation 390–420px. The recommendation column is sticky and scrolls independently.
 4. **Board**: enemy team row, ban ledger, center turn rule, our team row, then composition summary.
 5. **Recommendation column**: turn header, current player, warnings, top-five cards, then tentative next picks.
@@ -124,6 +124,24 @@ At ≤1050px the recommendation column moves below the board. Champion slots col
 - Import dialog: 2×2 status grid, token chips, first warnings, then “Importar todo / Solo confianza alta”.
 - Settings → Recomendación: switch “Usar historial como desempate” with the copy “±2 puntos, 3+ partidas; no cambia pool ni flex”. Off by default.
 - No charts yet. Tables show sample size; the bans/lados winrate carries a contextual footnote.
+
+### Team and lobby scouting
+
+- **Equipo** is five paired rows: saved pool on the left, LCU card on the right. At ≤1050px the pair stacks.
+- Left card reuses the existing roster player: pick order, role, name, pool entries with comfort and optional winrate.
+- Right card: LCU chip, player name + tag, level, principal/secondary position chips, Solo/Flex rank chips, top three masteries with a comfort-5 meter and “Pasar top 3” action, recent champions in the principal position, and a best-effort footnote.
+- The mastery “Pasar top 3” button writes the champions into the saved pool with comfort 5; it never edits the JSON silently.
+- Empty/error states: no League client, no lobby, unmatched roster row, and bot. Bots show no masteries or history.
+- Recent champions are distinct champions from Ranked Solo/Duo, Flex, 5s and Clash; the card names the filtered queues.
+- With LCU tracking active, a lobby/champ-select position signature refreshes the card automatically when the player changes roles; **Actualizar LCU** remains available for a manual refresh. The mastery list is filtered to the principal position using the local champion roles.
+
+### Rival Live
+
+- **Rival Live** is an ephemeral view tab immediately after **Draft**; it only exists while the LCU reports `ChampSelect`.
+- The page is a two-column grid of read-only enemy cards, ordered TOP/JUNGLE/MID/ADC/SUPPORT. Each card has the Rival chip, name + tag or a positional fallback, rank chips, top three masteries for the assigned position and recent champions in the supported queues.
+- The card never offers **Pasar al pool** or any write action. The footnote states that identities can be hidden and that all data is local/best-effort.
+- Hidden identities get a dashed card with the position and an explanation, not fabricated names or stats. The tab still appears so the user understands the limitation. When the client exposes names but not `assignedPosition`, the card shows global top masteries and recent champions and labels the role as unavailable.
+- The signature now includes both teams, so identity or position changes refresh the view automatically while tracking is on. **Actualizar rivales** is the manual fallback.
 
 ### Dialogs
 
