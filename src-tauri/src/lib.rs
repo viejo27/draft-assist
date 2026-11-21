@@ -2,6 +2,8 @@ mod commands;
 mod lcu;
 mod live;
 mod persistence;
+#[cfg(desktop)]
+mod updater;
 
 use draft_engine::Engine;
 use draft_engine::data::GameData;
@@ -129,6 +131,7 @@ pub fn load_engine(data_dir: &Path) -> Result<(Engine, Vec<String>), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             migrate_legacy_data(app);
@@ -179,6 +182,10 @@ pub fn run() {
             commands::history_export,
             commands::history_match_from_draft,
             commands::history_open_dir,
+            #[cfg(desktop)]
+            updater::update_check,
+            #[cfg(desktop)]
+            updater::update_install,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

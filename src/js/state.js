@@ -23,6 +23,20 @@ export const app = {
   lastSaved: null,
   validation: null,
   preview: api.isPreview,
+  update: {
+    checking: false,
+    available: false,
+    installing: false,
+    installed: false,
+    error: null,
+    currentVersion: null,
+    version: null,
+    notes: null,
+    date: null,
+    progress: null,
+    dismissedVersion: null,
+    lastCheckedAt: null,
+  },
   lcu: {
     status: null,
     auto: false,
@@ -361,6 +375,8 @@ export async function init() {
     void loadHistory();
     void loadClashOverview();
     if (api.isTauri) {
+      void initUpdater();
+      scheduleUpdateAutoCheck();
       void initLcu();
     } else {
       void initLivePreview();
@@ -556,6 +572,104 @@ async function initLivePreview() {
   } catch (error) {
     app.live.lastError = error.message ?? String(error);
   }
+}
+
+let updateEventsBound = false;
+let updateAutoCheckTimer = null;
+
+async function initUpdater() {
+  if (!api.isTauri || updateEventsBound) return;
+  updateEventsBound = true;
+  try {
+    await api.listenUpdateProgress((payload) => {
+      app.update.progress = {
+        downloaded: Number(payload?.downloaded) || 0,
+        total: payload?.total == null ? null : Number(payload.total),
+      };
+      window.dispatchEvent(
+        new CustomEvent("draft-assist:update-progress", {
+          detail: app.update.progress,
+        }),
+      );
+    });
+    await api.listenUpdateInstalling(() => {
+      app.update.installing = true;
+      emit();
+    });
+  } catch (error) {
+    app.update.error = error.message ?? String(error);
+    emit();
+  }
+}
+
+function scheduleUpdateAutoCheck() {
+  if (!api.isTauri || updateAutoCheckTimer !== null) return;
+  updateAutoCheckTimer = window.setTimeout(() => {
+    updateAutoCheckTimer = null;
+    void checkForUpdates({ silent: true });
+  }, 2500);
+}
+
+export async function checkForUpdates({ silent = false } = {}) {
+  if (!api.isTauri) {
+    if (!silent) {
+      toast("Las actualizaciones solo están disponibles en la app de escritorio.", "warning");
+    }
+    return;
+  }
+  if (app.update.checking || app.update.installing) return;
+
+  app.update.checking = true;
+  app.update.error = null;
+  emit();
+  try {
+    const result = await api.updateCheck();
+    app.update.currentVersion =
+      result.current_version ?? app.bootstrap?.app_version ?? null;
+    app.update.available = Boolean(result.available);
+    app.update.version = result.version ?? null;
+    app.update.notes = result.notes ?? null;
+    app.update.date = result.date ?? null;
+    app.update.lastCheckedAt = Date.now();
+    if (!result.available) app.update.dismissedVersion = null;
+    if (result.available && !silent) {
+      toast(`Nueva versión ${result.version} disponible.`, "info");
+    }
+  } catch (error) {
+    app.update.error = error.message ?? String(error);
+    app.update.lastCheckedAt = Date.now();
+    if (!silent) toast(app.update.error, "error");
+  } finally {
+    app.update.checking = false;
+    emit();
+  }
+}
+
+export async function installUpdate() {
+  if (!api.isTauri || !app.update.available || app.update.installing) return;
+  app.update.installing = true;
+  app.update.error = null;
+  app.update.progress = { downloaded: 0, total: null };
+  emit();
+  try {
+    await api.updateInstall();
+    app.update.installed = true;
+    app.update.available = false;
+    app.update.installing = false;
+    app.update.progress = null;
+    emit();
+  } catch (error) {
+    app.update.installing = false;
+    app.update.progress = null;
+    app.update.error = error.message ?? String(error);
+    toast(app.update.error, "error");
+    emit();
+  }
+}
+
+export function dismissUpdate() {
+  app.update.dismissedVersion = app.update.version;
+  emit();
 }
 
 function resetLiveState() {

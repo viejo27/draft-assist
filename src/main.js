@@ -5,6 +5,7 @@ import {
   cancelHistoryImport,
   cancelPendingMatch,
   cancelRenameRival,
+  checkForUpdates,
   commitHistoryImport,
   confirmLiveMatch,
   confirmPendingMatch,
@@ -12,12 +13,14 @@ import {
   currentTurn,
   deleteHistoryMatch,
   dismissLiveSave,
+  dismissUpdate,
   emit,
   exportHistory,
   exportState,
   importHistoryFile,
   importState,
   init,
+  installUpdate,
   loadExample,
   loadHistory,
   openDataDir,
@@ -66,6 +69,7 @@ import {
   renderLiveDialogs,
   renderNewDraftOptions,
   renderStepOptions,
+  renderUpdateDialog,
 } from "./js/render.js";
 
 const picker = {
@@ -89,6 +93,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("undo-button")?.addEventListener("click", undo);
   bindGlobalEvents();
+  const updateDialog = document.getElementById("update-dialog");
+  updateDialog?.addEventListener("cancel", (event) => {
+    if (app.update.installing) event.preventDefault();
+  });
   renderChampionRoleFilter("ALL");
   render(app);
   void init();
@@ -143,7 +151,9 @@ function bindGlobalEvents() {
 
   for (const dialog of document.querySelectorAll("dialog")) {
     dialog.addEventListener("click", (event) => {
-      if (event.target === dialog) dialog.close();
+      if (event.target !== dialog) return;
+      if (dialog.id === "update-dialog" && app.update.installing) return;
+      dialog.close();
     });
   }
 
@@ -338,6 +348,19 @@ function handleClick(event) {
     case "reload-data":
       void reloadData();
       break;
+    case "check-update":
+      void checkForUpdates();
+      break;
+    case "open-update-dialog":
+      openUpdateDialog();
+      break;
+    case "install-update":
+      void installUpdate();
+      break;
+    case "dismiss-update":
+      dismissUpdate();
+      document.getElementById("update-dialog")?.close();
+      break;
     case "dismiss-toast":
       app.toasts = app.toasts.filter(
         (toastItem) => String(toastItem.id) !== trigger.dataset.toast,
@@ -434,6 +457,16 @@ function openLcuDialog() {
     return;
   }
   const dialog = document.getElementById("lcu-dialog");
+  if (dialog && !dialog.open) dialog.showModal();
+}
+
+function openUpdateDialog() {
+  if (!app.update?.available) {
+    toast("No hay actualizaciones disponibles.", "info");
+    return;
+  }
+  renderUpdateDialog(app);
+  const dialog = document.getElementById("update-dialog");
   if (dialog && !dialog.open) dialog.showModal();
 }
 

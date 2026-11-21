@@ -28,6 +28,10 @@
           <button class="icon-button" id="undo-button" type="button" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" data-action="undo">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5M4 12h9a6 6 0 0 1 0 12h-1"/></svg>
           </button>
+          <button class="button button-ghost update-button" id="update-button" type="button" data-action="open-update-dialog" hidden>
+            <span class="update-dot" aria-hidden="true"></span>
+            <span id="update-button-label">Actualización disponible</span>
+          </button>
           <button class="button button-ghost" type="button" data-action="open-step-dialog">Cambiar turno</button>
           <button class="button button-ghost" type="button" data-action="new-draft">Nuevo draft</button>
           <button class="button button-ghost" type="button" data-action="load-example">Cargar ejemplo</button>
@@ -245,6 +249,40 @@
       <div class="dialog-actions">
         <button class="button button-ghost" type="button" data-action="close-dialog">Cancelar</button>
         <button class="button button-primary" type="button" data-action="history-confirm-rename">Guardar nombre</button>
+      </div>
+    </dialog>
+
+    <dialog class="dialog" id="update-dialog">
+      <form method="dialog" class="dialog-head">
+        <div>
+          <h2>Actualización disponible</h2>
+          <p class="muted" id="update-dialog-subtitle">La app se cerrará para instalar y volverá a abrirse.</p>
+        </div>
+        <button class="icon-button" value="cancel" aria-label="Cerrar" type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </form>
+      <div class="dialog-body">
+        <div class="update-version-row">
+          <span class="update-version-chip" id="update-current-version">—</span>
+          <span class="update-arrow" aria-hidden="true">→</span>
+          <span class="update-version-chip is-new" id="update-new-version">—</span>
+        </div>
+        <div class="update-notes" id="update-notes"></div>
+        <div class="update-progress" id="update-progress" hidden>
+          <div class="update-progress-head">
+            <span id="update-progress-label">Descargando…</span>
+            <span id="update-progress-percent"></span>
+          </div>
+          <div class="update-progress-track">
+            <span class="update-progress-bar" id="update-progress-bar"></span>
+          </div>
+        </div>
+        <p class="notice notice-error" id="update-error" hidden></p>
+      </div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-action="dismiss-update">Ahora no</button>
+        <button class="button button-primary" type="button" id="update-install-button" data-action="install-update">Actualizar y reiniciar</button>
       </div>
     </dialog>
 

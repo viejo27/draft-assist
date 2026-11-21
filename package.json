@@ -1,7 +1,7 @@
 {
   "name": "draft-assist",
   "private": true,
-  "version": "0.4.2",
+  "version": "0.5.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/viejo27/draft-assist.git"
@@ -12,6 +12,7 @@
     "build": "tauri build",
     "tauri": "tauri",
     "prepare-data": "node scripts/prepare-data.mjs",
+    "prepare-update": "node scripts/prepare-update.mjs",
     "test:engine": "cargo test -p draft-engine",
     "test:history": "node --test src/js/history.test.js",
     "test:live": "node --test src/js/live.test.js",

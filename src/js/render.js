@@ -105,6 +105,7 @@ export function render(view) {
 
   renderLiveDialogs(view);
   renderHistoryDialogs(view);
+  renderUpdateDialog(view);
   renderToasts(view);
 }
 
@@ -201,6 +202,21 @@ function renderTopbar(view) {
   for (const action of ["open-step-dialog", "new-draft", "load-example"]) {
     const button = document.querySelector(`.topbar-actions [data-action="${action}"]`);
     if (button) button.disabled = auto;
+  }
+
+  const updateButton = document.getElementById("update-button");
+  if (updateButton) {
+    const update = view.update;
+    const visible = Boolean(
+      update?.available &&
+        update.version &&
+        update.version !== update.dismissedVersion,
+    );
+    updateButton.hidden = !visible;
+    const label = document.getElementById("update-button-label");
+    if (label && update?.version) {
+      label.textContent = `Actualización ${update.version}`;
+    }
   }
 }
 
@@ -3460,6 +3476,74 @@ function historySettingsSection(view) {
   `;
 }
 
+function updaterSettingsSection(view) {
+  const update = view.update ?? {};
+  const version = view.bootstrap?.app_version ?? "—";
+  const busy = update.checking || update.installing;
+  const disabled = view.preview || busy ? "disabled" : "";
+  const status = updaterStatusText(update);
+  return `
+    <section class="settings-section settings-update">
+      <header class="panel-head">
+        <div>
+          <h2>Aplicación</h2>
+        </div>
+        <span class="status-dot ${update.available ? "is-update" : update.error ? "is-error" : update.lastCheckedAt ? "is-ok" : ""}"></span>
+      </header>
+      <div class="setting-row">
+        <div>
+          <strong>Versión instalada</strong>
+          <p>Draft Assist ${escapeHtml(version)}</p>
+        </div>
+        <button class="button button-ghost" type="button" data-action="check-update" ${disabled}>
+          ${update.checking ? "Buscando…" : "Buscar actualizaciones"}
+        </button>
+      </div>
+      <div class="setting-row">
+        <div>
+          <strong>Actualizaciones</strong>
+          <p>${escapeHtml(status)}</p>
+        </div>
+        ${
+          update.available
+            ? `<button class="button button-primary button-small" type="button" data-action="open-update-dialog" ${update.installing ? "disabled" : ""}>
+                ${update.installing ? "Instalando…" : "Actualizar"}
+              </button>`
+            : ""
+        }
+      </div>
+      ${update.error ? `<p class="notice notice-error">${escapeHtml(update.error)}</p>` : ""}
+      ${
+        update.lastCheckedAt
+          ? `<p class="muted update-checked">Última comprobación: ${escapeHtml(formatUpdateCheckTime(update.lastCheckedAt))}</p>`
+          : ""
+      }
+      ${
+        view.preview
+          ? `<p class="muted update-checked">La vista previa estática no puede buscar actualizaciones.</p>`
+          : ""
+      }
+    </section>
+  `;
+}
+
+function updaterStatusText(update) {
+  if (update.installing) return "Instalando la actualización…";
+  if (update.checking) return "Buscando actualizaciones…";
+  if (update.available) return `Versión ${update.version} disponible`;
+  if (update.error) return "No se pudo comprobar";
+  if (update.lastCheckedAt) return "Estás al día";
+  return "Sin comprobar";
+}
+
+function formatUpdateCheckTime(milliseconds) {
+  if (!milliseconds) return "—";
+  return new Date(milliseconds).toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function lcuStatusText(status, auto = false) {
   if (!status) return "Sin comprobar";
   if (status.state === "preview") return "No disponible en la vista previa";
@@ -3545,6 +3629,7 @@ function settingsView(view) {
 
       ${lcuSettingsSection(view)}
       ${historySettingsSection(view)}
+      ${updaterSettingsSection(view)}
 
       <section class="settings-section">
         <header class="panel-head">
@@ -3597,6 +3682,114 @@ function settingsView(view) {
       </section>
     </div>
   `;
+}
+
+export function renderUpdateDialog(view) {
+  const update = view.update ?? {};
+  const dialog = document.getElementById("update-dialog");
+  if (!dialog) return;
+
+  const current = update.currentVersion ?? view.bootstrap?.app_version ?? "—";
+  const next = update.version ?? "—";
+  setElementText("update-current-version", current);
+  setElementText("update-new-version", next);
+
+  const subtitle = document.getElementById("update-dialog-subtitle");
+  if (subtitle) {
+    const date = formatUpdateDate(update.date);
+    subtitle.textContent = date
+      ? `Publicada el ${date}. La app se cerrará para instalar y volverá a abrirse.`
+      : "La app se cerrará para instalar y volverá a abrirse.";
+  }
+
+  const notes = document.getElementById("update-notes");
+  if (notes) {
+    const text = (update.notes ?? "").trim();
+    notes.textContent = text || "Sin notas para esta versión.";
+    notes.classList.toggle("is-empty", !text);
+  }
+
+  const progress = document.getElementById("update-progress");
+  if (progress) progress.hidden = !update.installing;
+
+  const error = document.getElementById("update-error");
+  if (error) {
+    error.hidden = !update.error;
+    error.textContent = update.error ?? "";
+  }
+
+  const installButton = document.getElementById("update-install-button");
+  if (installButton) {
+    installButton.disabled = Boolean(update.installing || update.checking);
+    installButton.textContent = update.installing ? "Instalando…" : "Actualizar y reiniciar";
+  }
+
+  const dismissButton = dialog.querySelector('[data-action="dismiss-update"]');
+  if (dismissButton) dismissButton.disabled = Boolean(update.installing);
+  const closeButton = dialog.querySelector('.dialog-head button[value="cancel"]');
+  if (closeButton) closeButton.disabled = Boolean(update.installing);
+
+  if (update.installing) renderUpdateProgress(update.progress);
+}
+
+export function renderUpdateProgress(progress = app.update.progress) {
+  const bar = document.getElementById("update-progress-bar");
+  const label = document.getElementById("update-progress-label");
+  const percentLabel = document.getElementById("update-progress-percent");
+  if (!bar || !label) return;
+
+  const downloaded = Number(progress?.downloaded) || 0;
+  const total = Number(progress?.total) || 0;
+  const percent =
+    total > 0 ? Math.min(100, Math.round((downloaded / total) * 100)) : null;
+
+  if (percent === null) {
+    bar.style.width = "35%";
+    bar.classList.add("is-indeterminate");
+    label.textContent =
+      downloaded > 0 ? `Descargando… ${formatBytes(downloaded)}` : "Preparando la descarga…";
+    if (percentLabel) percentLabel.textContent = "";
+    return;
+  }
+
+  bar.style.width = `${percent}%`;
+  bar.classList.remove("is-indeterminate");
+  label.textContent = "Descargando…";
+  if (percentLabel) {
+    percentLabel.textContent = `${percent}% · ${formatBytes(downloaded)} de ${formatBytes(total)}`;
+  }
+}
+
+function setElementText(id, text) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = text;
+}
+
+function formatUpdateDate(unixSeconds) {
+  if (!unixSeconds) return null;
+  return new Date(unixSeconds * 1000).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 MB";
+  const units = ["B", "KB", "MB", "GB"];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value.toFixed(value >= 10 || unit === 0 ? 0 : 1)} ${units[unit]}`;
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("draft-assist:update-progress", (event) => {
+    renderUpdateProgress(event.detail);
+  });
 }
 
 export function renderToasts(view) {

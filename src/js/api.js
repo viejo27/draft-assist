@@ -231,3 +231,33 @@ export async function openHistoryDir() {
   if (isTauri) return invoke("history_open_dir");
   throw new Error("Abrir carpetas solo está disponible en la app de escritorio.");
 }
+
+export async function updateCheck() {
+  if (isTauri) return invoke("update_check");
+  return {
+    available: false,
+    current_version: "vista previa",
+    version: null,
+    notes: null,
+    date: null,
+  };
+}
+
+export async function updateInstall() {
+  if (isTauri) return invoke("update_install");
+  throw new Error("Las actualizaciones solo están disponibles en la app de escritorio.");
+}
+
+export async function listenUpdateProgress(handler) {
+  if (!isTauri) return () => {};
+  return window.__TAURI__.event.listen("update-progress", (event) => {
+    handler(event.payload);
+  });
+}
+
+export async function listenUpdateInstalling(handler) {
+  if (!isTauri) return () => {};
+  return window.__TAURI__.event.listen("update-installing", () => {
+    handler();
+  });
+}

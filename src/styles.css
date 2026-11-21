@@ -1935,6 +1935,140 @@ code {
   color: var(--muted);
 }
 
+/* Updates */
+.status-dot.is-update {
+  background: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+
+.update-button {
+  color: var(--gold);
+  border-color: rgba(232, 189, 115, 0.36);
+  background: var(--gold-soft);
+}
+
+.update-button[hidden] {
+  display: none;
+}
+
+.update-button:hover:not(:disabled) {
+  color: #f0c980;
+  border-color: rgba(232, 189, 115, 0.55);
+  background: rgba(232, 189, 115, 0.18);
+}
+
+.update-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(232, 189, 115, 0.12);
+}
+
+.update-version-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.update-version-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--surface-quiet);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.update-version-chip.is-new {
+  color: var(--gold);
+  border-color: rgba(232, 189, 115, 0.38);
+  background: var(--gold-soft);
+}
+
+.update-arrow {
+  color: var(--muted-2);
+  font-size: 14px;
+}
+
+.update-notes {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text-soft);
+  background: var(--surface-quiet);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.update-notes.is-empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.update-progress {
+  display: grid;
+  gap: 7px;
+}
+
+.update-progress[hidden] {
+  display: none;
+}
+
+.update-progress-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.update-progress-track {
+  position: relative;
+  height: 7px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-quiet);
+}
+
+.update-progress-bar {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gold);
+  transition: width 140ms linear;
+}
+
+.update-progress-bar.is-indeterminate {
+  width: 35%;
+  animation: update-progress-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes update-progress-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+.update-checked {
+  margin-top: 9px;
+  font-size: 11.5px;
+}
+
+.settings-update .notice {
+  margin-top: 10px;
+}
+
 /* Dialogs */
 .dialog {
   width: min(620px, calc(100vw - 40px));

@@ -21,6 +21,7 @@ Asistente de draft para League of Legends, hecho con **Rust + Tauri v2** y front
 - **Historial local y scouting**: importa tu TXT de Clash, guarda picks, bans y resultados, y consulta estadísticas por campeón, bans, lado y rival.
 - **Pools rivales**: agrega por nombre los campeones que fuiste anotando y corrige nombres con alias.
 - **Historial como desempate opcional**: ±2 puntos, muestra mínima de 3 partidas y apagado por defecto.
+- **Actualizaciones automáticas**: busca, descarga e instala nuevas versiones desde la app, sin desinstalar.
 - Persistencia local con autosave, export/import.
 
 La app no automatiza picks ni bans; todas las acciones las confirma el usuario. El seguimiento LCU y la vista Rival solo leen el cliente; nunca envían acciones.
@@ -58,6 +59,42 @@ Genera el ejecutable en `target/release/draft-assist.exe` y los instaladores en 
 ```powershell
 npx.cmd @tauri-apps/cli build --no-bundle
 ```
+
+## Actualizaciones
+
+La app usa `tauri-plugin-updater` con un endpoint estático en GitHub Releases:
+
+```
+https://github.com/viejo27/draft-assist/releases/latest/download/latest.json
+```
+
+Para compilar una versión que se pueda publicar como actualización, la clave privada de firma tiene que estar en el entorno de la misma terminal:
+
+```powershell
+$env:TAURI_SIGNING_PRIVATE_KEY = "$env:USERPROFILE\.tauri\draft-assist.key"
+
+# Solo si la clave tiene contraseña:
+$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = "tu-password"
+
+npm.cmd run build -- --bundles nsis
+```
+
+Para las releases con updater usá NSIS. Si alguien tiene instalada una versión vieja por MSI, tiene que pasar una vez al instalador NSIS.
+
+Eso genera el instalador y su firma en `target/release/bundle/nsis/`:
+
+- `Draft Assist_0.5.0_x64-setup.exe`
+- `Draft Assist_0.5.0_x64-setup.exe.sig`
+
+Después, `npm run prepare-update` arma la carpeta del release con el instalador renombrado, la firma y `latest.json`:
+
+```powershell
+npm.cmd run prepare-update
+```
+
+El script imprime el comando de `gh release create` para subir todo. El release tiene que quedar publicado (no draft ni prerelease) para que funcione el endpoint `releases/latest/download/latest.json`.
+
+Los usuarios que ya tengan 0.4.2 o anterior tienen que instalar la primera versión con updater una vez a mano. A partir de ahí, la app les avisa y se actualiza sola. Guardá `draft-assist.key` y su contraseña en un lugar seguro: sin esa clave no se pueden publicar más actualizaciones para las instalaciones existentes.
 
 ## Icono
 
