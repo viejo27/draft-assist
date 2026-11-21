@@ -1554,7 +1554,7 @@ function rivalLiveView(view) {
           ? `<div class="rival-live-grid">${members.map((member, index) => rivalLiveCard(member, index)).join("")}</div>`
           : ""
       }
-      <p class="lcu-note rival-live-footnote">Datos locales / best-effort. En Ranked Solo/Duo y Flex el cliente puede ocultar las identidades enemigas; si no expone la posición, se muestran maestrías y recientes globales.</p>
+      <p class="lcu-note rival-live-footnote">Datos locales / best-effort. En Ranked Solo/Duo y Flex el cliente puede ocultar las identidades enemigas. En Ranked 5s, si no expone la posición, se estima por el rol principal del campeón elegido; sin pick, se muestran maestrías y recientes globales. En Clash se usa la posición marcada.</p>
     </div>
   `;
 }
@@ -1650,7 +1650,7 @@ function rivalLiveCard(member, index) {
         <div class="lcu-positions">
           ${
             primary
-              ? `<span class="lcu-position"><span class="field-label">Posición</span>${roleBadge(primary)}</span>`
+              ? `<span class="lcu-position"><span class="field-label">${member.position_inferred ? "Posición estimada" : "Posición"}</span>${roleBadge(primary)}</span>`
               : `<span class="muted">Sin posición</span>`
           }
         </div>

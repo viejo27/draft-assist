@@ -182,10 +182,16 @@ pub(crate) fn lobby_signature(
                         .map(|id| id.to_string())
                         .or_else(|| player.puuid.clone())
                         .unwrap_or_else(|| player.cell_id.to_string());
+                    let champion = if player.assigned_position.trim().is_empty() {
+                        player.champion_id
+                    } else {
+                        0
+                    };
                     parts.push(format!(
-                        "{}:{}:{}",
+                        "{}:{}:{}:{}",
                         identity,
                         player.assigned_position,
+                        champion,
                         player.team.unwrap_or_default()
                     ));
                 }
@@ -806,6 +812,20 @@ mod tests {
         let second = lobby_signature("ChampSelect", Some(420), None, Some(&session)).unwrap();
         assert_ne!(first, second);
         assert!(second.contains("utility"));
+    }
+
+    #[test]
+    fn champ_select_signature_tracks_enemy_picks_when_positions_are_missing() {
+        let mut session = ChampSelectSession {
+            their_team: vec![player(5, 2, "", 0)],
+            ..ChampSelectSession::default()
+        };
+        let first = lobby_signature("ChampSelect", Some(710), None, Some(&session)).unwrap();
+
+        session.their_team[0].champion_id = 63;
+        let second = lobby_signature("ChampSelect", Some(710), None, Some(&session)).unwrap();
+        assert_ne!(first, second);
+        assert!(second.contains(":63:"));
     }
 
     #[test]

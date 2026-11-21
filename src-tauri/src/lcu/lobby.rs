@@ -3,6 +3,7 @@
 use draft_engine::data::GameData;
 use draft_engine::model::Role;
 use serde::Serialize;
+use std::collections::HashMap;
 
 use super::client::{LcuClient, LcuError};
 use super::mapping;
@@ -41,6 +42,7 @@ pub struct LobbyMemberScoutingView {
     pub team_id: Option<i64>,
     pub primary_position: Option<Role>,
     pub secondary_position: Option<Role>,
+    pub position_inferred: bool,
     pub ranks: Vec<ClashRankView>,
     pub scouting: Option<ClashScoutingView>,
     pub recent_champions: Vec<RecentChampionView>,
@@ -84,7 +86,8 @@ pub async fn fetch(client: &LcuClient, data: &GameData) -> Result<LobbyScoutingV
         };
         view.signature =
             mapping::lobby_signature(&phase, queue_id, None, Some(&session)).unwrap_or_default();
-        view.members = champ_select_members(client, data, &session, false).await;
+        view.members =
+            champ_select_members(client, data, &session, false, infers_positions(queue_id)).await;
         view.local_player = view
             .members
             .iter()
@@ -173,10 +176,11 @@ pub async fn fetch_rival(
 
     view.signature =
         mapping::lobby_signature(&phase, queue_id, None, Some(&session)).unwrap_or_default();
-    view.members = champ_select_members(client, data, &session, true).await;
+    view.members =
+        champ_select_members(client, data, &session, true, infers_positions(queue_id)).await;
     view.available = !view.members.is_empty();
     view.message = Some(if view.available {
-        "Datos locales del LCU. La identidad o la posición del rival pueden no estar disponibles; en ese caso el scouting es global o best-effort."
+        "Datos locales del LCU. En Ranked 5s la posición del rival se estima por el campeón elegido si el cliente no la expone; en Clash se usa la posición marcada. El resto es best-effort."
             .into()
     } else {
         "El cliente no expone al equipo rival en este modo.".into()
@@ -264,6 +268,7 @@ async fn lobby_members(
             team_id: member.team_id,
             primary_position,
             secondary_position,
+            position_inferred: false,
             ranks: Vec::new(),
             scouting: None,
             recent_champions: Vec::new(),
@@ -284,6 +289,7 @@ async fn champ_select_members(
     data: &GameData,
     session: &ChampSelectSession,
     enemy: bool,
+    infer_positions: bool,
 ) -> Vec<LobbyMemberScoutingView> {
     let players: Vec<&ChampSelectPlayer> = if enemy {
         session.their_team.iter().collect()
@@ -295,6 +301,7 @@ async fn champ_select_members(
         .filter_map(|player| player.summoner_id.filter(|id| *id > 0))
         .collect();
     let summoners = fetch_summoners(client, &summoner_ids).await;
+    let roles = champion_roles(data);
 
     let mut views = Vec::with_capacity(players.len());
     for (index, member) in players.iter().enumerate() {
@@ -315,7 +322,14 @@ async fn champ_select_members(
         let puuid = identity
             .and_then(|summoner| summoner.puuid.clone())
             .or(puuid);
-        let role = role_from_position(Some(member.assigned_position.as_str()));
+        let assigned_position = role_from_position(Some(member.assigned_position.as_str()));
+        let inferred_position = if infer_positions && assigned_position.is_none() {
+            inferred_role(&roles, member.champion_id)
+        } else {
+            None
+        };
+        let position_inferred = inferred_position.is_some();
+        let role = assigned_position.or(inferred_position);
         let fallback_name = if enemy {
             role.map(|role| format!("Rival {}", role.label_es()))
                 .unwrap_or_else(|| format!("Rival {}", index + 1))
@@ -362,6 +376,7 @@ async fn champ_select_members(
             team_id: member.team,
             primary_position: role,
             secondary_position: None,
+            position_inferred,
             ranks: Vec::new(),
             scouting: None,
             recent_champions: Vec::new(),
@@ -437,6 +452,18 @@ async fn hydrate_members(
     }
 }
 
+fn infers_positions(queue_id: Option<i64>) -> bool {
+    matches!(queue_id, Some(42 | 710))
+}
+
+fn inferred_role(roles: &HashMap<i32, Vec<Role>>, champion_id: i64) -> Option<Role> {
+    if champion_id <= 0 {
+        return None;
+    }
+    let key = i32::try_from(champion_id).ok()?;
+    roles.get(&key).and_then(|roles| roles.first().copied())
+}
+
 fn role_from_position(position: Option<&str>) -> Option<Role> {
     let position = position?.trim().to_ascii_uppercase();
     match position.as_str() {
@@ -458,8 +485,37 @@ fn now_ms() -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use super::role_from_position;
+    use super::{inferred_role, infers_positions, role_from_position};
+    use draft_engine::data::GameData;
     use draft_engine::model::Role;
+
+    #[test]
+    fn only_infers_positions_for_ranked_fives() {
+        assert!(infers_positions(Some(42)));
+        assert!(infers_positions(Some(710)));
+        assert!(!infers_positions(Some(700)));
+        assert!(!infers_positions(Some(420)));
+        assert!(!infers_positions(Some(440)));
+        assert!(!infers_positions(None));
+    }
+
+    #[test]
+    fn infers_the_primary_role_from_the_picked_champion() {
+        let data = GameData::embedded().expect("datos embebidos");
+        let roles = super::champion_roles(&data);
+        let key = |id: &str| {
+            data.champion(id)
+                .expect(id)
+                .key
+                .parse::<i64>()
+                .expect("key numérica")
+        };
+
+        assert_eq!(inferred_role(&roles, key("Brand")), Some(Role::Mid));
+        assert_eq!(inferred_role(&roles, key("MissFortune")), Some(Role::Adc));
+        assert_eq!(inferred_role(&roles, key("Zac")), Some(Role::Jungle));
+        assert_eq!(inferred_role(&roles, 0), None);
+    }
 
     #[test]
     fn maps_lobby_positions_to_roles() {

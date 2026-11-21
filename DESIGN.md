@@ -140,7 +140,7 @@ At ≤1050px the recommendation column moves below the board. Champion slots col
 - **Rival Live** is an ephemeral view tab immediately after **Draft**; it only exists while the LCU reports `ChampSelect`.
 - The page is a two-column grid of read-only enemy cards, ordered TOP/JUNGLE/MID/ADC/SUPPORT. Each card has the Rival chip, name + tag or a positional fallback, rank chips, top three masteries for the assigned position and recent champions in the supported queues.
 - The card never offers **Pasar al pool** or any write action. The footnote states that identities can be hidden and that all data is local/best-effort.
-- Hidden identities get a dashed card with the position and an explanation, not fabricated names or stats. The tab still appears so the user understands the limitation. When the client exposes names but not `assignedPosition`, the card shows global top masteries and recent champions and labels the role as unavailable.
+- Hidden identities get a dashed card with the position and an explanation, not fabricated names or stats. The tab still appears so the user understands the limitation. In **Ranked 5s**, when the client exposes names but not `assignedPosition`, the backend estimates the role from the picked champion's first curated role and the UI labels it **Posición estimada**. While there is no picked champion yet, the card shows global top masteries and recent champions. **Clash** and other queues keep the client-assigned position and never infer from the champion.
 - The signature now includes both teams, so identity or position changes refresh the view automatically while tracking is on. **Actualizar rivales** is the manual fallback.
 
 ### Dialogs

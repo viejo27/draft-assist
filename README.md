@@ -201,7 +201,7 @@ El comando `rival_scouting` lee `theirTeam` de `/lol-champ-select/v1/session`. R
 
 El tab aparece cuando el LCU reporta la fase `ChampSelect`. Con el seguimiento activo, la firma de lobby/champ select incluye a ambos equipos y refresca la vista cuando cambian identidades o posiciones. Sin seguimiento, el estado se consulta al abrir la app o al enfocar la ventana, y **Actualizar rivales** refresca manualmente.
 
-En Ranked Solo/Duo y Flex el cliente puede ocultar las identidades enemigas; en ese caso la tarjeta muestra la posición y un aviso, sin inventar datos. En Ranked 5s, torneo o custom donde el cliente expone los nombres, el scouting funciona igual que en **Equipo**. Si el cliente expone los nombres pero no la posición del rival, se muestran igualmente las 3 mejores maestrías globales y los campeones recientes sin filtrar por rol.
+En Ranked Solo/Duo y Flex el cliente puede ocultar las identidades enemigas; en ese caso la tarjeta muestra la posición y un aviso, sin inventar datos. En Ranked 5s el cliente expone los nombres pero no `assignedPosition`, así que la posición se estima con el rol principal curado del campeón elegido y la tarjeta la marca como **Posición estimada**. Mientras el rival todavía no eligió campeón, se muestran las 3 mejores maestrías globales y los recientes sin filtrar. En Clash se usa la posición marcada por el cliente, sin inferencia.
 
 ## Rival de Clash
 

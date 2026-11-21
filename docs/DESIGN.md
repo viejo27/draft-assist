@@ -342,7 +342,9 @@ El match history se filtra a Ranked Solo/Duo (`420`), Ranked Flex (`440`), Ranke
 
 El tracker LCU incluye una firma de lobby/champ select (PUUID/summonerId + posiciones). Cuando cambia, el frontend recarga `lobby_scouting` automáticamente; no hace falta pulsar **Actualizar LCU**. Todo es best-effort: si el cliente no tiene cacheadas las maestrías o partidas, la tarjeta muestra el vacío correspondiente.
 
-El comando `rival_scouting` reutiliza la misma hidratación sobre `theirTeam` y alimenta el tab efímero **Rival Live**, visible solo en `ChampSelect`. Las tarjetas son de solo lectura y no ofrecen pasar campeones al pool. La firma de champ select incluye `myTeam` y `theirTeam`, así que un cambio de identidad o posición rival refresca la vista con seguimiento activo. Si el cliente oculta las identidades, se muestran tarjetas con la posición y un aviso, sin inventar nombres ni estadísticas. Si expone los nombres pero no `assignedPosition`, la tarjeta muestra maestrías y recientes globales, sin filtro de rol.
+El comando `rival_scouting` reutiliza la misma hidratación sobre `theirTeam` y alimenta el tab efímero **Rival Live**, visible solo en `ChampSelect`. Las tarjetas son de solo lectura y no ofrecen pasar campeones al pool. La firma de champ select incluye `myTeam` y `theirTeam`, así que un cambio de identidad, posición o pick rival refresca la vista con seguimiento activo. Si el cliente oculta las identidades, se muestran tarjetas con la posición y un aviso, sin inventar nombres ni estadísticas.
+
+La inferencia de posición por campeón está limitada a **Ranked 5s** (`42`, `710`): si el cliente expone los nombres pero no `assignedPosition`, el backend usa el primer rol curado del campeón elegido, lo expone como `position_inferred` y filtra maestrías/recientes por ese rol. Mientras no haya pick, usa maestrías y recientes globales. En **Clash** (`700`) y otras colas se respeta `assignedPosition`; no se infiere por campeón.
 
 ## 10. Juego en vivo
 
