@@ -1,6 +1,6 @@
 [package]
 name = "draft-engine"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2024"
 description = "Motor de recomendaciones para el draft de League of Legends"
 license = "MIT"

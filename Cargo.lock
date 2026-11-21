@@ -901,7 +901,7 @@ dependencies = [
 
 [[package]]
 name = "draft-assist"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "base64 0.22.1",
  "draft-engine",
@@ -919,7 +919,7 @@ dependencies = [
 
 [[package]]
 name = "draft-engine"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "serde",
  "serde_json",

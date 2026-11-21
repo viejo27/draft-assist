@@ -89,6 +89,9 @@ const outDir = resolve(
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });
 
+const title =
+  typeof args.title === "string" ? args.title : `Draft Assist ${version}`;
+
 const sigAssetName = `${assetName}.sig`;
 await copyFile(installerPath, join(outDir, assetName));
 await copyFile(sigPath, join(outDir, sigAssetName));
@@ -124,7 +127,7 @@ console.log("  notes.md");
 console.log("");
 console.log("Para publicarlo en GitHub:");
 console.log(
-  `gh release create ${tag} --title "Draft Assist ${version}" --notes-file "${join(outDir, "notes.md")}" "${join(outDir, assetName)}" "${join(outDir, sigAssetName)}" "${join(outDir, "latest.json")}"`,
+  `gh release create ${tag} --title "${title}" --notes-file "${join(outDir, "notes.md")}" "${join(outDir, assetName)}" "${join(outDir, sigAssetName)}" "${join(outDir, "latest.json")}"`,
 );
 console.log("");
 console.log(

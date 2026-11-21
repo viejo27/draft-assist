@@ -83,8 +83,8 @@ Para las releases con updater usá NSIS. Si alguien tiene instalada una versión
 
 Eso genera el instalador y su firma en `target/release/bundle/nsis/`:
 
-- `Draft Assist_0.5.0_x64-setup.exe`
-- `Draft Assist_0.5.0_x64-setup.exe.sig`
+- `Draft Assist_0.5.1_x64-setup.exe`
+- `Draft Assist_0.5.1_x64-setup.exe.sig`
 
 Después, `npm run prepare-update` arma la carpeta del release con el instalador renombrado, la firma y `latest.json`:
 
