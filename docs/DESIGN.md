@@ -480,9 +480,9 @@ El CLI `cargo run -p draft-engine --example import_history -- <txt> <out>` gener
 Vistas: Draft, Rival Live, Juego en vivo, Equipo, Rival, Historial, Ajustes.
 
 - **Draft:** tablero enemigo/aliado, bans, resumen de composición, recomendaciones Top N, próximos picks.
-- **Rival Live:** tab efímero durante `ChampSelect`. Grid de tarjetas de solo lectura para el equipo rival con posición, rango, top 3 maestrías de la posición y recientes en Ranked Solo/Duo, Flex, 5s y Clash. Las identidades ocultas se muestran como tales, sin inventar datos.
+- **Rival Live:** tab durante `ChampSelect` y, en Clash, antes del champ select. Grid de tarjetas de solo lectura para el equipo rival con posición, rango, top 5 maestrías de la posición y recientes en Ranked Solo/Duo, Flex, 5s y Clash. En Clash pre-champ-select reutiliza las tarjetas del bracket con campeones de la temporada, maestrías y últimas partidas. Las identidades ocultas se muestran como tales, sin inventar datos.
 - **Juego en vivo:** tab efímero para colas elegibles; mapa `map11`, tokens, evento actual, feed, marcador y estadísticas. Modal de guardado al terminar una Clash.
-- **Equipo:** cinco filas emparejadas. Izquierda: roster y pool guardado, orden de picks, comfort y winrate. Derecha: tarjeta LCU del jugador del lobby con posiciones principal/secundaria, rango, top 3 maestrías con comfort 5 y recientes en la posición. La tarjeta LCU incluye una nota de datos locales / best-effort.
+- **Equipo:** cinco filas emparejadas. Izquierda: roster y pool guardado, orden de picks, comfort y winrate. Derecha: tarjeta LCU del jugador del lobby con posiciones principal/secundaria, rango, top 5 maestrías con comfort 5 y recientes en la posición. La tarjeta LCU incluye una nota de datos locales / best-effort.
 - **Historial:** resumen, partidas, rivales y bans; importación de Clash, guardado del draft actual o de Juego en vivo, exportación y edición.
 - **Ajustes:** Top N, prioridad de pool, flex fuera de rol, desempate por historial, cliente de League, historial local, datos, export/import, explicación del scoring.
 

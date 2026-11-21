@@ -30,6 +30,7 @@ import {
   recordBan,
   recordPick,
   refresh,
+  refreshActiveScouting,
   refreshClash,
   refreshLobbyScouting,
   refreshRivalScouting,
@@ -103,6 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("focus", () => {
     if (!app.lcu.auto) void refreshLcuStatus();
+    void refreshActiveScouting();
   });
 
   document.getElementById("new-draft-confirm")?.addEventListener("click", confirmNewDraft);

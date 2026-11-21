@@ -5,6 +5,7 @@ import {
   orderedPlayers,
   championById,
   unavailableChampions,
+  isClashContext,
 } from "./state.js";
 import {
   championAvatar,
@@ -129,22 +130,34 @@ function renderTopbar(view) {
       ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
     `;
   } else if (view.view === "rival-live") {
-    const data = view.rivalLive?.data;
-    const members = data?.members ?? [];
-    const hidden = members.filter((member) => !member.puuid && !member.summoner_id).length;
-    const summary = members.length
-      ? hidden
-        ? `${members.length} rivales · ${hidden} con identidad oculta`
-        : `${members.length} rivales visibles`
-      : "Solo lectura";
-    context.innerHTML = `
-      <span class="context-chip context-rival"><span class="rival-dot"></span>Rival Live</span>
-      <span class="context-separator"></span>
-      <span class="context-chip">${escapeHtml(data?.queue_name ?? view.lcu?.status?.queue_name ?? "Champ select")}</span>
-      <span class="context-turn">${escapeHtml(summary)}</span>
-      ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
-      ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
-    `;
+    if (view.lcu?.status?.phase !== "ChampSelect" && isClashContext(view.lcu?.status)) {
+      const opponent = view.clash?.data?.opponent;
+      context.innerHTML = `
+        <span class="context-chip context-rival"><span class="rival-dot"></span>Rival Live</span>
+        <span class="context-separator"></span>
+        <span class="context-chip">Clash</span>
+        <span class="context-turn">${escapeHtml(opponent?.name ?? "Esperando rival")}</span>
+        ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
+        ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
+      `;
+    } else {
+      const data = view.rivalLive?.data;
+      const members = data?.members ?? [];
+      const hidden = members.filter((member) => !member.puuid && !member.summoner_id).length;
+      const summary = members.length
+        ? hidden
+          ? `${members.length} rivales · ${hidden} con identidad oculta`
+          : `${members.length} rivales visibles`
+        : "Solo lectura";
+      context.innerHTML = `
+        <span class="context-chip context-rival"><span class="rival-dot"></span>Rival Live</span>
+        <span class="context-separator"></span>
+        <span class="context-chip">${escapeHtml(data?.queue_name ?? view.lcu?.status?.queue_name ?? "Champ select")}</span>
+        <span class="context-turn">${escapeHtml(summary)}</span>
+        ${view.preview ? `<span class="context-chip context-preview">Vista previa</span>` : ""}
+        ${view.lcu?.auto ? `<span class="context-chip context-auto">AUTO LCU</span>` : ""}
+      `;
+    }
   } else if (view.view === "clash") {
     context.innerHTML = `
       <span class="context-chip">Rival</span>
@@ -257,9 +270,15 @@ function renderViewbar(view) {
         ? "Datos en vivo · solo lectura"
         : "Datos detenidos";
   } else if (view.view === "rival-live") {
-    note.textContent = view.rivalLive?.loading
-      ? "Leyendo el equipo rival…"
-      : "Rival Live · solo lectura";
+    if (view.lcu?.status?.phase !== "ChampSelect" && isClashContext(view.lcu?.status)) {
+      note.textContent = view.clash?.loading
+        ? "Leyendo rival de Clash…"
+        : "Rival Live · Clash";
+    } else {
+      note.textContent = view.rivalLive?.loading
+        ? "Leyendo el equipo rival…"
+        : "Rival Live · solo lectura";
+    }
   } else if (view.preview) {
     note.textContent = "Modo demostración sin backend Tauri";
   } else if (view.lastSaved) {
@@ -1545,6 +1564,9 @@ function nextPicksPanel(view) {
 }
 
 function rivalLiveView(view) {
+  if (view.lcu?.status?.phase !== "ChampSelect" && isClashContext(view.lcu?.status)) {
+    return rivalLiveClashView(view);
+  }
   const state = view.rivalLive ?? {};
   const data = state.data;
   const members = orderEnemyMembers(data?.members ?? []);
@@ -1632,6 +1654,71 @@ function rivalLiveStatus(state, data, visible, hidden) {
   `;
 }
 
+function rivalLiveClashView(view) {
+  const clash = view.clash ?? {};
+  const opponent = clash.data?.opponent ?? null;
+  return `
+    <div class="rival-live-root">
+      <div class="page-head">
+        <div>
+          <h1>Rival Live</h1>
+          <p class="muted">Rival de Clash desde el bracket, antes del champ select. Solo lectura; los datos salen del cliente local.</p>
+        </div>
+        <div class="inline-actions">
+          <button class="button button-ghost" type="button" data-action="refresh-rival-scouting" ${clash.loading ? "disabled" : ""}>
+            ${clash.loading && !opponent ? "Leyendo LCU…" : "Actualizar rivales"}
+          </button>
+        </div>
+      </div>
+      ${rivalLiveClashStatus(clash, opponent)}
+      ${opponent ? clashOpponentPanel(opponent) : ""}
+      <p class="lcu-note rival-live-footnote">Datos del bracket de Clash. El rival se actualiza automáticamente cuando el cliente lo expone; no se envían acciones al juego.</p>
+    </div>
+  `;
+}
+
+function rivalLiveClashStatus(clash, opponent) {
+  if (clash.loading && !opponent) {
+    return `
+      <div class="lobby-status is-loading">
+        <span class="lobby-status-dot"></span>
+        <span>Leyendo el rival de Clash desde el LCU…</span>
+      </div>
+    `;
+  }
+  if (clash.error) {
+    return `
+      <div class="lobby-status is-error">
+        <span class="lobby-status-dot"></span>
+        <div>
+          <strong>No se pudo leer el rival de Clash</strong>
+          <span class="muted">${escapeHtml(clash.error)}</span>
+        </div>
+      </div>
+    `;
+  }
+  if (!opponent) {
+    return `
+      <div class="lobby-status">
+        <span class="lobby-status-dot"></span>
+        <div>
+          <strong>Clash activo</strong>
+          <span class="muted">El bracket todavía no expone al rival. Se reintenta automáticamente.</span>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="lobby-status is-live">
+      <span class="lobby-status-dot"></span>
+      <div>
+        <strong>Clash · antes del champ select</strong>
+        <span class="muted">${opponent.players?.length ?? 0} jugadores · datos locales / best-effort.</span>
+      </div>
+    </div>
+  `;
+}
+
 function rivalIdentityHidden(member) {
   return !member?.puuid && !member?.summoner_id;
 }
@@ -1642,7 +1729,7 @@ function rivalLiveCard(member, index) {
     member.display_name ||
     (primary ? `Rival ${roleLabel(primary)}` : `Rival ${index + 1}`);
   const hidden = rivalIdentityHidden(member);
-  const masteries = (member.scouting?.masteries ?? []).slice(0, 3);
+  const masteries = (member.scouting?.masteries ?? []).slice(0, 5);
   const recent = (member.recent_champions ?? []).slice(0, 5);
   const message =
     member.message ??
@@ -1692,7 +1779,7 @@ function rivalLiveCard(member, index) {
             <div class="lcu-section">
               <div class="lcu-section-head">
                 <div>
-                  <h3>Top 3 maestrías${primary ? ` · ${roleLabel(primary)}` : ""}</h3>
+                  <h3>Top 5 maestrías${primary ? ` · ${roleLabel(primary)}` : ""}</h3>
                 </div>
               </div>
               ${
@@ -1850,7 +1937,7 @@ function lobbyScoutingCard(view, player, member) {
 
   const primary = member.primary_position;
   const secondary = member.secondary_position;
-  const masteries = (member.scouting?.masteries ?? []).slice(0, 3);
+  const masteries = (member.scouting?.masteries ?? []).slice(0, 5);
   const recent = (member.recent_champions ?? []).slice(0, 5);
   const name = member.display_name || "Jugador LCU";
   const positions = `
@@ -1898,7 +1985,7 @@ function lobbyScoutingCard(view, player, member) {
             <div class="lcu-section">
               <div class="lcu-section-head">
                 <div>
-                  <h3>Top 3 maestrías${primary ? ` · ${roleLabel(primary)}` : ""}</h3>
+                  <h3>Top 5 maestrías${primary ? ` · ${roleLabel(primary)}` : ""}</h3>
                   <span class="muted">Al pasar al pool se guardan con comfort 5.</span>
                 </div>
                 ${
@@ -1907,7 +1994,7 @@ function lobbyScoutingCard(view, player, member) {
                         data-action="lcu-add-masteries"
                         data-player="${escapeHtml(player.id)}"
                         data-champions="${escapeHtml(masteries.map((entry) => entry.champion_id).join(","))}">
-                        Pasar top 3
+                        Pasar top 5
                       </button>`
                     : ""
                 }
@@ -3185,8 +3272,8 @@ function clashOpponentPanel(opponent) {
 function clashPlayerCard(player) {
   const ranks = player.ranks ?? [];
   const scouting = player.scouting;
-  const seasonChampions = (scouting?.season_champions ?? []).slice(0, 3);
-  const masteries = (scouting?.masteries ?? []).slice(0, 3);
+  const seasonChampions = (scouting?.season_champions ?? []).slice(0, 5);
+  const masteries = (scouting?.masteries ?? []).slice(0, 5);
   const recentMatches = (player.recent_matches ?? []).slice(0, 5);
   const primaryRank = ranks[0];
   return `

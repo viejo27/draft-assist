@@ -66,6 +66,18 @@
             "champion_name": "Renekton",
             "level": 8,
             "points": 60000
+          },
+          {
+            "champion_id": "Garen",
+            "champion_name": "Garen",
+            "level": 9,
+            "points": 90000
+          },
+          {
+            "champion_id": "Jax",
+            "champion_name": "Jax",
+            "level": 8,
+            "points": 80000
           }
         ],
         "season_champions": []
@@ -148,6 +160,18 @@
             "champion_name": "Vi",
             "level": 7,
             "points": 45000
+          },
+          {
+            "champion_id": "Warwick",
+            "champion_name": "Warwick",
+            "level": 9,
+            "points": 90000
+          },
+          {
+            "champion_id": "Nidalee",
+            "champion_name": "Nidalee",
+            "level": 8,
+            "points": 80000
           }
         ],
         "season_champions": []
@@ -230,6 +254,18 @@
             "champion_name": "Azir",
             "level": 8,
             "points": 65000
+          },
+          {
+            "champion_id": "Syndra",
+            "champion_name": "Syndra",
+            "level": 9,
+            "points": 90000
+          },
+          {
+            "champion_id": "Zed",
+            "champion_name": "Zed",
+            "level": 8,
+            "points": 80000
           }
         ],
         "season_champions": []
@@ -312,6 +348,18 @@
             "champion_name": "Kai'Sa",
             "level": 9,
             "points": 70000
+          },
+          {
+            "champion_id": "Ashe",
+            "champion_name": "Ashe",
+            "level": 9,
+            "points": 90000
+          },
+          {
+            "champion_id": "Ezreal",
+            "champion_name": "Ezreal",
+            "level": 8,
+            "points": 80000
           }
         ],
         "season_champions": []
@@ -362,7 +410,40 @@
       "primary_position": "SUPPORT",
       "secondary_position": null,
       "ranks": [],
-      "scouting": null,
+      "scouting": {
+        "masteries": [
+          {
+            "champion_id": "Nautilus",
+            "champion_name": "Nautilus",
+            "level": 9,
+            "points": 90000
+          },
+          {
+            "champion_id": "Rakan",
+            "champion_name": "Rakan",
+            "level": 8,
+            "points": 80000
+          },
+          {
+            "champion_id": "Milio",
+            "champion_name": "Milio",
+            "level": 7,
+            "points": 70000
+          },
+          {
+            "champion_id": "Lulu",
+            "champion_name": "Lulu",
+            "level": 6,
+            "points": 60000
+          },
+          {
+            "champion_id": "Thresh",
+            "champion_name": "Thresh",
+            "level": 5,
+            "points": 50000
+          }
+        ]
+      },
       "recent_champions": [],
       "message": "El cliente no expone la identidad de este rival. Sin maestrías ni historial."
     }

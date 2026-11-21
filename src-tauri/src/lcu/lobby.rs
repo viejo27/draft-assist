@@ -427,7 +427,7 @@ async fn hydrate_members(
             &roles,
             puuid,
             member.primary_position,
-            3,
+            5,
         )
         .await;
         let (total_mastery_score, season_champions) = batch_view

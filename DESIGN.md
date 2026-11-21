@@ -129,19 +129,19 @@ At ≤1050px the recommendation column moves below the board. Champion slots col
 
 - **Equipo** is five paired rows: saved pool on the left, LCU card on the right. At ≤1050px the pair stacks.
 - Left card reuses the existing roster player: pick order, role, name, pool entries with comfort and optional winrate.
-- Right card: LCU chip, player name + tag, level, principal/secondary position chips, Solo/Flex rank chips, top three masteries with a comfort-5 meter and “Pasar top 3” action, recent champions in the principal position, and a best-effort footnote.
-- The mastery “Pasar top 3” button writes the champions into the saved pool with comfort 5; it never edits the JSON silently.
+- Right card: LCU chip, player name + tag, level, principal/secondary position chips, Solo/Flex rank chips, top five masteries with a comfort-5 meter and “Pasar top 5” action, recent champions in the principal position, and a best-effort footnote.
+- The mastery “Pasar top 5” button writes the champions into the saved pool with comfort 5; it never edits the JSON silently.
 - Empty/error states: no League client, no lobby, unmatched roster row, and bot. Bots show no masteries or history.
 - Recent champions are distinct champions from Ranked Solo/Duo, Flex, 5s and Clash; the card names the filtered queues.
 - With LCU tracking active, a lobby/champ-select position signature refreshes the card automatically when the player changes roles; **Actualizar LCU** remains available for a manual refresh. The mastery list is filtered to the principal position using the local champion roles.
 
 ### Rival Live
 
-- **Rival Live** is an ephemeral view tab immediately after **Draft**; it only exists while the LCU reports `ChampSelect`.
-- The page is a two-column grid of read-only enemy cards, ordered TOP/JUNGLE/MID/ADC/SUPPORT. Each card has the Rival chip, name + tag or a positional fallback, rank chips, top three masteries for the assigned position and recent champions in the supported queues.
+- **Rival Live** is an ephemeral view tab immediately after **Draft**; it exists while the LCU reports `ChampSelect` and, in Clash, before champ select using the bracket opponent.
+- The page is a two-column grid of read-only enemy cards, ordered TOP/JUNGLE/MID/ADC/SUPPORT. Each card has the Rival chip, name + tag or a positional fallback, rank chips, top five masteries for the assigned position and recent champions in the supported queues. In Clash before champ select, the tab reuses the bracket opponent cards with season champions, top five masteries and recent matches.
 - The card never offers **Pasar al pool** or any write action. The footnote states that identities can be hidden and that all data is local/best-effort.
 - Hidden identities get a dashed card with the position and an explanation, not fabricated names or stats. The tab still appears so the user understands the limitation. In **Ranked 5s**, when the client exposes names but not `assignedPosition`, the backend estimates the role from the picked champion's first curated role and the UI labels it **Posición estimada**. While there is no picked champion yet, the card shows global top masteries and recent champions. **Clash** and other queues keep the client-assigned position and never infer from the champion.
-- The signature now includes both teams, so identity or position changes refresh the view automatically while tracking is on. **Actualizar rivales** is the manual fallback.
+- The signature now includes both teams, so identity or position changes refresh the view automatically while tracking is on. In Clash before champ select, the bracket opponent refreshes every 30 seconds and when the window regains focus. **Actualizar rivales** is the manual fallback.
 
 ### Dialogs
 

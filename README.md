@@ -16,7 +16,7 @@ Asistente de draft para League of Legends, hecho con **Rust + Tauri v2** y front
 - **Seguimiento LCU de solo lectura**: sincroniza lobby, formato, lado, posiciones, bans y picks desde el cliente.
 - **Juego en vivo**: durante partidas de Ranked Solo/Duo, Flex, 5s, Torneo o Clash, muestra el mapa, los campeones, los eventos y el marcador desde el Live Client Data, y al terminar una Clash propone guardar resultado y estadísticas en el historial.
 - **Scouting de lobby**: en Equipo, cruza tu pool guardado con maestrías, últimos campeones y rango que el LCU ve de cada jugador del lobby.
-- **Rival Live**: en champ select, un tab efímero junto a Draft con el scouting de solo lectura del equipo rival cuando el cliente expone sus identidades.
+- **Rival Live**: en champ select y, en Clash, antes del champ select, un tab de solo lectura con el scouting del equipo rival cuando el cliente o el bracket exponen sus identidades.
 - **Rival de Clash**: chip en el header al abrir la app, bracket, próximo partido, roster propio y rival, rangos, maestrías y últimas partidas desde el LCU.
 - **Historial local y scouting**: importa tu TXT de Clash, guarda picks, bans y resultados, y consulta estadísticas por campeón, bans, lado y rival.
 - **Pools rivales**: agrega por nombre los campeones que fuiste anotando y corrige nombres con alias.
@@ -83,8 +83,8 @@ Para las releases con updater usá NSIS. Si alguien tiene instalada una versión
 
 Eso genera el instalador y su firma en `target/release/bundle/nsis/`:
 
-- `Draft Assist_0.5.1_x64-setup.exe`
-- `Draft Assist_0.5.1_x64-setup.exe.sig`
+- `Draft Assist_0.5.2_x64-setup.exe`
+- `Draft Assist_0.5.2_x64-setup.exe.sig`
 
 Después, `npm run prepare-update` arma la carpeta del release con el instalador renombrado, la firma y `latest.json`:
 
@@ -222,7 +222,7 @@ La tarjeta LCU muestra:
 
 - nombre, tag, nivel y posición;
 - rango de Solo/Duo y Flex;
-- top 3 maestrías **de la posición principal**, con comfort 5 y botón para pasarlas al pool;
+- top 5 maestrías **de la posición principal**, con comfort 5 y botón para pasarlas al pool;
 - últimos campeones jugados en la posición principal, filtrados a Ranked Solo/Duo, Ranked Flex, Ranked 5s y Clash;
 - nota de **datos locales / best-effort**.
 
@@ -232,13 +232,15 @@ El comando `lobby_scouting` reutiliza los helpers compartidos de `src-tauri/src/
 
 ## Rival Live
 
-Con League en champ select aparece el tab **Rival Live** junto a **Draft**. Muestra una tarjeta por rival con posición, rango, top 3 maestrías de su posición y últimos campeones en las mismas colas que **Equipo**. Es de solo lectura: no tiene botones para pasar campeones al pool.
+Con League en champ select aparece el tab **Rival Live** junto a **Draft**. Muestra una tarjeta por rival con posición, rango, top 5 maestrías de su posición y últimos campeones en las mismas colas que **Equipo**. Es de solo lectura: no tiene botones para pasar campeones al pool.
+
+En Clash, el tab también aparece antes del champ select y muestra al rival del bracket con las mismas tarjetas de **Rival de Clash**: campeones de la temporada, maestrías y últimas partidas. Cuando empieza el champ select, pasa automáticamente al equipo rival real que expone el LCU.
 
 El comando `rival_scouting` lee `theirTeam` de `/lol-champ-select/v1/session`. Resuelve nombres con `summonerId` y, si el cliente no lo expone, intenta `/lol-summoner/v1/summoners-by-puuid-cached/{puuid}`. Reutiliza los mismos endpoints de rango, maestrías e historial que el scouting de lobby.
 
-El tab aparece cuando el LCU reporta la fase `ChampSelect`. Con el seguimiento activo, la firma de lobby/champ select incluye a ambos equipos y refresca la vista cuando cambian identidades o posiciones. Sin seguimiento, el estado se consulta al abrir la app o al enfocar la ventana, y **Actualizar rivales** refresca manualmente.
+El tab aparece cuando el LCU reporta la fase `ChampSelect` o cuando estás en Clash (`queue_id` 700). En Clash antes del champ select se alimenta del bracket; durante el champ select usa `theirTeam`. Con el seguimiento activo, la firma de lobby/champ select incluye a ambos equipos y refresca la vista cuando cambian identidades o posiciones. Sin seguimiento, el estado se consulta al abrir la app, al enfocar la ventana y cada 30 segundos mientras el tab está abierto; **Actualizar rivales** refresca manualmente.
 
-En Ranked Solo/Duo y Flex el cliente puede ocultar las identidades enemigas; en ese caso la tarjeta muestra la posición y un aviso, sin inventar datos. En Ranked 5s el cliente expone los nombres pero no `assignedPosition`, así que la posición se estima con el rol principal curado del campeón elegido y la tarjeta la marca como **Posición estimada**. Mientras el rival todavía no eligió campeón, se muestran las 3 mejores maestrías globales y los recientes sin filtrar. En Clash se usa la posición marcada por el cliente, sin inferencia.
+En Ranked Solo/Duo y Flex el cliente puede ocultar las identidades enemigas; en ese caso la tarjeta muestra la posición y un aviso, sin inventar datos. En Ranked 5s el cliente expone los nombres pero no `assignedPosition`, así que la posición se estima con el rol principal curado del campeón elegido y la tarjeta la marca como **Posición estimada**. Mientras el rival todavía no eligió campeón, se muestran las 5 mejores maestrías globales y los recientes sin filtrar. En Clash se usa la posición marcada por el cliente, sin inferencia.
 
 ## Rival de Clash
 

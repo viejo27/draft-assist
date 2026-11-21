@@ -377,6 +377,7 @@ export async function init() {
     if (api.isTauri) {
       void initUpdater();
       scheduleUpdateAutoCheck();
+      ensureScoutingAutoRefresh();
       void initLcu();
     } else {
       void initLivePreview();
@@ -460,13 +461,20 @@ function applyLcuStatus(status) {
     app.view = "draft";
   }
 
-  const rivalVisible = Boolean(status.connected && status.phase === "ChampSelect");
+  const clashContext = isClashContext(status);
+  const rivalVisible = Boolean(
+    status.connected && (status.phase === "ChampSelect" || clashContext),
+  );
   app.rivalLive.tabVisible = rivalVisible;
   if (!rivalVisible) {
     app.rivalLive.data = null;
     app.rivalLive.error = null;
     app.rivalLive.signature = null;
     if (app.view === "rival-live") app.view = "draft";
+  } else if (status.phase !== "ChampSelect") {
+    app.rivalLive.data = null;
+    app.rivalLive.error = null;
+    app.rivalLive.signature = null;
   }
 
   maybePromptLiveSave();
@@ -918,7 +926,51 @@ export async function loadRivalScouting({ silent = false } = {}) {
 }
 
 export function refreshRivalScouting() {
+  if (!isChampSelectPhase() && isClashContext()) {
+    return loadClash({ silent: false });
+  }
   return loadRivalScouting();
+}
+
+export function isClashContext(status = app.lcu.status) {
+  const tournament =
+    app.clash.data?.tournament ?? app.clashOverview.data?.tournament;
+  const team = app.clash.data?.roster ?? app.clashOverview.data?.team;
+  const activeTournament = Boolean(
+    tournament &&
+      tournament.state !== "RESULTS" &&
+      tournament.state !== "CANCELLED" &&
+      (!tournament.end_time_ms || Number(tournament.end_time_ms) > Date.now()),
+  );
+  return Boolean(status?.queue_id === 700 || (activeTournament && team));
+}
+
+function isChampSelectPhase() {
+  return app.lcu.status?.phase === "ChampSelect";
+}
+
+let scoutingRefreshTimer = null;
+
+export function refreshActiveScouting() {
+  if (app.view === "clash") {
+    return loadClash({ silent: true });
+  }
+  if (app.view === "rival-live") {
+    if (!isChampSelectPhase() && isClashContext()) {
+      return loadClash({ silent: true });
+    }
+    if (isChampSelectPhase()) {
+      return loadRivalScouting({ silent: true });
+    }
+  }
+  return Promise.resolve();
+}
+
+function ensureScoutingAutoRefresh() {
+  if (!api.isTauri || scoutingRefreshTimer !== null) return;
+  scoutingRefreshTimer = window.setInterval(() => {
+    void refreshActiveScouting();
+  }, 30000);
 }
 
 function syncScoutingSignature(payload) {
@@ -933,6 +985,7 @@ function syncScoutingSignature(payload) {
     return;
   }
   if (app.view === "rival-live" && !app.rivalLive.loading) {
+    if (!isChampSelectPhase() && isClashContext()) return;
     const state = app.rivalLive;
     if (signature && signature !== state.signature) {
       void loadRivalScouting({ silent: true });
@@ -999,13 +1052,17 @@ export function setView(view) {
     void loadLobbyScouting({ silent: true });
   }
   if (view === "rival-live") {
-    const signature = app.lcu.signature;
-    const stale =
-      !app.rivalLive.data ||
-      !signature ||
-      signature !== app.rivalLive.signature;
-    if (stale) {
-      void loadRivalScouting({ silent: Boolean(app.rivalLive.data) });
+    if (!isChampSelectPhase() && isClashContext()) {
+      void loadClash({ silent: Boolean(app.clash.data) });
+    } else {
+      const signature = app.lcu.signature;
+      const stale =
+        !app.rivalLive.data ||
+        !signature ||
+        signature !== app.rivalLive.signature;
+      if (stale) {
+        void loadRivalScouting({ silent: Boolean(app.rivalLive.data) });
+      }
     }
   }
   emit();
