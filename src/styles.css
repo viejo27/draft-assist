@@ -27,6 +27,7 @@
   --radius-sm: 7px;
   --radius: 11px;
   --radius-lg: 15px;
+  --topbar-height: 62px;
   --shadow-float: 0 14px 28px rgba(0, 0, 0, 0.42);
   --font: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
@@ -165,7 +166,7 @@ code {
   display: flex;
   align-items: center;
   gap: 22px;
-  min-height: 62px;
+  min-height: var(--topbar-height);
   padding: 10px 24px;
   border-bottom: 1px solid var(--line);
   background: #090c11;
@@ -415,6 +416,9 @@ code {
 
 /* View switch */
 .viewbar {
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: 19;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -2552,6 +2556,7 @@ code {
   }
 
   .viewbar {
+    position: static;
     padding: 0 14px;
   }
 
