@@ -15,7 +15,7 @@ Asistente de draft para League of Legends, hecho con **Rust + Tauri v2** y front
 - Próximos picks tentativos.
 - **Seguimiento LCU de solo lectura**: sincroniza lobby, formato, lado, posiciones, bans y picks desde el cliente.
 - **Juego en vivo**: durante partidas de Ranked Solo/Duo, Flex, 5s, Torneo o Clash, muestra el mapa, los campeones, los eventos y el marcador desde el Live Client Data, y al terminar una Clash propone guardar resultado y estadísticas en el historial.
-- **Scouting de lobby**: en Equipo, cruza tu pool guardado con maestrías, últimos campeones y rango que el LCU ve de cada jugador del lobby.
+- **Scouting de lobby**: en Equipo, cruza tu pool guardado con maestrías, últimos campeones y rango que el LCU ve de cada jugador del lobby, o del roster de Clash durante la fase de scouting.
 - **Rival Live**: en champ select y, en Clash, antes del champ select, un tab de solo lectura con el scouting del equipo rival cuando el cliente o el bracket exponen sus identidades.
 - **Rival de Clash**: chip en el header al abrir la app, bracket, próximo partido, roster propio y rival, rangos, maestrías y últimas partidas desde el LCU.
 - **Historial local y scouting**: importa tu TXT de Clash, guarda picks, bans y resultados, y consulta estadísticas por campeón, bans, lado y rival.
@@ -83,8 +83,8 @@ Para las releases con updater usá NSIS. Si alguien tiene instalada una versión
 
 Eso genera el instalador y su firma en `target/release/bundle/nsis/`:
 
-- `Draft Assist_0.5.2_x64-setup.exe`
-- `Draft Assist_0.5.2_x64-setup.exe.sig`
+- `Draft Assist_0.5.3_x64-setup.exe`
+- `Draft Assist_0.5.3_x64-setup.exe.sig`
 
 Después, `npm run prepare-update` arma la carpeta del release con el instalador renombrado, la firma y `latest.json`:
 
@@ -227,6 +227,10 @@ La tarjeta LCU muestra:
 - nota de **datos locales / best-effort**.
 
 Con el seguimiento LCU activo, el tracker detecta cambios de posición en el lobby y recarga la tarjeta automáticamente sin pulsar **Actualizar LCU**. Para filtrar las maestrías se consulta la lista completa de maestrías del jugador y se cruza con los roles locales del campeón; no se usan solo las 5 maestrías globales del scouting de Clash.
+
+Durante la fase `CheckedIntoTournament` de Clash, el lobby normal no expone al equipo. En ese caso la tarjeta LCU se completa desde `/lol-clash/v1/tournament-summary` y `/lol-clash/v1/roster/{id}`, con la misma hidratación de rango, maestrías y recientes. La vista se refresca automáticamente cada 30 segundos y al recuperar foco.
+
+Con LCU activo, el tablero de draft sigue siendo de solo lectura, pero el equipo sí se puede editar: nombre, orden de picks, comfort, winrate, agregar/quitar campeones del pool y **Pasar top 5** siguen disponibles.
 
 El comando `lobby_scouting` reutiliza los helpers compartidos de `src-tauri/src/lcu/scouting.rs`: maestrías, rango, historial y mapeo de campeones. Solo lee el cliente local; no usa Riot API y no envía acciones. No requiere activar el seguimiento LCU, pero sí tener League abierto.
 

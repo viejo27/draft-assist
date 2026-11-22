@@ -1,6 +1,6 @@
 [package]
 name = "draft-assist"
-version = "0.5.2"
+version = "0.5.3"
 description = "Asistente de draft para League of Legends"
 authors = ["el_viejo27"]
 edition = "2024"

@@ -134,6 +134,8 @@ At ≤1050px the recommendation column moves below the board. Champion slots col
 - Empty/error states: no League client, no lobby, unmatched roster row, and bot. Bots show no masteries or history.
 - Recent champions are distinct champions from Ranked Solo/Duo, Flex, 5s and Clash; the card names the filtered queues.
 - With LCU tracking active, a lobby/champ-select position signature refreshes the card automatically when the player changes roles; **Actualizar LCU** remains available for a manual refresh. The mastery list is filtered to the principal position using the local champion roles.
+- During Clash scouting (`CheckedIntoTournament`), the normal lobby endpoint does not expose the team, so the LCU card is built from the Clash roster (`/lol-clash/v1/tournament-summary` and `/lol-clash/v1/roster/{id}`) and hydrated with the same rank, mastery and recent-champion helpers. The view refreshes every 30 seconds and when the window regains focus.
+- While LCU tracking is active the draft board remains read-only, but the team stays editable: name, pick order, comfort, winrate, pool add/remove and **Pasar top 5** remain available.
 
 ### Rival Live
 

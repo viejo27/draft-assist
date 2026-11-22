@@ -1,7 +1,7 @@
 use super::client::{LcuClient, LcuError};
 use super::scouting::{
     ClashRankView, ClashRecentMatchView, ClashScoutingView, build_scouting, champion_index,
-    fetch_ranks, fetch_recent_matches, fetch_scouting, fetch_summoners,
+    fetch_ranks, fetch_recent_matches, fetch_scouting, fetch_summoners, json_id_array,
 };
 use draft_engine::data::GameData;
 use serde::{Deserialize, Serialize};
@@ -81,6 +81,8 @@ pub struct ClashRosterMemberView {
     pub puuid: Option<String>,
     pub display_name: String,
     pub tag_line: Option<String>,
+    pub level: Option<i32>,
+    pub profile_icon_id: Option<i32>,
     pub position: Option<String>,
     pub position_label: String,
     pub state: Option<String>,
@@ -156,6 +158,15 @@ struct TournamentSummary {
     bracket_id: Option<i64>,
     #[serde(default)]
     state: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct PlayerTier {
+    #[serde(default)]
+    player_id: Option<i64>,
+    #[serde(default)]
+    tier: Option<i32>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -397,6 +408,77 @@ pub async fn fetch_overview(client: &LcuClient) -> Result<ClashOverview, LcuErro
     Ok(overview)
 }
 
+/// Lightweight Clash roster lookup for the team tab during the scouting phase.
+pub(crate) async fn fetch_roster(client: &LcuClient) -> Option<ClashRosterView> {
+    let summaries = client
+        .get_optional_json::<Vec<TournamentSummary>>("/lol-clash/v1/tournament-summary")
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_default();
+    let summary = choose_summary(&summaries)?;
+    let roster_id = summary
+        .roster_id
+        .clone()
+        .filter(|id| !id.is_empty() && id != "0");
+    let roster = match roster_id.as_deref() {
+        Some(id) => client
+            .get_optional_json::<ClashRoster>(&format!("/lol-clash/v1/roster/{id}"))
+            .await
+            .ok()
+            .flatten(),
+        None => None,
+    };
+    let mut view = build_roster_view(
+        client,
+        roster_id.as_deref(),
+        roster.as_ref(),
+        summary.state.as_deref(),
+    )
+    .await?;
+    if view.tier.is_none() {
+        let summoner_ids: Vec<i64> = view
+            .members
+            .iter()
+            .filter_map(|member| member.summoner_id)
+            .collect();
+        let player_tiers = fetch_player_tiers(client, summary.tournament_id, &summoner_ids).await;
+        view.tier = team_tier_from_player_tiers(&player_tiers);
+    }
+    Some(view)
+}
+
+async fn fetch_player_tiers(
+    client: &LcuClient,
+    tournament_id: Option<i64>,
+    summoner_ids: &[i64],
+) -> HashMap<i64, i32> {
+    let Some(tournament_id) = tournament_id else {
+        return HashMap::new();
+    };
+    if summoner_ids.is_empty() {
+        return HashMap::new();
+    }
+    let query = json_id_array(summoner_ids);
+    client
+        .get_optional_json_query::<Vec<PlayerTier>>(
+            &format!("/lol-clash/v1/tournament/{tournament_id}/get-player-tiers"),
+            &[("summonerIds", query)],
+        )
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|entry| Some((entry.player_id?, entry.tier?)))
+        .filter(|(_, tier)| *tier > 0)
+        .collect()
+}
+
+fn team_tier_from_player_tiers(tiers: &HashMap<i64, i32>) -> Option<i32> {
+    tiers.values().copied().min()
+}
+
 /// Reads Clash bracket, opponent roster and scouting data from the local LCU.
 /// This path is read-only and does not call the Riot API or external proxies.
 pub async fn fetch(client: &LcuClient, data: &GameData) -> Result<ClashView, LcuError> {
@@ -560,6 +642,24 @@ pub async fn fetch(client: &LcuClient, data: &GameData) -> Result<ClashView, Lcu
         None => None,
     };
 
+    let opponent_member_ids: Vec<i64> = opponent_roster
+        .as_ref()
+        .map(|roster| {
+            roster
+                .members
+                .iter()
+                .filter_map(|member| member.summoner_id)
+                .collect()
+        })
+        .unwrap_or_default();
+    let opponent_player_tiers =
+        fetch_player_tiers(client, summary.tournament_id, &opponent_member_ids).await;
+    let opponent_tier = opponent_roster
+        .as_ref()
+        .and_then(|roster| roster.tier)
+        .filter(|tier| *tier > 0)
+        .or_else(|| team_tier_from_player_tiers(&opponent_player_tiers));
+
     let opponent = match opponent_id {
         Some(id) => {
             let players = build_players(client, &champions, opponent_roster.as_ref()).await;
@@ -573,7 +673,7 @@ pub async fn fetch(client: &LcuClient, data: &GameData) -> Result<ClashView, Lcu
                     .as_ref()
                     .and_then(|roster| roster.short_name.clone())
                     .or_else(|| opponent_bracket.and_then(|roster| roster.short_name.clone())),
-                tier: opponent_roster.as_ref().and_then(|roster| roster.tier),
+                tier: opponent_tier,
                 wins: opponent_roster.as_ref().map_or(0, |roster| roster.wins),
                 losses: opponent_roster.as_ref().map_or(0, |roster| roster.losses),
                 players,
@@ -839,6 +939,8 @@ async fn build_roster_members(
                 puuid: summoner.and_then(|summoner| summoner.puuid.clone()),
                 display_name,
                 tag_line: summoner.and_then(|summoner| summoner.tag_line.clone()),
+                level: summoner.and_then(|summoner| summoner.summoner_level),
+                profile_icon_id: summoner.and_then(|summoner| summoner.profile_icon_id),
                 position: member.position.clone(),
                 position_label: position_label(member.position.as_deref()),
                 state_label: member_state_label(state.as_deref()),
@@ -1576,5 +1678,15 @@ mod tests {
         assert_eq!(ranks[0].tier, "GOLD");
         assert_eq!(ranks[0].winrate, Some(66.66666666666666));
         assert_eq!(ranks[1].queue_label, "Flex");
+    }
+
+    #[test]
+    fn team_tier_uses_the_best_player_tier() {
+        let tiers = std::collections::HashMap::from([(1, 4), (2, 2), (3, 4)]);
+        assert_eq!(super::team_tier_from_player_tiers(&tiers), Some(2));
+        assert_eq!(
+            super::team_tier_from_player_tiers(&std::collections::HashMap::new()),
+            None
+        );
     }
 }

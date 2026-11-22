@@ -942,7 +942,11 @@ export function isClashContext(status = app.lcu.status) {
       tournament.state !== "CANCELLED" &&
       (!tournament.end_time_ms || Number(tournament.end_time_ms) > Date.now()),
   );
-  return Boolean(status?.queue_id === 700 || (activeTournament && team));
+  return Boolean(
+    status?.phase === "CheckedIntoTournament" ||
+      status?.queue_id === 700 ||
+      (activeTournament && team),
+  );
 }
 
 function isChampSelectPhase() {
@@ -963,6 +967,9 @@ export function refreshActiveScouting() {
       return loadRivalScouting({ silent: true });
     }
   }
+  if (app.view === "roster") {
+    return loadLobbyScouting({ silent: true });
+  }
   return Promise.resolve();
 }
 
@@ -976,6 +983,7 @@ function ensureScoutingAutoRefresh() {
 function syncScoutingSignature(payload) {
   const signature = payload.lobby_signature ?? null;
   if (app.view === "roster" && !app.lobbyScouting.loading) {
+    if (app.lcu.status?.phase === "CheckedIntoTournament") return;
     const state = app.lobbyScouting;
     if (signature && signature !== state.signature) {
       void loadLobbyScouting({ silent: true });

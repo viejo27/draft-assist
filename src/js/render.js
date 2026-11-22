@@ -2957,6 +2957,18 @@ const CLASH_TIERS = {
   CHALLENGER: "Retador",
 };
 
+const CLASH_TEAM_TIER_LABELS = {
+  1: "I",
+  2: "II",
+  3: "III",
+  4: "IV",
+};
+
+function clashTeamTierLabel(tier) {
+  const value = Number(tier);
+  return CLASH_TEAM_TIER_LABELS[value] ?? null;
+}
+
 function clashHeaderChip(view, includeInClash = false) {
   if (view.view === "clash" && !includeInClash) return "";
   const live = view.clash?.data;
@@ -3081,7 +3093,7 @@ function clashSummaryGrid(data) {
       : tournament.state_label
     : "Sin torneo";
   const rosterDetail = roster
-    ? `Tier ${roster.tier ?? "—"} · ${roster.accepted_count ?? 0}/${roster.member_count ?? 5} aceptados${roster.pending_count ? ` · ${roster.pending_count} pendientes` : ""} · ${roster.wins}-${roster.losses}`
+    ? `Tier ${clashTeamTierLabel(roster.tier) ?? "—"} · ${roster.accepted_count ?? 0}/${roster.member_count ?? 5} aceptados${roster.pending_count ? ` · ${roster.pending_count} pendientes` : ""} · ${roster.wins}-${roster.losses}`
     : "Creá un equipo o unite a uno";
   const bracketDetail = bracket
     ? `${bracket.size ?? "?"} equipos · ${bracket.roster_count} rosters${bracket.is_complete ? " · completo" : ""}`
@@ -3158,7 +3170,7 @@ function clashOurTeamPanel(roster) {
         <div>
           <h2>Nuestro equipo: ${escapeHtml(roster.name ?? "Sin nombre")}${roster.short_name ? ` <span class="clash-tag">(${escapeHtml(roster.short_name)})</span>` : ""}</h2>
           <p class="muted">
-            ${escapeHtml(state)} · Tier ${roster.tier ?? "—"} · ${roster.accepted_count ?? 0}/${roster.member_count ?? 5} aceptados${roster.pending_count ? ` · ${roster.pending_count} pendientes` : ""} · ${roster.wins ?? 0}-${roster.losses ?? 0}
+            ${escapeHtml(state)} · Tier ${clashTeamTierLabel(roster.tier) ?? "—"} · ${roster.accepted_count ?? 0}/${roster.member_count ?? 5} aceptados${roster.pending_count ? ` · ${roster.pending_count} pendientes` : ""} · ${roster.wins ?? 0}-${roster.losses ?? 0}
           </p>
         </div>
         <span class="context-chip ${roster.is_registered ? "is-ok" : ""}">${registered}</span>
@@ -3182,6 +3194,7 @@ function clashMemberRow(member) {
     ? `<span class="clash-tag">#${escapeHtml(String(member.tag_line).replace(/^#/, ""))}</span>`
     : "";
   const captain = member.is_captain ? `<span class="clash-captain">Capitán</span>` : "";
+  const tierLabel = clashTeamTierLabel(member.tier);
   const readyNote =
     member.state === "NOT_READY" || member.state === "FORCED_NOT_READY"
       ? " · No listo"
@@ -3191,7 +3204,7 @@ function clashMemberRow(member) {
       <span class="role-badge">${escapeHtml(member.position_label ?? "Flex")}</span>
       <div class="clash-member-copy">
         <strong>${escapeHtml(member.display_name ?? "Jugador")} ${tag} ${captain}</strong>
-        <small>${member.tier ? `Tier ${member.tier}` : "Sin tier"}${readyNote}</small>
+        <small>${tierLabel ? `Tier ${tierLabel}` : "Sin tier"}${readyNote}</small>
       </div>
       <span class="clash-member-state ${stateClass}">${escapeHtml(member.state_label ?? "Sin estado")}</span>
     </div>
@@ -3249,13 +3262,14 @@ function clashMatchPanel(data) {
 
 function clashOpponentPanel(opponent) {
   const players = opponent.players ?? [];
+  const tierLabel = clashTeamTierLabel(opponent.tier);
   return `
     <section class="clash-panel">
       <header class="panel-head">
         <div>
           <h2>Rival: ${escapeHtml(opponent.name ?? "Equipo rival")}</h2>
           <p class="muted">
-            ${opponent.short_name ? `${escapeHtml(opponent.short_name)} · ` : ""}${opponent.tier ? `Tier ${opponent.tier} · ` : ""}${opponent.wins ?? 0}-${opponent.losses ?? 0} · ${players.length} jugador${players.length === 1 ? "" : "es"} · datos del cliente
+            ${opponent.short_name ? `${escapeHtml(opponent.short_name)} · ` : ""}${tierLabel ? `Tier ${tierLabel} · ` : ""}${opponent.wins ?? 0}-${opponent.losses ?? 0} · ${players.length} jugador${players.length === 1 ? "" : "es"} · datos del cliente
           </p>
         </div>
         <span class="context-chip">${players.length}/5</span>

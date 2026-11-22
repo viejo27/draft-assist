@@ -53,7 +53,7 @@ pub async fn rival_scouting(data: &GameData) -> Result<LobbyScoutingView, String
 
 #[cfg(test)]
 mod live_tests {
-    use super::{clash_overview, clash_view, rival_scouting};
+    use super::{clash_overview, clash_view, lobby_scouting, rival_scouting};
 
     #[test]
     #[ignore = "requires a running League client"]
@@ -78,6 +78,15 @@ mod live_tests {
         let data = draft_engine::data::GameData::embedded().expect("embedded data");
         let view = tauri::async_runtime::block_on(rival_scouting(&data))
             .expect("the live rival scouting should be available");
+        println!("{view:#?}");
+    }
+
+    #[test]
+    #[ignore = "requires a running League client in Clash scouting"]
+    fn reads_the_live_clash_team_scouting() {
+        let data = draft_engine::data::GameData::embedded().expect("embedded data");
+        let view = tauri::async_runtime::block_on(lobby_scouting(&data))
+            .expect("the live team scouting should be available");
         println!("{view:#?}");
     }
 }

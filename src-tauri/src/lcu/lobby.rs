@@ -9,7 +9,7 @@ use super::client::{LcuClient, LcuError};
 use super::mapping;
 use super::model::{ChampSelectPlayer, ChampSelectSession, GameflowSession, Lobby, LobbyMember};
 use super::scouting::{
-    ClashRankView, ClashScoutingView, RecentChampionView, build_scouting, champion_index,
+    ClashRankView, ClashScoutingView, RecentChampionView, Summoner, build_scouting, champion_index,
     champion_roles, fetch_position_masteries, fetch_ranks, fetch_recent_position_champions,
     fetch_scouting, fetch_summoner_by_puuid, fetch_summoners,
 };
@@ -73,6 +73,10 @@ pub async fn fetch(client: &LcuClient, data: &GameData) -> Result<LobbyScoutingV
         last_sync_ms: now_ms(),
         signature: String::new(),
     };
+
+    if phase == "CheckedIntoTournament" {
+        return fetch_clash_scouting(client, data, queue_id).await;
+    }
 
     if phase == "ChampSelect" {
         let session = client
@@ -186,6 +190,97 @@ pub async fn fetch_rival(
         "El cliente no expone al equipo rival en este modo.".into()
     });
     Ok(view)
+}
+
+async fn fetch_clash_scouting(
+    client: &LcuClient,
+    data: &GameData,
+    queue_id: Option<i64>,
+) -> Result<LobbyScoutingView, LcuError> {
+    let mut view = LobbyScoutingView {
+        available: false,
+        phase: Some("Scouting de Clash".into()),
+        queue_id,
+        queue_name: Some("Clash".into()),
+        local_player: None,
+        members: Vec::new(),
+        message: None,
+        last_sync_ms: now_ms(),
+        signature: String::new(),
+    };
+
+    let Some(roster) = super::clash::fetch_roster(client).await else {
+        view.message = Some("El cliente todavía no expone tu roster de Clash.".into());
+        return Ok(view);
+    };
+
+    let current_summoner_id = client
+        .get_optional_json::<Summoner>("/lol-summoner/v1/current-summoner")
+        .await
+        .ok()
+        .flatten()
+        .and_then(|summoner| summoner.summoner_id);
+    let mut members = clash_roster_members(&roster, current_summoner_id);
+    hydrate_members(client, data, &mut members).await;
+
+    view.local_player = members
+        .iter()
+        .find(|member| member.is_local)
+        .map(|member| member.display_name.clone());
+    view.available = !members.is_empty();
+    view.signature = format!(
+        "clash-scouting:{}:{}",
+        roster.id,
+        members
+            .iter()
+            .filter_map(|member| member.summoner_id)
+            .map(|id| id.to_string())
+            .collect::<Vec<_>>()
+            .join(",")
+    );
+    view.members = members;
+    view.message = Some(
+        "Roster de Clash. Maestrías e historial son best-effort y pueden faltar si el cliente no los tiene cacheados."
+            .into(),
+    );
+    Ok(view)
+}
+
+fn clash_roster_members(
+    roster: &super::clash::ClashRosterView,
+    current_summoner_id: Option<i64>,
+) -> Vec<LobbyMemberScoutingView> {
+    roster
+        .members
+        .iter()
+        .map(|member| {
+            let primary_position = role_from_position(member.position.as_deref());
+            LobbyMemberScoutingView {
+                summoner_id: member.summoner_id,
+                puuid: member.puuid.clone(),
+                display_name: member.display_name.clone(),
+                tag_line: member.tag_line.clone(),
+                level: member.level,
+                profile_icon_id: member.profile_icon_id,
+                is_bot: false,
+                is_local: member.summoner_id.is_some() && member.summoner_id == current_summoner_id,
+                is_leader: member.is_captain,
+                ready: member.state.as_deref() == Some("READY"),
+                team_id: None,
+                primary_position,
+                secondary_position: None,
+                position_inferred: false,
+                ranks: Vec::new(),
+                scouting: None,
+                recent_champions: Vec::new(),
+                message: if member.is_pending {
+                    Some("Invitación pendiente.".into())
+                } else {
+                    None
+                },
+            }
+        })
+        .collect()
 }
 
 async fn lobby_members(

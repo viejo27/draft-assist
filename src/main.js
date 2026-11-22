@@ -634,10 +634,6 @@ function openPoolPicker(playerId) {
 }
 
 function openChampionPicker({ mode, side, playerId, role }) {
-  if (app.lcu.auto) {
-    toast("El tablero es de solo lectura durante el seguimiento LCU.", "warning");
-    return;
-  }
   picker.mode = mode;
   picker.side = side;
   picker.playerId = playerId;
